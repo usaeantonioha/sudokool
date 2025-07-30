@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sudoku Profesional (Web)</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="start-screen" class="screen active">
+        <h1>Sudoku Profesional</h1>
+        <h2 id="total-streak-display"></h2>
+        <div id="difficulty-buttons">
+            </div>
+    </div>
+
+    <div id="game-screen" class="screen">
+        <div class="game-header">
+            <button id="back-to-menu">Volver al Menú</button>
+            <div id="lives-counter"></div>
+        </div>
+        <div id="board"></div>
+        <div id="keypad"></div>
+    </div>
+    
+    <div id="game-over-screen" class="overlay">
+        <div class="game-over-box">
+            <h2 id="game-over-message"></h2>
+            <button id="restart-button">Jugar de Nuevo</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

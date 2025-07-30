@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+:root {
+    --color-bg: #f0f2f5;
+    --color-dark: #333;
+    --color-light-gray: #ccc;
+    --color-gray: #888;
+    --color-primary: #007bff;
+    --color-hint: #444;
+    --color-user: #0056b3;
+    --color-win: #28a745;
+    --color-lose: #dc3545;
+    --color-highlight: rgba(0, 123, 255, 0.15);
+    --color-selected: rgba(0, 123, 255, 0.3);
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-color: var(--color-bg);
+    color: var(--color-dark);
+}
+
+.screen {
+    width: 100%;
+    height: 100%;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.screen.active {
+    display: flex;
+}
+
+/* --- Pantalla de Inicio --- */
+#start-screen {
+    justify-content: center;
+    text-align: center;
+}
+#start-screen h1 {
+    font-size: clamp(2rem, 10vw, 3.5rem);
+    color: var(--color-dark);
+}
+#total-streak-display {
+    color: var(--color-win);
+    font-size: clamp(1rem, 5vw, 1.5rem);
+    min-height: 2em;
+}
+#difficulty-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 80%;
+    max-width: 400px;
+}
+.difficulty-btn {
+    padding: 15px;
+    font-size: 1.2rem;
+    border-radius: 10px;
+    border: none;
+    background-color: #fff;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+}
+.difficulty-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 10px rgba(0,0,0,0.15);
+}
+.streak-badge {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background-color: var(--color-win);
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.9rem;
+    font-weight: bold;
+    box-shadow: 0 0 5px rgba(0,0,0,0.3);
+}
+
+/* --- Pantalla de Juego --- */
+#game-screen {
+    justify-content: center;
+}
+.game-header {
+    width: 100%;
+    max-width: 450px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+#back-to-menu {
+    padding: 8px 12px;
+    border: 1px solid var(--color-light-gray);
+    background: #fff;
+    border-radius: 8px;
+    cursor: pointer;
+}
+#lives-counter {
+    font-size: 1.5rem;
+    color: var(--color-lose);
+    font-weight: bold;
+}
+#board {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    width: 90vw;
+    height: 90vw;
+    max-width: 450px;
+    max-height: 450px;
+    border: 3px solid var(--color-dark);
+    border-radius: 5px;
+    background-color: #fff;
+}
+.tile {
+    width: 100%;
+    height: 100%;
+    border: 1px solid var(--color-light-gray);
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: clamp(1rem, 5vw, 2rem);
+    cursor: pointer;
+}
+.tile.hint {
+    color: var(--color-hint);
+    font-weight: bold;
+}
+.tile.user-filled {
+    color: var(--color-user);
+    font-weight: bold;
+}
+.tile.selected {
+    background-color: var(--color-selected);
+}
+.tile.highlight {
+    background-color: var(--color-highlight);
+}
+/* Líneas gruesas de la grilla */
+.tile:nth-child(3n) { border-right: 2px solid var(--color-dark); }
+.tile:nth-child(9n) { border-right: none; }
+.tile:nth-of-type(n+19):nth-of-type(-n+27),
+.tile:nth-of-type(n+46):nth-of-type(-n+54) {
+    border-bottom: 2px solid var(--color-dark);
+}
+
+/* --- Teclado Numérico --- */
+#keypad {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    gap: 5px;
+    margin-top: 20px;
+    width: 90vw;
+    max-width: 450px;
+}
+.keypad-number {
+    padding: 10px 0;
+    font-size: 1.5rem;
+    font-weight: bold;
+    border-radius: 8px;
+    border: 1px solid var(--color-light-gray);
+    background-color: #fff;
+    cursor: pointer;
+    text-align: center;
+    transition: background-color 0.2s;
+}
+.keypad-number.disabled {
+    background-color: var(--color-light-gray);
+    color: var(--color-gray);
+    cursor: not-allowed;
+}
+
+/* --- Pantalla Game Over --- */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: none; /* Se activa con JS */
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+.overlay.active {
+    display: flex;
+}
+.game-over-box {
+    background-color: white;
+    padding: 40px;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    animation: zoomIn 0.3s ease-out;
+}
+.game-over-box h2 {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+}
+.game-over-box .win { color: var(--color-win); }
+.game-over-box .lose { color: var(--color-lose); }
+#restart-button {
+    padding: 12px 25px;
+    font-size: 1.2rem;
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+@keyframes zoomIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
