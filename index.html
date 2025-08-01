@@ -9,15 +9,21 @@
 <body>
 
     <div id="start-screen" class="screen active">
-        <h1>Sudoku Profesional</h1>
+        <div class="header-icons">
+            <div id="info-icon" class="icon-btn">i</div>
+        </div>
+        <h1>Elegir Dificultad</h1>
         <h2 id="total-streak-display"></h2>
-        <div id="difficulty-buttons">
-            </div>
+        <div id="difficulty-buttons"></div>
+        <div id="main-menu-logo" class="logo-btn">S</div>
     </div>
 
     <div id="game-screen" class="screen">
         <div class="game-header">
             <button id="back-to-menu">Volver al Menú</button>
+        </div>
+        <div id="lives-container">
+            <h3>Vidas Restantes</h3>
             <div id="lives-counter"></div>
         </div>
         <div id="board"></div>
@@ -25,11 +31,29 @@
     </div>
     
     <div id="game-over-screen" class="overlay">
-        <div class="game-over-box">
+        <div class="overlay-box">
             <h2 id="game-over-message"></h2>
-            <button id="restart-button">Jugar de Nuevo</button>
+            <button id="restart-button" class="overlay-btn">Jugar de Nuevo</button>
         </div>
     </div>
+    
+    <div id="instructions-screen" class="overlay">
+        <div class="overlay-box">
+            <h2>Instrucciones</h2>
+            <p class="instructions-text">Sudoku se juega en una cuadrícula de 9x9. Cada fila, columna y cuadrado de 3x3 debe completarse con los números del 1 al 9, sin repetir ningún número dentro de la misma fila, columna o cuadrado.</p>
+            <button class="overlay-btn back-btn">Volver</button>
+        </div>
+    </div>
+    
+    <div id="about-screen" class="overlay">
+        <div class="overlay-box">
+            <h2>Creado por</h2>
+            <p class="creator-name">Enzo Antonio Hinojosa Araya</p>
+            <button class="overlay-btn back-btn">Volver</button>
+        </div>
+    </div>
+    
+    <div id="flash-message"></div>
 
     <script src="script.js"></script>
 </body>
