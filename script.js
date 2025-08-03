@@ -46,15 +46,19 @@ document.addEventListener('DOMContentLoaded', () => {
         difficultyButtonsContainer.innerHTML = '';
         difficulties.forEach(diff => {
             const button = document.createElement('button');
+            const difficultyKey = diff.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+            
             button.className = 'difficulty-btn';
-            button.dataset.difficulty = diff.toLowerCase();
-            button.addEventListener('click', () => startGame(diff.toLowerCase()));
+            button.classList.add(`btn-${difficultyKey}`);
+            
+            button.dataset.difficulty = difficultyKey;
+            button.addEventListener('click', () => startGame(difficultyKey));
 
             const textSpan = document.createElement('span');
             textSpan.textContent = diff;
             button.appendChild(textSpan);
 
-            const streak = streaks[diff.toLowerCase()];
+            const streak = streaks[difficultyKey];
             if (streak > 0) {
                 const streakSpan = document.createElement('span');
                 streakSpan.className = 'streak-display-menu';

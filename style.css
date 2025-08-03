@@ -1,13 +1,12 @@
 :root {
     --color-bg: #f7faff;
-    --color-grid: #007bff; /* Color azul claro para la cuadrícula */
+    --color-grid: #000000;
     --color-light-gray: #e9eef2;
     --color-hint: #3C3C3C;
     --color-black: #000000;
     --color-text: #143478;
     --color-select: rgba(0, 123, 255, 0.3);
     --color-button: #E0E0E0;
-    --color-button-hover: #C8C8C8;
     --color-win-text: #00B414;
     --color-gameover-text: #B41414;
     --color-lives: #FF0000;
@@ -43,15 +42,62 @@ body {
 
 /* --- Pantalla de Inicio --- */
 #start-screen { justify-content: space-around; text-align: center; }
-#start-screen h1 { font-size: clamp(1.8rem, 8vw, 2.5rem); color: var(--color-hint); }
-#total-streak-display { color: var(--color-win-text); font-size: clamp(1rem, 5vw, 1.5rem); min-height: 1.5em; }
 .header-icons { position: absolute; top: 15px; left: 15px; }
 .icon-btn { width: 40px; height: 40px; border-radius: 50%; background-color: var(--color-hint); color: var(--color-bg); display: flex; justify-content: center; align-items: center; font-size: 1.5rem; font-weight: bold; cursor: pointer; }
+
+/* <<< NUEVOS ESTILOS PARA EL TÍTULO Y LOGO >>> */
+.title-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+#main-logo {
+    width: 50px;
+    height: 50px;
+    flex-shrink: 0;
+}
+.colorful-title {
+    font-size: clamp(2.2rem, 10vw, 3rem);
+    font-weight: bold;
+}
+.colorful-title span:nth-child(1) { color: #4285F4; } /* S */
+.colorful-title span:nth-child(2) { color: #DB4437; } /* U */
+.colorful-title span:nth-child(3) { color: #F4B400; } /* D */
+.colorful-title span:nth-child(4) { color: #4285F4; } /* O */
+.colorful-title span:nth-child(5) { color: #0F9D58; } /* K */
+.colorful-title span:nth-child(6) { color: #DB4437; } /* U */
+.colorful-title span:nth-child(7) { margin-left: 0.5ch; } /* Espacio */
+.colorful-title span:nth-child(8) { color: #F4B400; } /* P */
+.colorful-title span:nth-child(9) { color: #4285F4; } /* R */
+.colorful-title span:nth-child(10){ color: #0F9D58; } /* O */
+
+#total-streak-display { color: var(--color-win-text); font-size: clamp(1rem, 5vw, 1.5rem); min-height: 1.5em; }
 #difficulty-buttons { display: flex; flex-direction: column; gap: 15px; width: 80%; max-width: 350px; }
-.difficulty-btn { padding: 15px; font-size: 1.2rem; border-radius: 15px; border: none; background-color: var(--color-button); box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; transition: background-color 0.2s; position: relative; display: flex; justify-content: space-between; align-items: center; }
-.difficulty-btn:hover { background-color: var(--color-button-hover); }
-.streak-display-menu { font-size: 1.1rem; font-weight: bold; color: rgba(0, 0, 0, 0.4); }
-.logo-btn { width: 70px; height: 70px; border-radius: 50%; background-color: var(--color-logo-bg); color: var(--color-logo-text); display: flex; justify-content: center; align-items: center; font-size: 3rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+.difficulty-btn { padding: 15px; font-size: 1.4rem; font-weight: bold; border-radius: 15px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; transition: filter 0.2s; position: relative; display: flex; justify-content: space-between; align-items: center; color: white; }
+.difficulty-btn:hover { filter: brightness(0.9); }
+.btn-fácil { background-color: #28a745; }
+.btn-medio { background-color: #007bff; }
+.btn-difícil { background-color: #fd7e14; }
+.btn-experto { background-color: #dc3545; }
+.streak-display-menu { font-size: 1.1rem; font-weight: bold; color: rgba(255, 255, 255, 0.7); }
+
+/* <<< TAMAÑO DEL LOGO "S" REDUCIDO >>> */
+.logo-btn {
+    width: 45px;
+    height: 45px;
+    font-size: 2rem;
+    border-radius: 50%;
+    background-color: var(--color-logo-bg);
+    color: var(--color-logo-text);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
 
 /* --- Pantalla de Juego --- */
 #game-screen { justify-content: flex-start; }
@@ -62,8 +108,8 @@ body {
 #lives-counter { display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 2rem; color: var(--color-lives); }
 #ingame-streak-display { display: flex; align-items: center; gap: 5px; font-size: 1.8rem; font-weight: bold; color: #ffc107; }
 .ingame-streak-number { color: var(--color-hint); font-size: 1.5rem; }
-#board { display: grid; grid-template-columns: repeat(9, 1fr); width: 90vw; height: 90vw; max-width: 500px; max-height: 500px; border: 3px solid var(--color-grid); background-color: #fff; }
-.tile { border: 1px solid var(--color-grid); background-color: var(--color-light-gray); display: flex; justify-content: center; align-items: center; font-size: clamp(1rem, 5vw, 2rem); cursor: pointer; }
+#board { display: grid; grid-template-columns: repeat(9, 1fr); grid-template-rows: repeat(9, 1fr); width: 90vw; height: 90vw; max-width: 500px; max-height: 500px; border: 3px solid var(--color-grid); background-color: #fff; }
+.tile { border: 1px solid var(--color-grid); background-color: var(--color-light-gray); display: flex; justify-content: center; align-items: center; font-size: clamp(1rem, 5vw, 2rem); cursor: pointer; box-sizing: border-box; }
 .tile.hint { color: var(--color-hint); font-weight: bold; }
 .tile.user-filled { color: var(--color-text); font-weight: bold; }
 .tile.selected { background-color: var(--color-select); }
