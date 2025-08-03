@@ -1,10 +1,11 @@
 :root {
-    --color-bg: #FFFFFF;
-    --color-grid: #646464;
+    --color-bg: #f7faff;
+    --color-grid: #007bff; /* Color azul claro para la cuadrícula */
+    --color-light-gray: #e9eef2;
     --color-hint: #3C3C3C;
     --color-black: #000000;
     --color-text: #143478;
-    --color-select: rgba(173, 216, 230, 0.5);
+    --color-select: rgba(0, 123, 255, 0.3);
     --color-button: #E0E0E0;
     --color-button-hover: #C8C8C8;
     --color-win-text: #00B414;
@@ -12,7 +13,7 @@
     --color-lives: #FF0000;
     --color-logo-bg: #00AA00;
     --color-logo-text: #FFFFFF;
-    --color-highlight: rgba(225, 235, 255, 0.8);
+    --color-highlight: rgba(0, 123, 255, 0.15);
 }
 
 body {
@@ -24,7 +25,7 @@ body {
     margin: 0;
     background-color: var(--color-bg);
     color: var(--color-black);
-    -webkit-user-select: none; /* Evitar selección de texto */
+    -webkit-user-select: none;
     -ms-user-select: none;
     user-select: none;
 }
@@ -47,30 +48,28 @@ body {
 .header-icons { position: absolute; top: 15px; left: 15px; }
 .icon-btn { width: 40px; height: 40px; border-radius: 50%; background-color: var(--color-hint); color: var(--color-bg); display: flex; justify-content: center; align-items: center; font-size: 1.5rem; font-weight: bold; cursor: pointer; }
 #difficulty-buttons { display: flex; flex-direction: column; gap: 15px; width: 80%; max-width: 350px; }
-.difficulty-btn { padding: 15px; font-size: 1.2rem; border-radius: 15px; border: none; background-color: var(--color-button); box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; transition: background-color 0.2s; position: relative; }
+.difficulty-btn { padding: 15px; font-size: 1.2rem; border-radius: 15px; border: none; background-color: var(--color-button); box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; transition: background-color 0.2s; position: relative; display: flex; justify-content: space-between; align-items: center; }
 .difficulty-btn:hover { background-color: var(--color-button-hover); }
-.streak-badge { position: absolute; top: 5px; right: 10px; color: var(--color-win-text); font-size: 1.2rem; font-weight: bold; }
+.streak-display-menu { font-size: 1.1rem; font-weight: bold; color: rgba(0, 0, 0, 0.4); }
 .logo-btn { width: 70px; height: 70px; border-radius: 50%; background-color: var(--color-logo-bg); color: var(--color-logo-text); display: flex; justify-content: center; align-items: center; font-size: 3rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
 
 /* --- Pantalla de Juego --- */
 #game-screen { justify-content: flex-start; }
-.game-header { width: 100%; max-width: 500px; display: flex; justify-content: flex-start; margin-bottom: 10px; }
+.game-header { width: 100%; max-width: 500px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 #back-to-menu { padding: 8px 12px; border: none; background: var(--color-button); border-radius: 10px; cursor: pointer; font-weight: bold; }
-#lives-container { text-align: center; margin-bottom: 15px; }
-#lives-container h3 { margin: 0 0 5px 0; color: var(--color-lives); }
-#lives-counter { display: flex; gap: 5px; }
-.life-box { width: 30px; height: 30px; background-color: var(--color-lives); border-radius: 8px; }
+#lives-container { text-align: center; margin-bottom: 15px; width: 100%; }
+#lives-container h3 { margin: 0 0 5px 0; color: var(--color-lives); font-size: 1.2rem; }
+#lives-counter { display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 2rem; color: var(--color-lives); }
+#ingame-streak-display { display: flex; align-items: center; gap: 5px; font-size: 1.8rem; font-weight: bold; color: #ffc107; }
+.ingame-streak-number { color: var(--color-hint); font-size: 1.5rem; }
 #board { display: grid; grid-template-columns: repeat(9, 1fr); width: 90vw; height: 90vw; max-width: 500px; max-height: 500px; border: 3px solid var(--color-grid); background-color: #fff; }
-.tile { border: 1px solid var(--color-grid); display: flex; justify-content: center; align-items: center; font-size: clamp(1rem, 5vw, 2rem); cursor: pointer; }
+.tile { border: 1px solid var(--color-grid); background-color: var(--color-light-gray); display: flex; justify-content: center; align-items: center; font-size: clamp(1rem, 5vw, 2rem); cursor: pointer; }
 .tile.hint { color: var(--color-hint); font-weight: bold; }
 .tile.user-filled { color: var(--color-text); font-weight: bold; }
 .tile.selected { background-color: var(--color-select); }
 .tile.highlight { background-color: var(--color-highlight); }
-/* Líneas gruesas de la grilla */
-.tile:nth-child(3n) { border-right: 3px solid var(--color-grid); }
-.tile:nth-child(9n) { border-right: none; }
-.tile:nth-of-type(n+19):nth-of-type(-n+27),
-.tile:nth-of-type(n+46):nth-of-type(-n+54) { border-bottom: 3px solid var(--color-grid); }
+.tile-border-right { border-right: 3px solid var(--color-grid); }
+.tile-border-bottom { border-bottom: 3px solid var(--color-grid); }
 #keypad { display: grid; grid-template-columns: repeat(9, 1fr); gap: 5px; margin-top: 20px; width: 90vw; max-width: 500px; }
 .keypad-number { aspect-ratio: 1/1; font-size: 1.5rem; font-weight: bold; border-radius: 5px; border: 2px solid var(--color-grid); background-color: #fff; cursor: pointer; }
 .keypad-number.disabled { background-color: var(--color-button); color: var(--color-grid); cursor: not-allowed; }
