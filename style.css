@@ -45,7 +45,6 @@ body {
 .header-icons { position: absolute; top: 15px; left: 15px; }
 .icon-btn { width: 40px; height: 40px; border-radius: 50%; background-color: var(--color-hint); color: var(--color-bg); display: flex; justify-content: center; align-items: center; font-size: 1.5rem; font-weight: bold; cursor: pointer; }
 
-/* <<< NUEVOS ESTILOS PARA EL TÍTULO Y LOGO >>> */
 .title-container {
     display: flex;
     align-items: center;
@@ -75,15 +74,30 @@ body {
 
 #total-streak-display { color: var(--color-win-text); font-size: clamp(1rem, 5vw, 1.5rem); min-height: 1.5em; }
 #difficulty-buttons { display: flex; flex-direction: column; gap: 15px; width: 80%; max-width: 350px; }
-.difficulty-btn { padding: 15px; font-size: 1.4rem; font-weight: bold; border-radius: 15px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; transition: filter 0.2s; position: relative; display: flex; justify-content: space-between; align-items: center; color: white; }
+.difficulty-btn {
+    padding: 15px;
+    font-size: 1.4rem;
+    font-weight: bold;
+    border-radius: 15px;
+    border: none;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: filter 0.2s;
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+}
 .difficulty-btn:hover { filter: brightness(0.9); }
-.btn-fácil { background-color: #28a745; }
-.btn-medio { background-color: #007bff; }
-.btn-difícil { background-color: #fd7e14; }
-.btn-experto { background-color: #dc3545; }
-.streak-display-menu { font-size: 1.1rem; font-weight: bold; color: rgba(255, 255, 255, 0.7); }
 
-/* <<< TAMAÑO DEL LOGO "S" REDUCIDO >>> */
+/* <<< NUEVOS COLORES ÚNICOS PARA CADA BOTÓN >>> */
+.btn-fácil { background-color: #1abc9c; } /* Verde azulado */
+.btn-medio { background-color: #3498db; } /* Azul */
+.btn-difícil { background-color: #f39c12; } /* Naranja */
+.btn-experto { background-color: #c0392b; } /* Rojo oscuro */
+
+.streak-display-menu { font-size: 1.1rem; font-weight: bold; color: rgba(255, 255, 255, 0.7); }
 .logo-btn {
     width: 45px;
     height: 45px;
