@@ -1,18 +1,36 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- VARIABLES GLOBALES ---
-    let solution = [];
-    let puzzleBoard = [];
-    let lives = 3;
-    let selectedTile = null;
-    let currentDifficulty = 'medio';
-    let streaks = { fácil: 0, medio: 0, difícil: 0, experto: 0 };
+    // --- CONSTANTES ---
+    const DIFFICULTIES = {
+        FÁCIL: 'fácil',
+        MEDIO: 'medio',
+        DIFÍCIL: 'difícil',
+        EXPERTO: 'experto'
+    };
+    const CELLS_TO_REMOVE = {
+        [DIFFICULTIES.FÁCIL]: 40,
+        [DIFFICULTIES.MEDIO]: 50,
+        [DIFFICULTIES.DIFÍCIL]: 60,
+        [DIFFICULTIES.EXPERTO]: 65
+    };
+
+    // --- ESTADO DEL JUEGO ---
+    const gameState = {
+        solution: [],
+        puzzleBoard: [],
+        lives: 3,
+        selectedTile: null,
+        currentDifficulty: DIFFICULTIES.MEDIO,
+        streaks: { fácil: 0, medio: 0, difícil: 0, experto: 0 }
+    };
 
     // --- ELEMENTOS DEL DOM ---
-    const startScreen = document.getElementById('start-screen');
-    const gameScreen = document.getElementById('game-screen');
-    const gameOverScreen = document.getElementById('game-over-screen');
-    const instructionsScreen = document.getElementById('instructions-screen');
-    const aboutScreen = document.getElementById('about-screen');
+    const screens = {
+        start: document.getElementById('start-screen'),
+        game: document.getElementById('game-screen'),
+        gameOver: document.getElementById('game-over-screen'),
+        instructions: document.getElementById('instructions-screen'),
+        about: document.getElementById('about-screen')
+    };
     const boardElement = document.getElementById('board');
     const keypadElement = document.getElementById('keypad');
     const livesCounter = document.getElementById('lives-counter');
@@ -25,193 +43,221 @@ document.addEventListener('DOMContentLoaded', () => {
     const ingameStreakDisplay = document.getElementById('ingame-streak-display');
     const infoIcon = document.getElementById('info-icon');
     const mainMenuLogo = document.getElementById('main-menu-logo');
-    document.querySelectorAll('.back-btn').forEach(btn => btn.addEventListener('click', () => {
-        instructionsScreen.classList.remove('active');
-        aboutScreen.classList.remove('active');
-    }));
 
     // --- LÓGICA DE INICIO ---
     function initialize() {
         loadStreaks();
         createDifficultyButtons();
         updateStreakDisplay();
+        addEventListeners();
+    }
+
+    function addEventListeners() {
         backToMenuBtn.addEventListener('click', goHome);
         restartBtn.addEventListener('click', restartGame);
-        infoIcon.addEventListener('click', () => instructionsScreen.classList.add('active'));
-        mainMenuLogo.addEventListener('click', () => aboutScreen.classList.add('active'));
+        infoIcon.addEventListener('click', () => showOverlay('instructions', true));
+        mainMenuLogo.addEventListener('click', () => showOverlay('about', true));
+        document.querySelectorAll('.back-btn').forEach(btn => btn.addEventListener('click', () => {
+            showOverlay('instructions', false);
+            showOverlay('about', false);
+        }));
+        boardElement.addEventListener('click', handleBoardClick);
+        keypadElement.addEventListener('click', handleKeypadClick);
     }
 
     function createDifficultyButtons() {
-        const difficulties = ['Fácil', 'Medio', 'Difícil', 'Experto'];
         difficultyButtonsContainer.innerHTML = '';
-        difficulties.forEach(diff => {
+        const fragment = document.createDocumentFragment();
+        Object.keys(DIFFICULTIES).forEach(key => {
+            const diffValue = DIFFICULTIES[key];
             const button = document.createElement('button');
-            const difficultyKey = diff.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+            button.className = `difficulty-btn btn-${diffValue}`;
+            button.dataset.difficulty = diffValue;
             
-            button.className = 'difficulty-btn';
-            button.classList.add(`btn-${difficultyKey}`);
-            
-            button.dataset.difficulty = difficultyKey;
-            button.addEventListener('click', () => startGame(difficultyKey));
-
             const textSpan = document.createElement('span');
-            textSpan.textContent = diff;
+            textSpan.textContent = key.charAt(0) + key.slice(1).toLowerCase();
             button.appendChild(textSpan);
 
-            const streak = streaks[difficultyKey];
+            const streak = gameState.streaks[diffValue];
             if (streak > 0) {
                 const streakSpan = document.createElement('span');
                 streakSpan.className = 'streak-display-menu';
-                streakSpan.textContent = streak;
+                streakSpan.textContent = `👑 ${streak}`;
                 button.appendChild(streakSpan);
             }
-            difficultyButtonsContainer.appendChild(button);
+            fragment.appendChild(button);
         });
+        difficultyButtonsContainer.appendChild(fragment);
+        difficultyButtonsContainer.addEventListener('click', handleDifficultyClick);
     }
-    
+
     function startGame(difficulty) {
-        currentDifficulty = difficulty;
-        lives = 3;
-        selectedTile = null;
+        gameState.currentDifficulty = difficulty;
+        gameState.lives = 3;
+        gameState.selectedTile = null;
+
         let baseBoard = generateEmptyBoard();
         generateSolution(baseBoard);
-        solution = JSON.parse(JSON.stringify(baseBoard));
-        puzzleBoard = createPuzzle(baseBoard, difficulty);
+        gameState.solution = JSON.parse(JSON.stringify(baseBoard));
+        gameState.puzzleBoard = createPuzzle(baseBoard, difficulty);
 
         updateLivesDisplay();
         updateIngameStreakDisplay();
         renderBoard();
         renderKeypad();
         
-        startScreen.classList.remove('active');
-        gameScreen.classList.add('active');
+        showScreen('game');
+    }
+
+    // --- MANEJADORES DE EVENTOS ---
+    function handleDifficultyClick(event) {
+        const button = event.target.closest('.difficulty-btn');
+        if (button) {
+            startGame(button.dataset.difficulty);
+        }
+    }
+
+    function handleBoardClick(event) {
+        const tile = event.target.closest('.tile');
+        if (!tile) return;
+
+        if (gameState.selectedTile) {
+            gameState.selectedTile.classList.remove('selected');
+        }
+        gameState.selectedTile = tile;
+        gameState.selectedTile.classList.add('selected');
+        highlightTiles(tile.dataset.row, tile.dataset.col);
+    }
+    
+    function handleKeypadClick(event) {
+        const key = event.target.closest('.keypad-number');
+        if (key && !key.classList.contains('disabled')) {
+            placeNumber(parseInt(key.textContent));
+        }
     }
 
     // --- LÓGICA DEL JUEGO ---
     function placeNumber(num) {
-        if (!selectedTile || selectedTile.classList.contains('hint')) return;
+        if (!gameState.selectedTile || gameState.selectedTile.classList.contains('hint')) return;
 
-        const row = parseInt(selectedTile.dataset.row);
-        const col = parseInt(selectedTile.dataset.col);
+        const row = parseInt(gameState.selectedTile.dataset.row);
+        const col = parseInt(gameState.selectedTile.dataset.col);
 
-        if (solution[row][col] === num) {
-            puzzleBoard[row][col] = num;
-            selectedTile.textContent = num;
-            selectedTile.classList.add('user-filled');
+        if (gameState.solution[row][col] === num) {
+            gameState.puzzleBoard[row][col] = num;
+            gameState.selectedTile.textContent = num;
+            gameState.selectedTile.classList.add('user-filled');
             highlightTiles(row, col);
             if (checkWin()) endGame(true);
         } else {
-            lives--;
+            gameState.lives--;
             updateLivesDisplay();
             showFlashMessage("Número equivocado");
-            if (lives <= 0) endGame(false);
+            if (gameState.lives <= 0) endGame(false);
         }
         updateKeypad();
     }
     
     function endGame(isWin) {
         if (isWin) {
-            streaks[currentDifficulty]++;
+            gameState.streaks[gameState.currentDifficulty]++;
             gameOverMsg.textContent = '¡FELICITACIONES!';
             gameOverMsg.className = 'win';
         } else {
-            streaks[currentDifficulty] = 0;
+            gameState.streaks[gameState.currentDifficulty] = 0;
             gameOverMsg.textContent = 'Game Over';
             gameOverMsg.className = 'lose';
         }
         saveStreaks();
-        gameOverScreen.classList.add('active');
+        showOverlay('gameOver', true);
     }
     
     function restartGame() {
-        gameOverScreen.classList.remove('active');
-        startGame(currentDifficulty);
+        showOverlay('gameOver', false);
+        startGame(gameState.currentDifficulty);
     }
 
     function goHome() {
-        gameOverScreen.classList.remove('active');
-        gameScreen.classList.remove('active');
-        startScreen.classList.add('active');
+        showOverlay('gameOver', false);
+        showScreen('start');
         createDifficultyButtons();
         updateStreakDisplay();
     }
 
     // --- RENDERIZADO Y UI ---
+    function showScreen(screenKey) {
+        Object.values(screens).forEach(s => s.classList.remove('active'));
+        screens[screenKey].classList.add('active');
+    }
+
+    function showOverlay(overlayKey, show) {
+        screens[overlayKey].classList.toggle('active', show);
+    }
+
     function renderBoard() {
         boardElement.innerHTML = '';
+        const fragment = document.createDocumentFragment();
         for (let r = 0; r < 9; r++) {
             for (let c = 0; c < 9; c++) {
                 const tile = document.createElement('div');
                 tile.className = 'tile';
-
                 if (c === 2 || c === 5) tile.classList.add('tile-border-right');
                 if (r === 2 || r === 5) tile.classList.add('tile-border-bottom');
 
-                if (puzzleBoard[r][c] !== 0) {
-                    tile.textContent = puzzleBoard[r][c];
+                if (gameState.puzzleBoard[r][c] !== 0) {
+                    tile.textContent = gameState.puzzleBoard[r][c];
                     tile.classList.add('hint');
                 }
                 tile.dataset.row = r;
                 tile.dataset.col = c;
-                tile.addEventListener('click', () => {
-                    if (selectedTile) selectedTile.classList.remove('selected');
-                    selectedTile = tile;
-                    selectedTile.classList.add('selected');
-                    highlightTiles(r, c);
-                });
-                boardElement.appendChild(tile);
+                fragment.appendChild(tile);
             }
         }
+        boardElement.appendChild(fragment);
     }
     
     function renderKeypad() {
         keypadElement.innerHTML = '';
+        const fragment = document.createDocumentFragment();
         for (let i = 1; i <= 9; i++) {
             const key = document.createElement('button');
             key.className = 'keypad-number';
             key.textContent = i;
-            key.addEventListener('click', () => placeNumber(i));
-            keypadElement.appendChild(key);
+            fragment.appendChild(key);
         }
+        keypadElement.appendChild(fragment);
         updateKeypad();
     }
 
     function updateLivesDisplay() {
-        livesCounter.textContent = '❤️'.repeat(lives);
+        livesCounter.textContent = '❤️'.repeat(gameState.lives);
     }
 
     function updateIngameStreakDisplay() {
-        const streak = streaks[currentDifficulty];
-        if (streak > 0) {
-            ingameStreakDisplay.innerHTML = `👑 <span class="ingame-streak-number">${streak}</span>`;
-        } else {
-            ingameStreakDisplay.innerHTML = '';
-        }
+        const streak = gameState.streaks[gameState.currentDifficulty];
+        ingameStreakDisplay.innerHTML = streak > 0 ? `👑 <span class="ingame-streak-number">${streak}</span>` : '';
     }
 
     function showFlashMessage(message) {
         flashMessage.textContent = message;
         flashMessage.classList.add('show');
-        setTimeout(() => {
-            flashMessage.classList.remove('show');
-        }, 1500);
+        setTimeout(() => flashMessage.classList.remove('show'), 1500);
     }
 
     function highlightTiles(row, col) {
-        row = parseInt(row);
-        col = parseInt(col);
         document.querySelectorAll('.tile').forEach(t => t.classList.remove('highlight'));
         
-        const num = puzzleBoard[row][col];
+        const num = gameState.puzzleBoard[row][col];
         
         for (let i = 0; i < 9; i++) {
             boardElement.children[row * 9 + i].classList.add('highlight');
             boardElement.children[i * 9 + col].classList.add('highlight');
         }
+
         if (num !== 0) {
             for (let r = 0; r < 9; r++) {
                 for (let c = 0; c < 9; c++) {
-                    if (puzzleBoard[r][c] === num) {
+                    if (gameState.puzzleBoard[r][c] === num) {
                         boardElement.children[r * 9 + c].classList.add('highlight');
                     }
                 }
@@ -220,20 +266,113 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- LÓGICA DE RACHAS (localStorage) ---
-    function saveStreaks() { localStorage.setItem('sudokuStreaks', JSON.stringify(streaks)); }
-    function loadStreaks() { const saved = localStorage.getItem('sudokuStreaks'); if (saved) streaks = JSON.parse(saved); }
-    function updateStreakDisplay() { const total = Object.values(streaks).reduce((s, v) => s + v, 0); totalStreakDisplay.textContent = total > 0 ? `Racha Total: ${total}` : ''; }
+    function saveStreaks() {
+        localStorage.setItem('sudokuStreaks', JSON.stringify(gameState.streaks));
+    }
+    function loadStreaks() {
+        const saved = localStorage.getItem('sudokuStreaks');
+        if (saved) gameState.streaks = JSON.parse(saved);
+    }
+    function updateStreakDisplay() {
+        const total = Object.values(gameState.streaks).reduce((s, v) => s + v, 0);
+        totalStreakDisplay.textContent = total > 0 ? `Racha Total: ${total}` : '';
+    }
 
     // --- GENERADOR DE SUDOKU Y HELPERS ---
-    function getNumberCounts() { const c = {}; for(let i=1;i<=9;i++)c[i]=0; for(let r=0;r<9;r++)for(let col=0;col<9;col++)if(puzzleBoard[r][col]!==0)c[puzzleBoard[r][col]]++; return c; }
-    function updateKeypad() { const c = getNumberCounts(); document.querySelectorAll('.keypad-number').forEach(k => { const n=parseInt(k.textContent); if(c[n]>=9)k.classList.add('disabled'); else k.classList.remove('disabled'); }); }
-    function checkWin() { return puzzleBoard.every(r => r.every(c => c !== 0)); }
-    function generateEmptyBoard() { return Array(9).fill(0).map(() => Array(9).fill(0)); }
-    function generateSolution(b) { const f = findEmpty(b); if(!f)return true; const [r,c]=f; const n=shuffle(Array.from({length:9},(_,i)=>i+1)); for(const num of n){ if(isValid(b,num,[r,c])){ b[r][c]=num; if(generateSolution(b))return true; b[r][c]=0; }} return false; }
-    function createPuzzle(b, d) { const p=JSON.parse(JSON.stringify(b)); const l={'fácil':40,'medio':50,'difícil':60,'experto':65}; let s=l[d]||50; let count=0; while(count<s){ const r=Math.floor(Math.random()*9); const c=Math.floor(Math.random()*9); if(p[r][c]!==0){ p[r][c]=0; count++; }} return p; }
-    function findEmpty(b) { for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(b[r][c]===0)return[r,c]; return null; }
-    function isValid(b, n, p) { const [r,c]=p; for(let i=0;i<9;i++){ if(b[r][i]===n&&c!==i)return false; if(b[i][c]===n&&r!==i)return false; } const br=Math.floor(r/3)*3, bc=Math.floor(c/3)*3; for(let i=br;i<br+3;i++)for(let j=bc;j<bc+3;j++)if(b[i][j]===n&&(i!==r||j!==c))return false; return true; }
-    function shuffle(a) { for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+    function getNumberCounts() {
+        const counts = {};
+        for (let i = 1; i <= 9; i++) counts[i] = 0;
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                if (gameState.puzzleBoard[r][c] !== 0) {
+                    counts[gameState.puzzleBoard[r][c]]++;
+                }
+            }
+        }
+        return counts;
+    }
+
+    function updateKeypad() {
+        const counts = getNumberCounts();
+        document.querySelectorAll('.keypad-number').forEach(key => {
+            const num = parseInt(key.textContent);
+            key.classList.toggle('disabled', counts[num] >= 9);
+        });
+    }
+
+    function checkWin() {
+        return gameState.puzzleBoard.every(row => row.every(cell => cell !== 0));
+    }
+
+    function generateEmptyBoard() {
+        return Array(9).fill(0).map(() => Array(9).fill(0));
+    }
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    function findEmpty(board) {
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                if (board[r][c] === 0) return [r, c];
+            }
+        }
+        return null;
+    }
+
+    function isValid(board, num, pos) {
+        const [row, col] = pos;
+        for (let i = 0; i < 9; i++) {
+            if (board[row][i] === num && col !== i) return false;
+            if (board[i][col] === num && row !== i) return false;
+        }
+        const boxRow = Math.floor(row / 3) * 3;
+        const boxCol = Math.floor(col / 3) * 3;
+        for (let i = boxRow; i < boxRow + 3; i++) {
+            for (let j = boxCol; j < boxCol + 3; j++) {
+                if (board[i][j] === num && (i !== row || j !== col)) return false;
+            }
+        }
+        return true;
+    }
+
+    function generateSolution(board) {
+        const emptySpot = findEmpty(board);
+        if (!emptySpot) return true;
+        const [row, col] = emptySpot;
+        const numbers = shuffle(Array.from({ length: 9 }, (_, i) => i + 1));
+
+        for (const num of numbers) {
+            if (isValid(board, num, [row, col])) {
+                board[row][col] = num;
+                if (generateSolution(board)) return true;
+                board[row][col] = 0;
+            }
+        }
+        return false;
+    }
+
+    function createPuzzle(board, difficulty) {
+        const puzzle = JSON.parse(JSON.stringify(board));
+        let cellsToRemove = CELLS_TO_REMOVE[difficulty] || 50;
+        let attempts = 0;
+        
+        while (cellsToRemove > 0 && attempts < 200) {
+            const row = Math.floor(Math.random() * 9);
+            const col = Math.floor(Math.random() * 9);
+            if (puzzle[row][col] !== 0) {
+                puzzle[row][col] = 0;
+                cellsToRemove--;
+            }
+            attempts++;
+        }
+        return puzzle;
+    }
 
     initialize();
 });
