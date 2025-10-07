@@ -127,7 +127,6 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState.selectedTile = tile;
         gameState.selectedTile.classList.add('selected');
         
-        // Ejecutar el resaltado de fila, columna y números idénticos
         highlightTilesFromBoard(tile.dataset.row, tile.dataset.col);
     }
     
@@ -135,7 +134,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const key = event.target.closest('.keypad-number');
         if (key) {
             const num = parseInt(key.textContent);
-            // Ejecutar el resaltado celeste de números desde el teclado
             highlightNumbersFromKeypad(num);
             
             if (!key.classList.contains('disabled')) {
@@ -151,18 +149,31 @@ document.addEventListener('DOMContentLoaded', () => {
         const row = parseInt(gameState.selectedTile.dataset.row);
         const col = parseInt(gameState.selectedTile.dataset.col);
 
+        // --- MODIFICACIÓN CLAVE ---
+        // 1. Poner el número en el tablero y en la casilla VISUALMENTE primero.
+        gameState.puzzleBoard[row][col] = num;
+        gameState.selectedTile.textContent = num;
+        gameState.selectedTile.classList.add('user-filled');
+
+        // 2. Actualizar el resaltado INMEDIATAMENTE con el nuevo número.
+        highlightTilesFromBoard(row, col);
+
+        // 3. AHORA, comprobar si el número es correcto o no.
         if (gameState.solution[row][col] === num) {
-            gameState.puzzleBoard[row][col] = num;
-            gameState.selectedTile.textContent = num;
-            gameState.selectedTile.classList.add('user-filled');
-            highlightTilesFromBoard(row, col); // Actualizar resaltado
-            if (checkWin()) endGame(true);
+            // Si es correcto, solo comprobamos si ha ganado.
+            if (checkWin()) {
+                endGame(true);
+            }
         } else {
+            // Si es incorrecto, penalizamos.
             gameState.lives--;
             updateLivesDisplay();
             showFlashMessage("Número equivocado");
-            if (gameState.lives <= 0) endGame(false);
+            if (gameState.lives <= 0) {
+                endGame(false);
+            }
         }
+
         updateKeypad();
     }
     
@@ -252,7 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => flashMessage.classList.remove('show'), 1500);
     }
 
-    // --- NUEVA LÓGICA DE RESALTADO ---
+    // --- LÓGICA DE RESALTADO ---
     function clearAllHighlights() {
         document.querySelectorAll('.tile').forEach(t => {
             t.classList.remove('highlight', 'keypad-highlight');
@@ -260,17 +271,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function highlightTilesFromBoard(row, col) {
-        clearAllHighlights(); // Limpia cualquier resaltado anterior
+        clearAllHighlights();
         
         const num = gameState.puzzleBoard[row][col];
         
-        // Resalta fila y columna
         for (let i = 0; i < 9; i++) {
             boardElement.children[row * 9 + i].classList.add('highlight');
             boardElement.children[i * 9 + col].classList.add('highlight');
         }
 
-        // Resalta números idénticos si la casilla no está vacía
         if (num !== 0) {
             for (let r = 0; r < 9; r++) {
                 for (let c = 0; c < 9; c++) {
@@ -283,7 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function highlightNumbersFromKeypad(num) {
-        clearAllHighlights(); // Limpia cualquier resaltado anterior
+        clearAllHighlights();
         
         if (num > 0) {
             for (let r = 0; r < 9; r++) {
