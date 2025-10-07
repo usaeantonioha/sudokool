@@ -13,6 +13,7 @@
     --color-logo-bg: #00AA00;
     --color-logo-text: #FFFFFF;
     --color-highlight: rgba(0, 123, 255, 0.15);
+    --color-keypad-highlight: #add8e6; /* Celeste para el teclado */
 }
 
 body {
@@ -113,7 +114,6 @@ body {
     max-height: calc(100vh - 220px);
     border: 3px solid var(--color-grid);
     background-color: #fff;
-    /* La regla 'margin-bottom: auto;' fue eliminada de aquí */
 }
 .tile {
     border: 1px solid var(--color-grid); background-color: var(--color-light-gray);
@@ -124,6 +124,7 @@ body {
 .tile.user-filled { color: var(--color-text); font-weight: bold; }
 .tile.selected { background-color: var(--color-select); }
 .tile.highlight { background-color: var(--color-highlight); }
+.tile.keypad-highlight { background-color: var(--color-keypad-highlight); } /* NUEVO ESTILO */
 .tile-border-right { border-right: 3px solid var(--color-grid); }
 .tile-border-bottom { border-bottom: 3px solid var(--color-grid); }
 

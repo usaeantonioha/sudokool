@@ -126,13 +126,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         gameState.selectedTile = tile;
         gameState.selectedTile.classList.add('selected');
-        highlightTiles(tile.dataset.row, tile.dataset.col);
+        
+        // Ejecutar el resaltado de fila, columna y números idénticos
+        highlightTilesFromBoard(tile.dataset.row, tile.dataset.col);
     }
     
     function handleKeypadClick(event) {
         const key = event.target.closest('.keypad-number');
-        if (key && !key.classList.contains('disabled')) {
-            placeNumber(parseInt(key.textContent));
+        if (key) {
+            const num = parseInt(key.textContent);
+            // Ejecutar el resaltado celeste de números desde el teclado
+            highlightNumbersFromKeypad(num);
+            
+            if (!key.classList.contains('disabled')) {
+                placeNumber(num);
+            }
         }
     }
 
@@ -147,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
             gameState.puzzleBoard[row][col] = num;
             gameState.selectedTile.textContent = num;
             gameState.selectedTile.classList.add('user-filled');
-            highlightTiles(row, col);
+            highlightTilesFromBoard(row, col); // Actualizar resaltado
             if (checkWin()) endGame(true);
         } else {
             gameState.lives--;
@@ -244,16 +252,25 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => flashMessage.classList.remove('show'), 1500);
     }
 
-    function highlightTiles(row, col) {
-        document.querySelectorAll('.tile').forEach(t => t.classList.remove('highlight'));
+    // --- NUEVA LÓGICA DE RESALTADO ---
+    function clearAllHighlights() {
+        document.querySelectorAll('.tile').forEach(t => {
+            t.classList.remove('highlight', 'keypad-highlight');
+        });
+    }
+
+    function highlightTilesFromBoard(row, col) {
+        clearAllHighlights(); // Limpia cualquier resaltado anterior
         
         const num = gameState.puzzleBoard[row][col];
         
+        // Resalta fila y columna
         for (let i = 0; i < 9; i++) {
             boardElement.children[row * 9 + i].classList.add('highlight');
             boardElement.children[i * 9 + col].classList.add('highlight');
         }
 
+        // Resalta números idénticos si la casilla no está vacía
         if (num !== 0) {
             for (let r = 0; r < 9; r++) {
                 for (let c = 0; c < 9; c++) {
@@ -264,6 +281,21 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
+
+    function highlightNumbersFromKeypad(num) {
+        clearAllHighlights(); // Limpia cualquier resaltado anterior
+        
+        if (num > 0) {
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    if (gameState.puzzleBoard[r][c] === num) {
+                        boardElement.children[r * 9 + c].classList.add('keypad-highlight');
+                    }
+                }
+            }
+        }
+    }
+
 
     // --- LÓGICA DE RACHAS (localStorage) ---
     function saveStreaks() {
