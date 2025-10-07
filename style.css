@@ -113,7 +113,7 @@ body {
     max-height: calc(100vh - 220px);
     border: 3px solid var(--color-grid);
     background-color: #fff;
-    margin-bottom: auto; /* Empuja el teclado hacia abajo */
+    /* La regla 'margin-bottom: auto;' fue eliminada de aquí */
 }
 .tile {
     border: 1px solid var(--color-grid); background-color: var(--color-light-gray);
