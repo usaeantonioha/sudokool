@@ -20,7 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
         lives: 3,
         selectedTile: null,
         currentDifficulty: DIFFICULTIES.MEDIO,
-        streaks: { fácil: 0, medio: 0, difícil: 0, experto: 0 }
+        streaks: { fácil: 0, medio: 0, difícil: 0, experto: 0 },
+        totalWins: { fácil: 0, medio: 0, difícil: 0, experto: 0 } // NUEVO: Para guardar victorias totales
     };
 
     // --- ELEMENTOS DEL DOM ---
@@ -47,6 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LÓGICA DE INICIO ---
     function initialize() {
         loadStreaks();
+        loadTotalWins(); // NUEVO
         createDifficultyButtons();
         updateStreakDisplay();
         addEventListeners();
@@ -68,25 +70,44 @@ document.addEventListener('DOMContentLoaded', () => {
     function createDifficultyButtons() {
         difficultyButtonsContainer.innerHTML = '';
         const fragment = document.createDocumentFragment();
-        Object.keys(DIFFICULTIES).forEach(key => {
-            const diffValue = DIFFICULTIES[key];
+
+        const difficultyLevels = [
+            { key: 'fácil', name: 'Fácil', unlockCondition: () => true },
+            { key: 'medio', name: 'Medio', unlockCondition: () => gameState.totalWins.fácil >= 1, requirementText: 'Gana 1 en Fácil' },
+            { key: 'difícil', name: 'Difícil', unlockCondition: () => gameState.totalWins.medio >= 5, requirementText: 'Gana 5 en Medio' },
+            { key: 'experto', name: 'Experto', unlockCondition: () => gameState.totalWins.difícil >= 10, requirementText: 'Gana 10 en Difícil' }
+        ];
+
+        difficultyLevels.forEach(level => {
             const button = document.createElement('button');
-            button.className = `difficulty-btn btn-${diffValue}`;
-            button.dataset.difficulty = diffValue;
-            
+            button.className = 'difficulty-btn';
+            button.dataset.difficulty = level.key;
+
             const textSpan = document.createElement('span');
-            textSpan.textContent = key.charAt(0) + key.slice(1).toLowerCase();
+            textSpan.textContent = level.name;
             button.appendChild(textSpan);
 
-            const streak = gameState.streaks[diffValue];
-            if (streak > 0) {
-                const streakSpan = document.createElement('span');
-                streakSpan.className = 'streak-display-menu';
-                streakSpan.textContent = `👑 ${streak}`;
-                button.appendChild(streakSpan);
+            const isUnlocked = level.unlockCondition();
+
+            if (isUnlocked) {
+                button.classList.add(`btn-${level.key}`);
+                const streak = gameState.streaks[level.key];
+                if (streak > 0) {
+                    const streakSpan = document.createElement('span');
+                    streakSpan.className = 'streak-display-menu';
+                    streakSpan.textContent = `👑 ${streak}`;
+                    button.appendChild(streakSpan);
+                }
+            } else {
+                button.classList.add('locked');
+                const legendSpan = document.createElement('span');
+                legendSpan.className = 'unlock-criteria';
+                legendSpan.textContent = `🔒 ${level.requirementText}`;
+                button.appendChild(legendSpan);
             }
             fragment.appendChild(button);
         });
+
         difficultyButtonsContainer.appendChild(fragment);
         difficultyButtonsContainer.addEventListener('click', handleDifficultyClick);
     }
@@ -112,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- MANEJADORES DE EVENTOS ---
     function handleDifficultyClick(event) {
         const button = event.target.closest('.difficulty-btn');
-        if (button) {
+        if (button && !button.classList.contains('locked')) { // Evita iniciar niveles bloqueados
             startGame(button.dataset.difficulty);
         }
     }
@@ -149,23 +170,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const row = parseInt(gameState.selectedTile.dataset.row);
         const col = parseInt(gameState.selectedTile.dataset.col);
 
-        // --- MODIFICACIÓN CLAVE ---
-        // 1. Poner el número en el tablero y en la casilla VISUALMENTE primero.
         gameState.puzzleBoard[row][col] = num;
         gameState.selectedTile.textContent = num;
         gameState.selectedTile.classList.add('user-filled');
 
-        // 2. Actualizar el resaltado INMEDIATAMENTE con el nuevo número.
         highlightTilesFromBoard(row, col);
 
-        // 3. AHORA, comprobar si el número es correcto o no.
         if (gameState.solution[row][col] === num) {
-            // Si es correcto, solo comprobamos si ha ganado.
             if (checkWin()) {
                 endGame(true);
             }
         } else {
-            // Si es incorrecto, penalizamos.
             gameState.lives--;
             updateLivesDisplay();
             showFlashMessage("Número equivocado");
@@ -173,13 +188,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 endGame(false);
             }
         }
-
         updateKeypad();
     }
     
     function endGame(isWin) {
         if (isWin) {
             gameState.streaks[gameState.currentDifficulty]++;
+            gameState.totalWins[gameState.currentDifficulty]++; // Aumenta las victorias totales
+            saveTotalWins(); // Guarda las victorias totales
+            
             gameOverMsg.textContent = '¡FELICITACIONES!';
             gameOverMsg.className = 'win';
         } else {
@@ -306,13 +323,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    // --- LÓGICA DE RACHAS (localStorage) ---
+    // --- LÓGICA DE RACHAS Y VICTORIAS (localStorage) ---
     function saveStreaks() {
         localStorage.setItem('sudokuStreaks', JSON.stringify(gameState.streaks));
     }
     function loadStreaks() {
         const saved = localStorage.getItem('sudokuStreaks');
         if (saved) gameState.streaks = JSON.parse(saved);
+    }
+    function saveTotalWins() {
+        localStorage.setItem('sudokuTotalWins', JSON.stringify(gameState.totalWins));
+    }
+    function loadTotalWins() {
+        const saved = localStorage.getItem('sudokuTotalWins');
+        if (saved) {
+            // Asegurarse de que el objeto cargado tenga todas las dificultades
+            const loadedWins = JSON.parse(saved);
+            gameState.totalWins = { ...gameState.totalWins, ...loadedWins };
+        }
     }
     function updateStreakDisplay() {
         const total = Object.values(gameState.streaks).reduce((s, v) => s + v, 0);
