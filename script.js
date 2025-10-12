@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- MANEJADORES DE EVENTOS ---
     function handleDifficultyClick(event) {
         const button = event.target.closest('.difficulty-btn');
-        if (button && !button.classList.contains('locked')) { // Evita iniciar niveles bloqueados
+        if (button && !button.classList.contains('locked')) {
             startGame(button.dataset.difficulty);
         }
     }
@@ -148,6 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState.selectedTile = tile;
         gameState.selectedTile.classList.add('selected');
         
+        // Esta función se asegura de que el resaltado ocurra siempre al hacer clic
         highlightTilesFromBoard(tile.dataset.row, tile.dataset.col);
     }
     
@@ -194,8 +195,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function endGame(isWin) {
         if (isWin) {
             gameState.streaks[gameState.currentDifficulty]++;
-            gameState.totalWins[gameState.currentDifficulty]++; // Aumenta las victorias totales
-            saveTotalWins(); // Guarda las victorias totales
+            gameState.totalWins[gameState.currentDifficulty]++;
+            saveTotalWins();
             
             gameOverMsg.textContent = '¡FELICITACIONES!';
             gameOverMsg.className = 'win';
