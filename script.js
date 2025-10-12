@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedTile: null,
         currentDifficulty: DIFFICULTIES.MEDIO,
         streaks: { fácil: 0, medio: 0, difícil: 0, experto: 0 },
-        totalWins: { fácil: 0, medio: 0, difícil: 0, experto: 0 } // NUEVO: Para guardar victorias totales
+        totalWins: { fácil: 0, medio: 0, difícil: 0, experto: 0 }
     };
 
     // --- ELEMENTOS DEL DOM ---
@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LÓGICA DE INICIO ---
     function initialize() {
         loadStreaks();
-        loadTotalWins(); // NUEVO
+        loadTotalWins();
         createDifficultyButtons();
         updateStreakDisplay();
         addEventListeners();
@@ -337,7 +337,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function loadTotalWins() {
         const saved = localStorage.getItem('sudokuTotalWins');
         if (saved) {
-            // Asegurarse de que el objeto cargado tenga todas las dificultades
             const loadedWins = JSON.parse(saved);
             gameState.totalWins = { ...gameState.totalWins, ...loadedWins };
         }
