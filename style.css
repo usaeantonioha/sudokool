@@ -1,6 +1,6 @@
 :root {
     --color-bg: #f7faff;
-    --color-grid: #000000;
+    --color-grid: #00AEEF; /* <<< CAMBIO CLAVE: Color celeste para el borde del grid y las divisiones */
     --color-light-gray: #e9eef2;
     --color-hint: #3C3C3C;
     --color-black: #000000;
@@ -12,7 +12,7 @@
     --color-lives: #FF0000;
     --color-logo-bg: #00AA00;
     --color-logo-text: #FFFFFF;
-    --color-highlight: rgba(0, 123, 255, 0.15);
+    --color-highlight: rgba(0, 180, 255, 0.15); /* Ajustado para un celeste más brillante */
     --color-keypad-highlight: #add8e6; /* Celeste para el teclado */
 }
 
@@ -110,7 +110,7 @@ body {
 
 /* --- Pantalla de Juego --- */
 #game-screen {
-    justify-content: flex-start; /* <<< CAMBIO CLAVE: Alinea el contenido hacia arriba */
+    justify-content: flex-start; /* Alinea el contenido hacia arriba */
 }
 .game-header { width: 100%; max-width: 500px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 #back-to-menu { padding: 8px 12px; border: none; background: var(--color-button); border-radius: 10px; cursor: pointer; font-weight: bold; }
@@ -135,11 +135,12 @@ body {
     width: 100%;
     aspect-ratio: 1 / 1;
     max-height: calc(100vh - 220px);
-    border: 3px solid var(--color-grid);
+    border: 3px solid var(--color-grid); /* <<< Usa la variable para el borde principal */
     background-color: #fff;
 }
 .tile {
-    border: 1px solid var(--color-grid); background-color: var(--color-light-gray);
+    border: 1px solid var(--color-grid); /* <<< Usa la variable para los bordes de las celdas */
+    background-color: var(--color-light-gray);
     display: flex; justify-content: center; align-items: center;
     font-size: clamp(1rem, 5vw, 2rem); cursor: pointer; box-sizing: border-box;
 }
@@ -148,8 +149,8 @@ body {
 .tile.selected { background-color: var(--color-select); }
 .tile.highlight { background-color: var(--color-highlight); }
 .tile.keypad-highlight { background-color: var(--color-keypad-highlight); }
-.tile-border-right { border-right: 3px solid var(--color-grid); }
-.tile-border-bottom { border-bottom: 3px solid var(--color-grid); }
+.tile-border-right { border-right: 3px solid var(--color-grid); } /* <<< Usa la variable para los bordes gruesos */
+.tile-border-bottom { border-bottom: 3px solid var(--color-grid); } /* <<< Usa la variable para los bordes gruesos */
 
 #keypad {
     display: grid; 
@@ -160,7 +161,7 @@ body {
 }
 .keypad-number {
     aspect-ratio: 1/1; font-size: 1.5rem; font-weight: bold;
-    border-radius: 5px; border: 2px solid var(--color-grid);
+    border-radius: 5px; border: 2px solid var(--color-grid); /* <<< Usa la variable para los bordes del teclado */
     background-color: #fff; cursor: pointer;
 }
 .keypad-number.disabled { background-color: var(--color-button); color: var(--color-grid); cursor: not-allowed; }
