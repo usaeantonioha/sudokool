@@ -148,7 +148,6 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState.selectedTile = tile;
         gameState.selectedTile.classList.add('selected');
         
-        // Esta función se asegura de que el resaltado ocurra siempre al hacer clic
         highlightTilesFromBoard(tile.dataset.row, tile.dataset.col);
     }
     
@@ -289,13 +288,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function highlightTilesFromBoard(row, col) {
+        // ===== CORRECCIÓN CLAVE =====
+        // Convertimos las coordenadas a números enteros para evitar errores de cálculo.
+        const numRow = parseInt(row);
+        const numCol = parseInt(col);
+        // ============================
+
         clearAllHighlights();
         
-        const num = gameState.puzzleBoard[row][col];
+        const num = gameState.puzzleBoard[numRow][numCol];
         
+        // Usamos las coordenadas numéricas para un cálculo preciso.
         for (let i = 0; i < 9; i++) {
-            boardElement.children[row * 9 + i].classList.add('highlight');
-            boardElement.children[i * 9 + col].classList.add('highlight');
+            boardElement.children[numRow * 9 + i].classList.add('highlight'); // Fila
+            boardElement.children[i * 9 + numCol].classList.add('highlight'); // Columna
         }
 
         if (num !== 0) {
