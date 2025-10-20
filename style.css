@@ -152,18 +152,27 @@ body {
 .tile-border-right { border-right: 3px solid var(--color-grid); } /* <<< Usa la variable para los bordes gruesos */
 .tile-border-bottom { border-bottom: 3px solid var(--color-grid); } /* <<< Usa la variable para los bordes gruesos */
 
+
+/* ===== INICIO DE LA MODIFICACIÓN ===== */
 #keypad {
-    display: grid; 
-    grid-template-columns: repeat(9, 1fr); 
+    display: flex;      /* Cambiado de grid a flex */
+    flex-wrap: wrap;    /* Permite que los botones pasen a la siguiente línea */
     gap: 4px;
     margin-top: 15px;
     width: 100%;
 }
 .keypad-number {
-    aspect-ratio: 1/1; font-size: 1.5rem; font-weight: bold;
-    border-radius: 5px; border: 2px solid var(--color-grid); /* <<< Usa la variable para los bordes del teclado */
-    background-color: #fff; cursor: pointer;
+    flex: 1 0 30px;     /* Añadido para que los botones crezcan y se adapten */
+    aspect-ratio: 1/1; 
+    font-size: 1.5rem; 
+    font-weight: bold;
+    border-radius: 5px; 
+    border: 2px solid var(--color-grid);
+    background-color: #fff; 
+    cursor: pointer;
 }
+/* ===== FIN DE LA MODIFICACIÓN ===== */
+
 .keypad-number.disabled { background-color: var(--color-button); color: var(--color-grid); cursor: not-allowed; }
 
 /* --- Overlays --- */
