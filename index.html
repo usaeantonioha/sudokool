@@ -8,10 +8,24 @@
 </head>
 <body>
 
+    <canvas id="confetti-canvas"></canvas>
+
     <section id="start-screen" class="screen active">
         <header class="header-icons">
-            <button id="info-icon" class="icon-btn" aria-label="Mostrar instrucciones">i</button>
-            <button id="main-menu-logo" class="logo-btn" aria-label="Acerca del Creador">S</button>
+            <div class="header-icons-left">
+                <button id="info-icon" class="icon-btn" aria-label="Mostrar instrucciones">i</button>
+                <button id="main-menu-logo" class="logo-btn" aria-label="Acerca del Creador">S</button>
+            </div>
+            <div class="header-icons-right">
+                <button id="theme-toggle-btn" class="icon-btn" aria-label="Cambiar Tema">
+                    <span class="icon-light">☀️</span>
+                    <span class="icon-dark">🌙</span>
+                </button>
+                <button id="mute-toggle-btn" class="icon-btn" aria-label="Silenciar">
+                    <span class="icon-sound-on">🔊</span>
+                    <span class="icon-sound-off">🔇</span>
+                </button>
+            </div>
         </header>
         
         <div class="title-container">
@@ -21,6 +35,8 @@
         </div>
         
         <button id="resume-game-btn" class="resume-btn" style="display: none;">Reanudar Partida</button>
+        
+        <button id="daily-challenge-btn" class="daily-btn">Desafío Diario</button>
 
         <nav id="difficulty-buttons"></nav>
     </section>
@@ -30,6 +46,7 @@
             <button id="back-to-menu">Volver al Menú</button>
             <div class="game-header-right">
                 <div id="ingame-streak-display"></div>
+                <button id="hint-button" class="icon-btn" aria-label="Pedir Pista" style="display: none;">💡</button>
                 <button id="pencil-toggle-btn" class="icon-btn" aria-label="Modo Lápiz" style="display: none;">✏️</button>
                 <button id="undo-button" class="icon-btn" aria-label="Deshacer jugada" style="display: none;">↩️</button>
                 <button id="pause-button" class="icon-btn" aria-label="Pausar juego">||</button>
@@ -87,6 +104,14 @@
         </div>
     </div>
     
+    <div id="hint-overlay-screen" class="overlay">
+        <div class="overlay-box">
+            <h2>¡Pista Encontrada!</h2>
+            <p id="hint-explanation" class="instructions-text"></p>
+            <button id="hint-ok-btn" class="overlay-btn">Entendido</button>
+        </div>
+    </div>
+
     <div id="flash-message"></div>
 
     <script src="script.js"></script>

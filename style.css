@@ -13,8 +13,18 @@
     --color-logo-bg: #00AA00;
     --color-logo-text: #FFFFFF;
     --color-highlight: rgba(0, 174, 239, 0.25);
-    /* Se elimina --color-keypad-highlight, ahora usa --color-highlight + borde */
     --color-error: #D8000C;
+    
+    /* Variables para el Tema Oscuro */
+    --dark-bg: #121212;
+    --dark-grid: #888888;
+    --dark-light-gray: #333333;
+    --dark-hint: #CCCCCC;
+    --dark-black: #FFFFFF;
+    --dark-text: #8ab4f8; /* Azul claro para texto */
+    --dark-button: #3C3C3C;
+    --dark-win-text: #34A853;
+    --dark-gameover-text: #EA4335;
 }
 
 body {
@@ -30,7 +40,49 @@ body {
     -ms-user-select: none;
     user-select: none;
     overflow: hidden;
+    transition: background-color 0.3s, color 0.3s;
 }
+
+/* ===== NUEVO: MODO OSCURO ===== */
+body[data-theme="dark"] {
+    --color-bg: var(--dark-bg);
+    --color-grid: var(--dark-grid);
+    --color-light-gray: var(--dark-light-gray);
+    --color-hint: var(--dark-hint);
+    --color-black: var(--dark-black);
+    --color-text: var(--dark-text);
+    --color-button: var(--dark-button);
+    --color-win-text: var(--dark-win-text);
+    --color-gameover-text: var(--dark-gameover-text);
+}
+/* Re-colorear elementos clave en modo oscuro */
+body[data-theme="dark"] .overlay-box {
+    background-color: var(--dark-light-gray);
+}
+body[data-theme="dark"] #board,
+body[data-theme="dark"] .keypad-number {
+    background-color: var(--dark-bg);
+}
+body[data-theme="dark"] #back-to-menu {
+    background-color: var(--color-button);
+    color: var(--color-black);
+}
+body[data-theme="dark"] .keypad-number.disabled {
+    background-color: var(--dark-bg) !important;
+}
+
+
+/* ===== NUEVO: Canvas de Confeti ===== */
+#confetti-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* Permite hacer clic a través de él */
+    z-index: 500; /* Debajo de los overlays (1000) */
+}
+
 
 .screen {
     width: 100%;
@@ -48,9 +100,10 @@ body {
     justify-content: flex-start;
     text-align: center;
     padding-top: 10vh;
-    gap: 30px;
+    gap: 20px; /* Reducido para más botones */
 }
 
+/* ===== MODIFICADO: Cabecera de Inicio ===== */
 .header-icons {
     position: absolute;
     top: 15px;
@@ -59,10 +112,43 @@ body {
     display: flex; 
     justify-content: space-between; 
     width: auto; 
+    align-items: center;
+}
+.header-icons-left, .header-icons-right {
+    display: flex;
+    gap: 15px;
 }
 .icon-btn { width: 40px; height: 40px; border-radius: 50%; background-color: var(--color-hint); color: var(--color-bg); display: flex; justify-content: center; align-items: center; font-size: 1.5rem; font-weight: bold; border: none; cursor: pointer; }
+body[data-theme="dark"] .icon-btn {
+    background-color: var(--dark-button);
+    color: var(--dark-hint);
+}
 
-.title-container { display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+
+/* ===== NUEVO: Iconos de Tema y Sonido ===== */
+#theme-toggle-btn .icon-dark,
+body[data-theme="dark"] #theme-toggle-btn .icon-light {
+    display: none;
+}
+body[data-theme="dark"] #theme-toggle-btn .icon-dark {
+    display: inline;
+}
+#mute-toggle-btn .icon-sound-off,
+body[data-theme="dark"] #mute-toggle-btn .icon-sound-on {
+    display: none;
+}
+body[data-theme="dark"] #mute-toggle-btn .icon-sound-off {
+    display: inline;
+}
+#mute-toggle-btn.muted .icon-sound-on {
+    display: none;
+}
+#mute-toggle-btn.muted .icon-sound-off {
+    display: inline;
+}
+
+
+.title-container { display: flex; align-items: center; justify-content: center; margin-bottom: 0; }
 .colorful-title { font-size: clamp(2.2rem, 10vw, 3rem); font-weight: bold; }
 .colorful-title span:nth-child(1) { color: #4285F4; }
 .colorful-title span:nth-child(2) { color: #DB4437; }
@@ -93,6 +179,27 @@ body {
 #resume-game-btn:hover {
     filter: brightness(0.9);
 }
+
+/* ===== NUEVO: Botón Desafío Diario ===== */
+#daily-challenge-btn {
+    padding: 15px;
+    font-size: 1.4rem;
+    font-weight: bold;
+    border-radius: 15px;
+    border: none;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: all 0.2s;
+    background-color: #673AB7; /* Color púrpura */
+    color: white;
+    width: 80%;
+    max-width: 350px;
+    margin-bottom: 0;
+}
+#daily-challenge-btn:hover {
+    filter: brightness(0.9);
+}
+
 
 #difficulty-buttons { display: flex; flex-direction: column; gap: 15px; width: 80%; max-width: 350px; }
 .difficulty-btn {
@@ -128,6 +235,11 @@ body {
     display: flex; justify-content: center; align-items: center;
     font-weight: bold; cursor: pointer; border: none;
 }
+body[data-theme="dark"] .logo-btn {
+    background-color: var(--dark-button);
+    color: var(--dark-hint);
+}
+
 
 .difficulty-btn.locked {
     background-color: #95a5a6;
@@ -153,7 +265,7 @@ body {
 .game-header-right {
     display: flex;
     align-items: center;
-    gap: 10px; /* Reducido para 4 botones */
+    gap: 8px; /* Reducido para 5 botones */
 }
 #pause-button {
     font-size: 1.2rem;
@@ -166,16 +278,25 @@ body {
     padding: 0;
     display: none;
 }
-/* ===== NUEVO: Estilo Botón Lápiz ===== */
 #pencil-toggle-btn {
-    font-size: 1.3rem; /* Ajuste de tamaño del emoji */
+    font-size: 1.3rem;
     padding: 0;
     display: none;
 }
-/* Estado activo para el lápiz */
 #pencil-toggle-btn.active {
     background-color: var(--color-select);
     color: var(--color-black);
+}
+/* ===== NUEVO: Botón de Pista ===== */
+#hint-button {
+    font-size: 1.3rem;
+    padding: 0;
+    display: none;
+}
+#hint-button.disabled {
+    background-color: var(--color-button);
+    color: var(--color-grid);
+    cursor: not-allowed;
 }
 
 
@@ -235,7 +356,6 @@ body {
     position: relative; /* Para las notas */
 }
 
-/* ===== NUEVO: Contenedor para el número principal ===== */
 .tile-number {
     font-size: clamp(1rem, 5vw, 2rem);
     font-weight: bold;
@@ -248,12 +368,15 @@ body {
 .tile.selected { background-color: var(--color-select); }
 .tile.highlight { background-color: var(--color-highlight); }
 
-/* ===== MODIFICADO: Estilo de resaltado con patrón ===== */
 .tile.keypad-highlight {
-    background-color: var(--color-highlight); /* Mismo fondo celeste claro */
-    outline: 2px dotted var(--color-text); /* Borde punteado distintivo */
-    outline-offset: -2px; /* Borde hacia adentro */
+    background-color: var(--color-highlight);
+    outline: 2px dotted var(--color-text);
+    outline-offset: -2px;
 }
+body[data-theme="dark"] .tile.keypad-highlight {
+    outline: 2px dotted var(--dark-text);
+}
+
 
 .tile-border-right { border-right: 3px solid var(--color-grid); }
 .tile-border-bottom { border-bottom: 3px solid var(--color-grid); }
@@ -265,9 +388,8 @@ body {
     background-color: rgba(216, 0, 12, 0.3);
 }
 
-/* ===== NUEVO: Estilos para Notas (Lápiz) ===== */
 .tile-notes-grid {
-    display: none; /* Oculto por defecto */
+    display: none;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(3, 1fr);
     position: absolute;
@@ -275,10 +397,10 @@ body {
     width: 100%; height: 100%;
 }
 .tile.is-notes .tile-notes-grid {
-    display: grid; /* Se muestra si la celda está en modo notas */
+    display: grid;
 }
 .tile.is-notes .tile-number {
-    display: none; /* Se oculta el número principal si hay notas */
+    display: none;
 }
 .tile-note {
     font-size: clamp(0.5rem, 2vw, 0.7rem);
@@ -306,7 +428,6 @@ body {
     cursor: pointer;
 }
 
-/* ===== MODIFICADO: Oculta el número pero mantiene el espacio ===== */
 .keypad-number.disabled {
     visibility: hidden;
     cursor: not-allowed;
@@ -352,13 +473,39 @@ body {
     background-color: #888;
     color: #fff;
 }
+body[data-theme="dark"] .overlay-btn-secondary {
+    background-color: #555;
+}
 .overlay-btn-secondary:hover {
     background-color: #777;
     filter: none;
 }
+body[data-theme="dark"] .overlay-btn-secondary:hover {
+    background-color: #666;
+}
 
 
-.instructions-text { text-align: left; max-width: 400px; margin-bottom: 20px; }
+.instructions-text { 
+    text-align: left; 
+    max-width: 400px; 
+    margin-bottom: 20px; 
+    line-height: 1.5; /* Más legible */
+}
+
+/* ===== NUEVO: Estilo para la celda de pista ===== */
+#hint-explanation .hint-cell {
+    font-weight: bold;
+    color: var(--color-text);
+    background-color: var(--color-light-gray);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+body[data-theme="dark"] #hint-explanation .hint-cell {
+    color: var(--dark-text);
+    background-color: var(--dark-button);
+}
+
+
 .creator-name { font-size: 1.2rem; font-weight: bold; }
 
 /* --- Mensaje Flash --- */
@@ -369,4 +516,11 @@ body {
     0% { background-color: var(--color-light-gray); }
     50% { background-color: rgba(216, 0, 12, 0.5); }
     100% { background-color: var(--color-light-gray); }
+}
+
+/* Modo oscuro para el flash de error */
+body[data-theme="dark"] @keyframes flash-red {
+    0% { background-color: var(--dark-light-gray); }
+    50% { background-color: rgba(234, 67, 53, 0.6); }
+    100% { background-color: var(--dark-light-gray); }
 }

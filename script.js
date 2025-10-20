@@ -28,7 +28,11 @@ document.addEventListener('DOMContentLoaded', () => {
         gameInProgress: false,
         lastMove: null, // {row, col, prevValue, prevNotes}
         isPencilMode: false,
-        notesBoard: []
+        notesBoard: [],
+        // ===== NUEVOS ESTADOS =====
+        isMuted: false,
+        isDailyChallenge: false,
+        hintUsed: false
     };
 
     // --- ELEMENTOS DEL DOM ---
@@ -38,7 +42,9 @@ document.addEventListener('DOMContentLoaded', () => {
         gameOver: document.getElementById('game-over-screen'),
         instructions: document.getElementById('instructions-screen'),
         about: document.getElementById('about-screen'),
-        pause: document.getElementById('pause-screen')
+        pause: document.getElementById('pause-screen'),
+        // ===== NUEVOS ELEMENTOS =====
+        hintOverlay: document.getElementById('hint-overlay-screen')
     };
     const boardElement = document.getElementById('board');
     const keypadElement = document.getElementById('keypad');
@@ -59,10 +65,109 @@ document.addEventListener('DOMContentLoaded', () => {
     const gameOverHomeBtn = document.getElementById('game-over-home-btn');
     const undoButton = document.getElementById('undo-button');
     const pencilToggleButton = document.getElementById('pencil-toggle-btn');
+    // ===== NUEVOS ELEMENTOS =====
+    const themeToggleButton = document.getElementById('theme-toggle-btn');
+    const muteToggleButton = document.getElementById('mute-toggle-btn');
+    const dailyChallengeButton = document.getElementById('daily-challenge-btn');
+    const hintButton = document.getElementById('hint-button');
+    const hintExplanation = document.getElementById('hint-explanation');
+    const hintOkButton = document.getElementById('hint-ok-btn');
+    const confettiCanvas = document.getElementById('confetti-canvas');
 
 
+    // --- LÓGICA DE AUDIO (WEB AUDIO API) ---
+    let audioCtx;
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+    }
+    
+    function playSound(type, freq, duration = 0.1) {
+        if (gameState.isMuted || !audioCtx) return;
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        oscillator.type = type; // 'sine', 'square', 'sawtooth', 'triangle'
+        oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime); // Volumen
+        
+        oscillator.start(audioCtx.currentTime);
+        oscillator.stop(audioCtx.currentTime + duration);
+    }
+    
+    function playClickSound() { playSound('sine', 880, 0.05); }
+    function playErrorSound() { playSound('square', 220, 0.15); }
+    function playWinSound() {
+        playSound('sine', 523, 0.1);
+        setTimeout(() => playSound('sine', 659, 0.1), 120);
+        setTimeout(() => playSound('sine', 783, 0.1), 240);
+        setTimeout(() => playSound('sine', 1046, 0.15), 360);
+    }
+    
+    // --- LÓGICA DE CONFETI ---
+    let confettiCtx = confettiCanvas.getContext('2d');
+    let confettiParticles = [];
+
+    function launchConfetti() {
+        confettiCanvas.width = window.innerWidth;
+        confettiCanvas.height = window.innerHeight;
+        confettiParticles = [];
+        const particleCount = 200;
+        const colors = ['#4285F4', '#DB4437', '#F4B400', '#0F9D58'];
+
+        for (let i = 0; i < particleCount; i++) {
+            confettiParticles.push({
+                x: Math.random() * confettiCanvas.width,
+                y: Math.random() * confettiCanvas.height - confettiCanvas.height,
+                w: Math.random() * 10 + 5,
+                h: Math.random() * 10 + 5,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                speed: Math.random() * 3 + 2,
+                angle: Math.random() * 2 * Math.PI,
+                tilt: Math.random() * 10 - 5,
+                tiltAngle: 0
+            });
+        }
+        animateConfetti();
+    }
+
+    let confettiAnimationId;
+    function animateConfetti() {
+        confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+        
+        confettiParticles.forEach((p, index) => {
+            p.y += p.speed;
+            p.tiltAngle += 0.1;
+            p.x += Math.sin(p.tiltAngle) * 0.5;
+            p.tilt = Math.sin(p.tiltAngle) * p.tilt;
+
+            confettiCtx.fillStyle = p.color;
+            confettiCtx.save();
+            confettiCtx.translate(p.x + p.w / 2, p.y + p.h / 2);
+            confettiCtx.rotate(p.tilt);
+            confettiCtx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+            confettiCtx.restore();
+
+            if (p.y > confettiCanvas.height) {
+                confettiParticles.splice(index, 1);
+            }
+        });
+
+        if (confettiParticles.length > 0) {
+            confettiAnimationId = requestAnimationFrame(animateConfetti);
+        } else {
+            confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+        }
+    }
+    
     // --- LÓGICA DE INICIO ---
     function initialize() {
+        loadMuteState(); // Cargar antes que nada
+        loadTheme();
         loadStreaks();
         loadTotalWins();
         createDifficultyButtons();
@@ -70,6 +175,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function addEventListeners() {
+        // Eventos de un solo uso
+        document.body.addEventListener('click', initAudio, { once: true });
+        
         backToMenuBtn.addEventListener('click', togglePause);
         restartBtn.addEventListener('click', restartGame);
         infoIcon.addEventListener('click', () => showOverlay('instructions', true));
@@ -89,6 +197,13 @@ document.addEventListener('DOMContentLoaded', () => {
         
         undoButton.addEventListener('click', undoLastMove);
         pencilToggleButton.addEventListener('click', togglePencilMode);
+        
+        // ===== NUEVOS LISTENERS =====
+        themeToggleButton.addEventListener('click', toggleTheme);
+        muteToggleButton.addEventListener('click', toggleMute);
+        dailyChallengeButton.addEventListener('click', startDailyChallenge);
+        hintButton.addEventListener('click', provideHint);
+        hintOkButton.addEventListener('click', () => showOverlay('hintOverlay', false));
     }
 
     function createDifficultyButtons() {
@@ -132,9 +247,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     let initialPuzzleForResume = [];
+    let randomSeed = 1; // Para el PRNG
 
     function startGame(difficulty) {
+        // Detener confeti si estaba activo
+        cancelAnimationFrame(confettiAnimationId);
+        confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+        
         gameState.gameInProgress = true;
+        gameState.isDailyChallenge = false;
         resumeGameBtn.style.display = 'none';
 
         gameState.currentDifficulty = difficulty;
@@ -150,6 +271,11 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState.isPencilMode = false;
         pencilToggleButton.classList.remove('active');
         pencilToggleButton.style.display = 'flex';
+        
+        gameState.hintUsed = false;
+        hintButton.style.display = 'flex';
+        hintButton.classList.remove('disabled');
+
         gameState.notesBoard = Array(9).fill(null).map(() => 
             Array(9).fill(null).map(() => new Set())
         );
@@ -159,9 +285,10 @@ document.addEventListener('DOMContentLoaded', () => {
         pauseButton.style.display = 'flex';
 
         let baseBoard = generateEmptyBoard();
-        generateSolution(baseBoard);
+        // Usar Math.random() estándar para juegos normales
+        generateSolution(baseBoard, Math.random);
         gameState.solution = JSON.parse(JSON.stringify(baseBoard));
-        gameState.puzzleBoard = createPuzzle(baseBoard, difficulty); 
+        gameState.puzzleBoard = createPuzzle(baseBoard, difficulty, Math.random); 
 
         updateLivesDisplay();
         updateIngameStreakDisplay();
@@ -175,6 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleDifficultyClick(event) {
         const button = event.target.closest('.difficulty-btn');
         if (button && !button.classList.contains('locked')) {
+            playClickSound();
             startGame(button.dataset.difficulty);
         }
     }
@@ -193,6 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (gameState.isPaused) return;
         const key = event.target.closest('.keypad-number');
         if (key) {
+            playClickSound();
             if (key.classList.contains('disabled')) return; 
 
             const num = parseInt(key.textContent);
@@ -219,6 +348,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const row = parseInt(gameState.selectedTile.dataset.row);
         const col = parseInt(gameState.selectedTile.dataset.col);
         
+        // No permitir sobrescribir un número incorrecto (debe deshacerlo)
+        if (gameState.selectedTile.classList.contains('tile-wrong-number')) {
+            playErrorSound();
+            showFlashMessage("Deshaz tu jugada anterior primero");
+            return;
+        }
+
         const notes = gameState.notesBoard[row][col];
         gameState.lastMove = {
             row: row,
@@ -239,7 +375,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         highlightTilesFromBoard(row, col);
         
-        undoButton.style.display = 'flex';
+        undoButton.style.display = 'none'; // Se deshabilita por defecto
 
         if (gameState.solution[row][col] === num) {
             gameState.selectedTile.classList.remove('tile-wrong-number');
@@ -247,6 +383,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 endGame(true);
             }
         } else {
+            playErrorSound();
             if (navigator.vibrate) {
                 navigator.vibrate(200);
             }
@@ -260,6 +397,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     gameState.selectedTile.classList.remove('tile-error');
                 }
             }, 500);
+            
+            // Habilitar deshacer solo en error
+            undoButton.style.display = 'flex'; 
 
             gameState.lives--;
             updateLivesDisplay();
@@ -273,6 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function undoLastMove() {
         if (!gameState.lastMove) return;
+        playClickSound();
 
         const { row, col, prevValue, prevNotes } = gameState.lastMove;
         const tile = boardElement.children[row * 9 + col];
@@ -306,6 +447,7 @@ document.addEventListener('DOMContentLoaded', () => {
         stopTimer();
         pauseButton.style.display = 'none';
         pencilToggleButton.style.display = 'none';
+        hintButton.style.display = 'none';
         gameState.gameInProgress = false;
         resumeGameBtn.style.display = 'none';
         
@@ -314,6 +456,8 @@ document.addEventListener('DOMContentLoaded', () => {
         clearAllErrors();
         
         if (isWin) {
+            playWinSound();
+            launchConfetti(); // Animación de victoria
             gameState.streaks[gameState.currentDifficulty]++;
             gameState.totalWins[gameState.currentDifficulty]++;
             saveTotalWins();
@@ -330,14 +474,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function restartGame() {
+        playClickSound();
         showOverlay('gameOver', false);
         startGame(gameState.currentDifficulty);
     }
 
     function goHome() {
+        playClickSound();
         stopTimer();
         pauseButton.style.display = 'none';
         pencilToggleButton.style.display = 'none';
+        hintButton.style.display = 'none';
         
         gameState.isPaused = false;
         gameState.gameInProgress = false;
@@ -355,6 +502,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function goHomeFromPause() {
+        playClickSound();
         gameState.isPaused = true;
         gameState.gameInProgress = true;
         
@@ -364,6 +512,7 @@ document.addEventListener('DOMContentLoaded', () => {
         resumeGameBtn.style.display = 'block';
         pauseButton.style.display = 'none';
         pencilToggleButton.style.display = 'none';
+        hintButton.style.display = 'none';
         
         undoButton.style.display = 'none';
         
@@ -371,6 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function resumeGame() {
+        playClickSound();
         gameState.isPaused = false;
         renderBoardImproved();
         updateKeypad();
@@ -378,6 +528,7 @@ document.addEventListener('DOMContentLoaded', () => {
         resumeGameBtn.style.display = 'none';
         pauseButton.style.display = 'flex';
         pencilToggleButton.style.display = 'flex';
+        hintButton.style.display = 'flex';
         
         if (gameState.lastMove) {
             undoButton.style.display = 'flex';
@@ -392,7 +543,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showOverlay(overlayKey, show) {
-        screens[overlayKey].classList.toggle('active', show);
+        const overlay = screens[overlayKey];
+        if (overlay) {
+             overlay.classList.toggle('active', show);
+        }
     }
 
     function renderBoardImproved() {
@@ -463,6 +617,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderTileNotes(row, col) {
         const tile = boardElement.children[row * 9 + col];
+        if (!tile) return; // Seguridad
         const notesGrid = tile.querySelector('.tile-notes-grid');
         if (!notesGrid) return;
 
@@ -588,8 +743,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- LÓGICA DE RACHAS Y VICTORIAS (localStorage) ---
     
-    // ===== CORRECCIÓN: Funciones de carga con try...catch =====
-    
     function saveStreaks() {
         localStorage.setItem('sudokuStreaks', JSON.stringify(gameState.streaks));
     }
@@ -599,7 +752,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (saved) {
             try {
                 const parsedStreaks = JSON.parse(saved);
-                // Asegurarse de que es un objeto antes de asignarlo
                 if (typeof parsedStreaks === 'object' && parsedStreaks !== null) {
                     gameState.streaks = parsedStreaks;
                 } else {
@@ -607,7 +759,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (e) {
                 console.error("Error loading streaks from localStorage:", e);
-                localStorage.removeItem('sudokuStreaks'); // Limpiar dato corrupto
+                localStorage.removeItem('sudokuStreaks');
             }
         }
     }
@@ -621,7 +773,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (saved) {
             try {
                 const loadedWins = JSON.parse(saved);
-                // Asegurarse de que es un objeto antes de hacer spread
                 if (typeof loadedWins === 'object' && loadedWins !== null) {
                     gameState.totalWins = { ...gameState.totalWins, ...loadedWins };
                 } else {
@@ -629,7 +780,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (e) {
                 console.error("Error loading total wins from localStorage:", e);
-                localStorage.removeItem('sudokuTotalWins'); // Limpiar dato corrupto
+                localStorage.removeItem('sudokuTotalWins');
             }
         }
     }
@@ -659,11 +810,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function togglePause() {
+        playClickSound();
         gameState.isPaused = !gameState.isPaused;
         showOverlay('pause', gameState.isPaused);
     }
     
     function togglePencilMode() {
+        playClickSound();
         gameState.isPencilMode = !gameState.isPencilMode;
         pencilToggleButton.classList.toggle('active', gameState.isPencilMode);
     }
@@ -682,6 +835,245 @@ document.addEventListener('DOMContentLoaded', () => {
             notes.add(num);
         }
         renderTileNotes(row, col);
+    }
+
+    // --- LÓGICA DE TEMA Y SONIDO ---
+    function toggleTheme() {
+        playClickSound();
+        const currentTheme = document.body.dataset.theme;
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.body.dataset.theme = newTheme;
+        localStorage.setItem('sudokuTheme', newTheme);
+    }
+
+    function loadTheme() {
+        const savedTheme = localStorage.getItem('sudokuTheme');
+        if (savedTheme) {
+            document.body.dataset.theme = savedTheme;
+        }
+    }
+    
+    function toggleMute() {
+        gameState.isMuted = !gameState.isMuted;
+        muteToggleButton.classList.toggle('muted', gameState.isMuted);
+        localStorage.setItem('sudokuMuted', gameState.isMuted.toString());
+        if (!gameState.isMuted) {
+            playClickSound();
+        }
+    }
+    
+    function loadMuteState() {
+        const savedMute = localStorage.getItem('sudokuMuted');
+        if (savedMute === 'true') {
+            gameState.isMuted = true;
+            muteToggleButton.classList.add('muted');
+        }
+    }
+
+    // --- LÓGICA DE DESAFÍO DIARIO Y PISTAS ---
+    
+    // Generador de números pseudoaleatorio (PRNG)
+    function setSeed(seed) {
+        randomSeed = seed;
+    }
+    function seededRandom() {
+        let x = Math.sin(randomSeed++) * 10000;
+        return x - Math.floor(x);
+    }
+    
+    function startDailyChallenge() {
+        playClickSound();
+        // Detener confeti si estaba activo
+        cancelAnimationFrame(confettiAnimationId);
+        confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+        
+        gameState.gameInProgress = true;
+        gameState.isDailyChallenge = true;
+        resumeGameBtn.style.display = 'none';
+
+        gameState.currentDifficulty = DIFFICULTIES.MEDIO; // Fijo
+        gameState.lives = 3;
+        gameState.selectedTile = null;
+        gameState.secondsElapsed = 0;
+        gameState.isPaused = false;
+        
+        gameState.lastMove = null;
+        undoButton.style.display = 'none';
+        clearAllErrors();
+        
+        gameState.isPencilMode = false;
+        pencilToggleButton.classList.remove('active');
+        pencilToggleButton.style.display = 'flex';
+        
+        gameState.hintUsed = false;
+        hintButton.style.display = 'flex';
+        hintButton.classList.remove('disabled');
+
+        gameState.notesBoard = Array(9).fill(null).map(() => 
+            Array(9).fill(null).map(() => new Set())
+        );
+        
+        renderTimer();
+        startTimer();
+        pauseButton.style.display = 'flex';
+
+        // Generar semilla basada en la fecha
+        const date = new Date();
+        const seed = parseInt(`${date.getFullYear()}${date.getMonth()}${date.getDate()}`);
+        setSeed(seed);
+
+        let baseBoard = generateEmptyBoard();
+        // Usar el PRNG con semilla
+        generateSolution(baseBoard, seededRandom); 
+        gameState.solution = JSON.parse(JSON.stringify(baseBoard));
+        gameState.puzzleBoard = createPuzzle(baseBoard, DIFFICULTIES.MEDIO, seededRandom);
+
+        updateLivesDisplay();
+        updateIngameStreakDisplay();
+        renderBoardImproved();
+        renderKeypad();
+        
+        showScreen('game');
+    }
+    
+    function provideHint() {
+        if (gameState.hintUsed) return;
+        playClickSound();
+        
+        let hint = findNakedSingle();
+        if (!hint) {
+            hint = findHiddenSingle();
+        }
+
+        if (hint) {
+            gameState.hintUsed = true;
+            hintButton.classList.add('disabled');
+            
+            // Añadir penalización de tiempo
+            gameState.secondsElapsed += 60;
+            renderTimer();
+            showFlashMessage("Pista usada: +1 minuto");
+            
+            // Aplicar la pista
+            const { row, col, num, logic } = hint;
+            gameState.puzzleBoard[row][col] = num;
+            
+            // Marcar como pista en el tablero de "hints"
+            initialPuzzleForResume[row][col] = num; 
+            
+            // Limpiar notas de esa celda
+            gameState.notesBoard[row][col].clear();
+            
+            // Actualizar la UI
+            renderBoardImproved();
+            updateKeypad();
+            
+            // Resaltar la celda y mostrar explicación
+            const tile = boardElement.children[row * 9 + col];
+            gameState.selectedTile = tile;
+            highlightTilesFromBoard(row, col);
+            
+            hintExplanation.innerHTML = logic;
+            showOverlay('hintOverlay', true);
+
+        } else {
+            showFlashMessage("No se encontraron pistas simples");
+        }
+    }
+    
+    function findNakedSingle() {
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                if (gameState.puzzleBoard[r][c] === 0) {
+                    let possible = new Set([1,2,3,4,5,6,7,8,9]);
+                    
+                    // Quitar por fila
+                    for (let i = 0; i < 9; i++) {
+                        if (gameState.puzzleBoard[r][i] !== 0) {
+                            possible.delete(gameState.puzzleBoard[r][i]);
+                        }
+                    }
+                    // Quitar por columna
+                    for (let i = 0; i < 9; i++) {
+                        if (gameState.puzzleBoard[i][c] !== 0) {
+                            possible.delete(gameState.puzzleBoard[i][c]);
+                        }
+                    }
+                    // Quitar por caja
+                    const boxRow = Math.floor(r / 3) * 3;
+                    const boxCol = Math.floor(c / 3) * 3;
+                    for (let i = boxRow; i < boxRow + 3; i++) {
+                        for (let j = boxCol; j < boxCol + 3; j++) {
+                            if (gameState.puzzleBoard[i][j] !== 0) {
+                                possible.delete(gameState.puzzleBoard[i][j]);
+                            }
+                        }
+                    }
+                    
+                    if (possible.size === 1) {
+                        const num = possible.values().next().value;
+                        return { 
+                            row: r, 
+                            col: c, 
+                            num: num, 
+                            logic: `En la celda <span class="hint-cell">Fila ${r+1}, Col ${c+1}</span>, el número <strong>${num}</strong> es el único valor posible, ya que todos los demás números ya están presentes en su fila, columna o caja.`
+                        };
+                    }
+                }
+            }
+        }
+        return null; // No se encontró
+    }
+    
+    function findHiddenSingle() {
+        // Lógica para Hidden Singles (más compleja)
+        // Revisar por fila
+        for (let r = 0; r < 9; r++) {
+            for (let num = 1; num <= 9; num++) {
+                let count = 0;
+                let lastCol = -1;
+                // ¿Este número ya está en la fila?
+                if ([...gameState.puzzleBoard[r]].includes(num)) continue;
+
+                for (let c = 0; c < 9; c++) {
+                    if (gameState.puzzleBoard[r][c] === 0 && isPossible(r, c, num)) {
+                        count++;
+                        lastCol = c;
+                    }
+                }
+                if (count === 1) {
+                    return { 
+                        row: r, 
+                        col: lastCol, 
+                        num: num, 
+                        logic: `En la <span class="hint-cell">Fila ${r+1}</span>, la celda <span class="hint-cell">Col ${lastCol+1}</span> es el único lugar donde puede ir el número <strong>${num}</strong>.`
+                    };
+                }
+            }
+        }
+        // ... (Se repetiría para columnas y cajas) ...
+        return null;
+    }
+    
+    // Helper para findHiddenSingle
+    function isPossible(r, c, num) {
+        // Chequear fila
+        for (let i = 0; i < 9; i++) {
+            if (gameState.puzzleBoard[r][i] === num) return false;
+        }
+        // Chequear columna
+        for (let i = 0; i < 9; i++) {
+            if (gameState.puzzleBoard[i][c] === num) return false;
+        }
+        // Chequear caja
+        const boxRow = Math.floor(r / 3) * 3;
+        const boxCol = Math.floor(c / 3) * 3;
+        for (let i = boxRow; i < boxRow + 3; i++) {
+            for (let j = boxCol; j < boxCol + 3; j++) {
+                if (gameState.puzzleBoard[i][j] === num) return false;
+            }
+        }
+        return true;
     }
 
 
@@ -720,9 +1112,9 @@ document.addEventListener('DOMContentLoaded', () => {
         return Array(9).fill(0).map(() => Array(9).fill(0));
     }
 
-    function shuffle(array) {
+    function shuffle(array, randFunc = Math.random) {
         for (let i = array.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
+            const j = Math.floor(randFunc() * (i + 1));
             [array[i], array[j]] = [array[j], array[i]];
         }
         return array;
@@ -753,30 +1145,30 @@ document.addEventListener('DOMContentLoaded', () => {
         return true;
     }
 
-    function generateSolution(board) {
+    function generateSolution(board, randFunc = Math.random) {
         const emptySpot = findEmpty(board);
         if (!emptySpot) return true;
         const [row, col] = emptySpot;
-        const numbers = shuffle(Array.from({ length: 9 }, (_, i) => i + 1));
+        const numbers = shuffle(Array.from({ length: 9 }, (_, i) => i + 1), randFunc);
 
         for (const num of numbers) {
             if (isValid(board, num, [row, col])) {
                 board[row][col] = num;
-                if (generateSolution(board)) return true;
+                if (generateSolution(board, randFunc)) return true;
                 board[row][col] = 0;
             }
         }
         return false;
     }
 
-    function createPuzzle(board, difficulty) {
+    function createPuzzle(board, difficulty, randFunc = Math.random) {
         const puzzle = JSON.parse(JSON.stringify(board));
         let cellsToRemove = CELLS_TO_REMOVE[difficulty] || 50;
         let attempts = 200;
         
         while (cellsToRemove > 0 && attempts > 0) {
-            const row = Math.floor(Math.random() * 9);
-            const col = Math.floor(Math.random() * 9);
+            const row = Math.floor(randFunc() * 9);
+            const col = Math.floor(randFunc() * 9);
             if (puzzle[row][col] !== 0) {
                 puzzle[row][col] = 0;
                 cellsToRemove--;
