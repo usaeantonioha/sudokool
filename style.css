@@ -5,15 +5,17 @@
     --color-hint: #3C3C3C;
     --color-black: #000000;
     --color-text: #143478;
-    --color-select: rgba(0, 123, 255, 0.3);
+    /* ===== INICIO DE LA MODIFICACIÓN ===== */
+    --color-select: rgba(255, 165, 0, 0.4);   /* Naranja/Dorado para la celda seleccionada */
     --color-button: #E0E0E0;
     --color-win-text: #00B414;
     --color-gameover-text: #B41414;
     --color-lives: #FF0000;
     --color-logo-bg: #00AA00;
     --color-logo-text: #FFFFFF;
-    --color-highlight: rgba(85, 85, 85, 0.1);
-    --color-keypad-highlight: #dcdcdc;
+    --color-highlight: rgba(255, 215, 0, 0.3); /* Amarillo/Dorado para fila y columna */
+    --color-keypad-highlight: #FFFACD;         /* Amarillo pálido para los números iguales */
+    /* ===== FIN DE LA MODIFICACIÓN ===== */
 }
 
 body {
@@ -68,10 +70,6 @@ body {
 .colorful-title span:nth-child(9) { color: #4285F4; }
 .colorful-title span:nth-child(10){ color: #0F9D58; }
 
-/* ===== ELIMINADO: Estilo para #total-streak-display ===== */
-/* (El selector #total-streak-display fue eliminado del HTML) */
-
-/* ===== NUEVO: Botón de Reanudar Partida ===== */
 #resume-game-btn {
     padding: 15px;
     font-size: 1.4rem;
@@ -81,11 +79,11 @@ body {
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     cursor: pointer;
     transition: all 0.2s;
-    background-color: var(--color-win-text); /* Color verde para destacar */
+    background-color: var(--color-win-text);
     color: white;
     width: 80%;
     max-width: 350px;
-    margin-bottom: 20px; /* Espacio antes de los botones de dificultad */
+    margin-bottom: 20px;
 }
 #resume-game-btn:hover {
     filter: brightness(0.9);
@@ -247,7 +245,6 @@ body {
 .overlay-box .win { color: var(--color-win-text); }
 .overlay-box .lose { color: var(--color-gameover-text); }
 
-/* ===== MODIFICADO: Estilo de botón general de overlay ===== */
 .overlay-btn { 
     padding: 12px 25px; 
     font-size: 1.1rem; 
@@ -263,19 +260,18 @@ body {
     filter: brightness(0.9);
 }
 
-/* ===== NUEVO: Contenedor para botones de overlay (Pausa, Game Over) ===== */
 .overlay-button-container {
     display: flex;
     flex-direction: column;
     gap: 10px;
     width: 100%;
-    max-width: 250px; /* Limita el ancho de los botones */
+    max-width: 250px;
     margin: 15px auto 0;
 }
 .overlay-button-container .overlay-btn {
     width: 100%;
     box-sizing: border-box;
-    margin-top: 0; /* El 'gap' del contenedor se encarga */
+    margin-top: 0;
 }
 .overlay-btn-secondary {
     background-color: #888;
