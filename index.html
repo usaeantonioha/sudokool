@@ -9,7 +9,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700&family=Roboto+Slab:wght@400;700&family=Source+Code+Pro:wght@400;700&display=swap" rel="stylesheet">
 </head>
-<body data-theme="auto"> <canvas id="confetti-canvas"></canvas>
+<body data-theme="auto">
+
+    <canvas id="confetti-canvas"></canvas>
 
     <section id="start-screen" class="screen active">
         <header class="header-icons">
@@ -19,7 +21,7 @@
             </div>
             <div class="header-icons-right">
                 <button id="settings-btn" class="icon-btn" aria-label="Configuración">⚙️</button>
-                </div>
+            </div>
         </header>
 
         <div class="title-container">
@@ -30,8 +32,11 @@
 
         <button id="resume-game-btn" class="resume-btn" style="display: none;">Reanudar Partida</button>
         <button id="daily-challenge-btn" class="daily-btn">Desafío Diario</button>
-        <button id="leaderboard-btn" class="leaderboard-btn">🏆 Clasificación</button>
         <nav id="difficulty-buttons"></nav>
+
+        <div class="bottom-button-container">
+             <button id="leaderboard-btn" class="leaderboard-btn">🏆 Clasificación</button>
+        </div>
     </section>
 
     <main id="game-screen" class="screen">
@@ -64,7 +69,7 @@
     <div id="game-over-screen" class="overlay">
         <div class="overlay-box">
             <h2 id="game-over-message"></h2>
-            <button id="share-daily-result-btn" class="overlay-btn overlay-btn-share" style="display: none;">Compartir Resultado</button>
+             <p id="time-comparison" class="time-comparison"></p> <button id="share-daily-result-btn" class="overlay-btn overlay-btn-share" style="display: none;">Compartir Resultado</button>
             <button id="go-to-leaderboard-btn" class="overlay-btn" style="display: none;">Ver Clasificación</button>
             <div class="overlay-button-container">
                 <button id="restart-button" class="overlay-btn">Jugar de Nuevo</button>
@@ -116,6 +121,7 @@
             <h2>Pausa</h2>
             <div class="overlay-button-container">
                 <button id="resume-button" class="overlay-btn">Reanudar</button>
+                <button id="share-puzzle-btn" class="overlay-btn overlay-btn-share">Compartir Puzzle</button>
                 <button id="pause-back-to-menu" class="overlay-btn overlay-btn-secondary">Volver al Menú</button>
             </div>
         </div>
@@ -132,7 +138,6 @@
     <div id="settings-screen" class="overlay">
         <div class="overlay-box overlay-box-large">
             <h2>⚙️ Configuración</h2>
-
             <div class="settings-section">
                 <h3>Apariencia</h3>
                 <div class="setting-item">
@@ -154,41 +159,7 @@
                         <option value="Source Code Pro">Monoespaciada (Source Code)</option>
                     </select>
                 </div>
-                <div class="setting-item toggle-setting">
-                     <label for="custom-colors-toggle">Usar Colores Personalizados:</label>
-                     <input type="checkbox" id="custom-colors-toggle" class="toggle-switch">
-                </div>
-                <div id="custom-colors-section" style="display: none;">
-                    <div class="color-picker-grid">
-                        <div class="color-picker-item">
-                            <label for="color-bg-picker">Fondo:</label>
-                            <input type="color" id="color-bg-picker" data-var="--color-bg">
-                        </div>
-                        <div class="color-picker-item">
-                            <label for="color-grid-picker">Rejilla:</label>
-                            <input type="color" id="color-grid-picker" data-var="--color-grid">
-                        </div>
-                        <div class="color-picker-item">
-                            <label for="color-text-picker">Números (Usuario):</label>
-                            <input type="color" id="color-text-picker" data-var="--color-text">
-                        </div>
-                         <div class="color-picker-item">
-                            <label for="color-hintnum-picker">Números (Pista):</label>
-                            <input type="color" id="color-hintnum-picker" data-var="--color-hint">
-                        </div>
-                        <div class="color-picker-item">
-                            <label for="color-highlight-picker">Resaltado F/C:</label>
-                            <input type="color" id="color-highlight-picker" data-var="--color-highlight">
-                        </div>
-                        <div class="color-picker-item">
-                            <label for="color-select-picker">Celda Select:</label>
-                            <input type="color" id="color-select-picker" data-var="--color-select">
-                        </div>
-                    </div>
-                    <button id="reset-colors-btn" class="overlay-btn overlay-btn-secondary">Restaurar Colores</button>
-                </div>
             </div>
-
             <div class="settings-section">
                 <h3>Juego</h3>
                  <div class="setting-item toggle-setting">
@@ -208,7 +179,6 @@
                      <input type="checkbox" id="show-undo-toggle" class="toggle-switch" checked>
                  </div>
             </div>
-
             <button class="overlay-btn back-btn">Cerrar</button>
         </div>
     </div>
