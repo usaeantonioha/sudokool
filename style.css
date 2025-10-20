@@ -5,17 +5,17 @@
     --color-hint: #3C3C3C;
     --color-black: #000000;
     --color-text: #143478;
-    /* ===== INICIO DE LA MODIFICACIÓN ===== */
-    --color-select: rgba(255, 165, 0, 0.4);   /* Naranja/Dorado para la celda seleccionada */
+    /* ===== INICIO DE LA MODIFICACIÓN (Colores) ===== */
+    --color-select: rgba(255, 165, 0, 0.4);   /* Naranja (celda seleccionada) - MANTENIDO */
     --color-button: #E0E0E0;
     --color-win-text: #00B414;
     --color-gameover-text: #B41414;
     --color-lives: #FF0000;
     --color-logo-bg: #00AA00;
     --color-logo-text: #FFFFFF;
-    --color-highlight: rgba(255, 215, 0, 0.3); /* Amarillo/Dorado para fila y columna */
-    --color-keypad-highlight: #FFFACD;         /* Amarillo pálido para los números iguales */
-    /* ===== FIN DE LA MODIFICACIÓN ===== */
+    --color-highlight: rgba(0, 174, 239, 0.25); /* Celeste claro (Fila/Columna) */
+    --color-keypad-highlight: rgba(0, 80, 180, 0.35); /* Celeste más oscuro (Números iguales) */
+    /* ===== FIN DE LA MODIFICACIÓN (Colores) ===== */
 }
 
 body {
@@ -45,7 +45,15 @@ body {
 .screen.active { display: flex; }
 
 /* --- Pantalla de Inicio --- */
-#start-screen { justify-content: space-around; text-align: center; }
+/* ===== INICIO DE LA MODIFICACIÓN (Posición) ===== */
+#start-screen {
+    justify-content: flex-start; /* Cambiado de 'space-around' a 'flex-start' */
+    text-align: center;
+    padding-top: 10vh; /* Se añade padding superior para bajar el contenido (pero menos que antes) */
+    gap: 30px; /* Se añade 'gap' para separar el título, el botón de reanudar y los niveles */
+}
+/* ===== FIN DE LA MODIFICACIÓN (Posición) ===== */
+
 .header-icons {
     position: absolute;
     top: 15px;
@@ -83,7 +91,7 @@ body {
     color: white;
     width: 80%;
     max-width: 350px;
-    margin-bottom: 20px;
+    margin-bottom: 0; /* El 'gap' del contenedor padre se encarga del espacio */
 }
 #resume-game-btn:hover {
     filter: brightness(0.9);
