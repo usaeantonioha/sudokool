@@ -1,6 +1,6 @@
 :root {
     --color-bg: #f7faff;
-    --color-grid: #00AEEF; /* <<< CAMBIO CLAVE: Color celeste para el borde del grid y las divisiones */
+    --color-grid: #555555; 
     --color-light-gray: #e9eef2;
     --color-hint: #3C3C3C;
     --color-black: #000000;
@@ -12,8 +12,8 @@
     --color-lives: #FF0000;
     --color-logo-bg: #00AA00;
     --color-logo-text: #FFFFFF;
-    --color-highlight: rgba(0, 180, 255, 0.15); /* Ajustado para un celeste más brillante */
-    --color-keypad-highlight: #add8e6; /* Celeste para el teclado */
+    --color-highlight: rgba(85, 85, 85, 0.1);
+    --color-keypad-highlight: #dcdcdc;
 }
 
 body {
@@ -37,18 +37,25 @@ body {
     display: none;
     flex-direction: column;
     align-items: center;
-    padding: 4vh 15px 15px 15px; /* Padding superior aumentado para bajar el contenido */
+    padding: 4vh 15px 15px 15px;
     box-sizing: border-box;
 }
 .screen.active { display: flex; }
 
 /* --- Pantalla de Inicio --- */
 #start-screen { justify-content: space-around; text-align: center; }
-.header-icons { position: absolute; top: 15px; left: 15px; }
+.header-icons {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    right: 15px; 
+    display: flex; 
+    justify-content: space-between; 
+    width: auto; 
+}
 .icon-btn { width: 40px; height: 40px; border-radius: 50%; background-color: var(--color-hint); color: var(--color-bg); display: flex; justify-content: center; align-items: center; font-size: 1.5rem; font-weight: bold; border: none; cursor: pointer; }
 
-.title-container { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 10px; }
-#main-logo { width: 50px; height: 50px; flex-shrink: 0; }
+.title-container { display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
 .colorful-title { font-size: clamp(2.2rem, 10vw, 3rem); font-weight: bold; }
 .colorful-title span:nth-child(1) { color: #4285F4; }
 .colorful-title span:nth-child(2) { color: #DB4437; }
@@ -61,7 +68,29 @@ body {
 .colorful-title span:nth-child(9) { color: #4285F4; }
 .colorful-title span:nth-child(10){ color: #0F9D58; }
 
-#total-streak-display { color: var(--color-win-text); font-size: clamp(1rem, 5vw, 1.5rem); min-height: 1.5em; }
+/* ===== ELIMINADO: Estilo para #total-streak-display ===== */
+/* (El selector #total-streak-display fue eliminado del HTML) */
+
+/* ===== NUEVO: Botón de Reanudar Partida ===== */
+#resume-game-btn {
+    padding: 15px;
+    font-size: 1.4rem;
+    font-weight: bold;
+    border-radius: 15px;
+    border: none;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: all 0.2s;
+    background-color: var(--color-win-text); /* Color verde para destacar */
+    color: white;
+    width: 80%;
+    max-width: 350px;
+    margin-bottom: 20px; /* Espacio antes de los botones de dificultad */
+}
+#resume-game-btn:hover {
+    filter: brightness(0.9);
+}
+
 #difficulty-buttons { display: flex; flex-direction: column; gap: 15px; width: 80%; max-width: 350px; }
 .difficulty-btn {
     padding: 15px;
@@ -87,11 +116,14 @@ body {
 
 .streak-display-menu { font-size: 1.1rem; font-weight: bold; color: rgba(255, 255, 255, 0.7); }
 .logo-btn {
-    width: 45px; height: 45px; font-size: 2rem; border-radius: 50%;
-    background-color: var(--color-logo-bg); color: var(--color-logo-text);
+    width: 40px; 
+    height: 40px; 
+    font-size: 1.5rem; 
+    border-radius: 50%;
+    background-color: var(--color-hint); 
+    color: var(--color-bg); 
     display: flex; justify-content: center; align-items: center;
     font-weight: bold; cursor: pointer; border: none;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
 .difficulty-btn.locked {
@@ -110,23 +142,59 @@ body {
 
 /* --- Pantalla de Juego --- */
 #game-screen {
-    justify-content: flex-start; /* Alinea el contenido hacia arriba */
+    justify-content: flex-start;
 }
 .game-header { width: 100%; max-width: 500px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 #back-to-menu { padding: 8px 12px; border: none; background: var(--color-button); border-radius: 10px; cursor: pointer; font-weight: bold; }
-#lives-container { text-align: center; margin-bottom: 15px; width: 100%; }
-#lives-container h3 { margin: 0 0 5px 0; color: var(--color-lives); font-size: 1.2rem; }
-#lives-counter { display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 2rem; color: var(--color-lives); }
-#ingame-streak-display { display: flex; align-items: center; gap: 5px; font-size: 1.8rem; font-weight: bold; color: #ffc107; }
-.ingame-streak-number { color: var(--color-hint); font-size: 1.5rem; }
 
-.game-container {
+.game-header-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+#pause-button {
+    font-size: 1.2rem;
+    line-height: 1;
+    padding: 0;
+    display: none;
+}
+
+#game-stats-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
     width: 100%;
     max-width: 500px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    margin-bottom: 10px;
+    padding: 0 20px;
+    box-sizing: border-box;
 }
+
+#lives-container { 
+    text-align: center; 
+    margin-bottom: 0;
+    width: auto;
+}
+#lives-container h3 { margin: 0 0 5px 0; color: var(--color-lives); font-size: 1.2rem; }
+#lives-counter { display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 1.8rem; color: var(--color-lives); }
+
+#timer-container {
+    text-align: center;
+}
+#timer-container h3 {
+    margin: 0 0 5px 0;
+    color: var(--color-text);
+    font-size: 1.2rem;
+}
+#timer-display {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: var(--color-text);
+    letter-spacing: 1px;
+}
+
+#ingame-streak-display { display: flex; align-items: center; gap: 5px; font-size: 1.8rem; font-weight: bold; color: #ffc107; }
+.ingame-streak-number { color: var(--color-hint); font-size: 1.5rem; }
 
 #board {
     display: grid;
@@ -134,12 +202,12 @@ body {
     grid-template-rows: repeat(9, 1fr);
     width: 100%;
     aspect-ratio: 1 / 1;
-    max-height: calc(100vh - 220px);
-    border: 3px solid var(--color-grid); /* <<< Usa la variable para el borde principal */
+    max-height: calc(100vh - 250px);
+    border: 3px solid var(--color-grid);
     background-color: #fff;
 }
 .tile {
-    border: 1px solid var(--color-grid); /* <<< Usa la variable para los bordes de las celdas */
+    border: 1px solid var(--color-grid);
     background-color: var(--color-light-gray);
     display: flex; justify-content: center; align-items: center;
     font-size: clamp(1rem, 5vw, 2rem); cursor: pointer; box-sizing: border-box;
@@ -149,20 +217,18 @@ body {
 .tile.selected { background-color: var(--color-select); }
 .tile.highlight { background-color: var(--color-highlight); }
 .tile.keypad-highlight { background-color: var(--color-keypad-highlight); }
-.tile-border-right { border-right: 3px solid var(--color-grid); } /* <<< Usa la variable para los bordes gruesos */
-.tile-border-bottom { border-bottom: 3px solid var(--color-grid); } /* <<< Usa la variable para los bordes gruesos */
+.tile-border-right { border-right: 3px solid var(--color-grid); }
+.tile-border-bottom { border-bottom: 3px solid var(--color-grid); }
 
-
-/* ===== INICIO DE LA MODIFICACIÓN ===== */
 #keypad {
-    display: flex;      /* Cambiado de grid a flex */
-    flex-wrap: wrap;    /* Permite que los botones pasen a la siguiente línea */
+    display: flex;      
+    flex-wrap: wrap;    
     gap: 4px;
     margin-top: 15px;
     width: 100%;
 }
 .keypad-number {
-    flex: 1 0 30px;     /* Añadido para que los botones crezcan y se adapten */
+    flex: 1 0 30px;     
     aspect-ratio: 1/1; 
     font-size: 1.5rem; 
     font-weight: bold;
@@ -171,8 +237,6 @@ body {
     background-color: #fff; 
     cursor: pointer;
 }
-/* ===== FIN DE LA MODIFICACIÓN ===== */
-
 .keypad-number.disabled { background-color: var(--color-button); color: var(--color-grid); cursor: not-allowed; }
 
 /* --- Overlays --- */
@@ -182,7 +246,47 @@ body {
 .overlay-box h2 { font-size: 2rem; margin-top: 0; }
 .overlay-box .win { color: var(--color-win-text); }
 .overlay-box .lose { color: var(--color-gameover-text); }
-.overlay-btn { padding: 12px 25px; font-size: 1.1rem; background-color: var(--color-button); color: var(--color-hint); border: none; border-radius: 8px; cursor: pointer; margin-top: 15px; }
+
+/* ===== MODIFICADO: Estilo de botón general de overlay ===== */
+.overlay-btn { 
+    padding: 12px 25px; 
+    font-size: 1.1rem; 
+    background-color: var(--color-button); 
+    color: var(--color-hint); 
+    border: none; 
+    border-radius: 8px; 
+    cursor: pointer; 
+    margin-top: 15px;
+    transition: background-color 0.2s;
+}
+.overlay-btn:hover {
+    filter: brightness(0.9);
+}
+
+/* ===== NUEVO: Contenedor para botones de overlay (Pausa, Game Over) ===== */
+.overlay-button-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    max-width: 250px; /* Limita el ancho de los botones */
+    margin: 15px auto 0;
+}
+.overlay-button-container .overlay-btn {
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 0; /* El 'gap' del contenedor se encarga */
+}
+.overlay-btn-secondary {
+    background-color: #888;
+    color: #fff;
+}
+.overlay-btn-secondary:hover {
+    background-color: #777;
+    filter: none;
+}
+
+
 .instructions-text { text-align: left; max-width: 400px; margin-bottom: 20px; }
 .creator-name { font-size: 1.2rem; font-weight: bold; }
 

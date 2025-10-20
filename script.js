@@ -21,7 +21,12 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedTile: null,
         currentDifficulty: DIFFICULTIES.MEDIO,
         streaks: { fácil: 0, medio: 0, difícil: 0, experto: 0 },
-        totalWins: { fácil: 0, medio: 0, difícil: 0, experto: 0 }
+        totalWins: { fácil: 0, medio: 0, difícil: 0, experto: 0 },
+        timerInterval: null,
+        secondsElapsed: 0,
+        isPaused: false,
+        // ===== NUEVO: Flag para partida en progreso =====
+        gameInProgress: false
     };
 
     // --- ELEMENTOS DEL DOM ---
@@ -30,7 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
         game: document.getElementById('game-screen'),
         gameOver: document.getElementById('game-over-screen'),
         instructions: document.getElementById('instructions-screen'),
-        about: document.getElementById('about-screen')
+        about: document.getElementById('about-screen'),
+        pause: document.getElementById('pause-screen')
     };
     const boardElement = document.getElementById('board');
     const keypadElement = document.getElementById('keypad');
@@ -39,23 +45,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const restartBtn = document.getElementById('restart-button');
     const gameOverMsg = document.getElementById('game-over-message');
     const difficultyButtonsContainer = document.getElementById('difficulty-buttons');
-    const totalStreakDisplay = document.getElementById('total-streak-display');
+    // ===== ELIMINADO: totalStreakDisplay =====
     const flashMessage = document.getElementById('flash-message');
     const ingameStreakDisplay = document.getElementById('ingame-streak-display');
     const infoIcon = document.getElementById('info-icon');
     const mainMenuLogo = document.getElementById('main-menu-logo');
+    const timerDisplay = document.getElementById('timer-display');
+    const pauseButton = document.getElementById('pause-button');
+    const resumeButton = document.getElementById('resume-button');
+    // ===== NUEVOS ELEMENTOS =====
+    const resumeGameBtn = document.getElementById('resume-game-btn');
+    const pauseBackToMenuBtn = document.getElementById('pause-back-to-menu');
+    const gameOverHomeBtn = document.getElementById('game-over-home-btn');
+
 
     // --- LÓGICA DE INICIO ---
     function initialize() {
         loadStreaks();
         loadTotalWins();
         createDifficultyButtons();
-        updateStreakDisplay();
+        // ===== ELIMINADO: updateStreakDisplay() =====
         addEventListeners();
     }
 
     function addEventListeners() {
-        backToMenuBtn.addEventListener('click', goHome);
+        // ===== MODIFICADO: Ahora llama a togglePause =====
+        backToMenuBtn.addEventListener('click', togglePause);
         restartBtn.addEventListener('click', restartGame);
         infoIcon.addEventListener('click', () => showOverlay('instructions', true));
         mainMenuLogo.addEventListener('click', () => showOverlay('about', true));
@@ -65,6 +80,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }));
         boardElement.addEventListener('click', handleBoardClick);
         keypadElement.addEventListener('click', handleKeypadClick);
+        pauseButton.addEventListener('click', togglePause);
+        resumeButton.addEventListener('click', togglePause);
+        
+        // ===== NUEVOS LISTENERS =====
+        resumeGameBtn.addEventListener('click', resumeGame);
+        pauseBackToMenuBtn.addEventListener('click', goHomeFromPause);
+        gameOverHomeBtn.addEventListener('click', goHome);
     }
 
     function createDifficultyButtons() {
@@ -73,9 +95,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const difficultyLevels = [
             { key: 'fácil', name: 'Fácil', unlockCondition: () => true },
-            { key: 'medio', name: 'Medio', unlockCondition: () => gameState.totalWins.fácil >= 1, requirementText: 'Gana 1 en Fácil' },
-            { key: 'difícil', name: 'Difícil', unlockCondition: () => gameState.totalWins.medio >= 5, requirementText: 'Gana 5 en Medio' },
-            { key: 'experto', name: 'Experto', unlockCondition: () => gameState.totalWins.difícil >= 10, requirementText: 'Gana 10 en Difícil' }
+            { key: 'medio', name: 'Medio', unlockCondition: () => true },
+            { key: 'difícil', name: 'Difícil', unlockCondition: () => true },
+            { key: 'experto', name: 'Experto', unlockCondition: () => true }
         ];
 
         difficultyLevels.forEach(level => {
@@ -98,13 +120,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     streakSpan.textContent = `👑 ${streak}`;
                     button.appendChild(streakSpan);
                 }
-            } else {
-                button.classList.add('locked');
-                const legendSpan = document.createElement('span');
-                legendSpan.className = 'unlock-criteria';
-                legendSpan.textContent = `🔒 ${level.requirementText}`;
-                button.appendChild(legendSpan);
-            }
+            } 
+            
             fragment.appendChild(button);
         });
 
@@ -113,9 +130,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function startGame(difficulty) {
+        // ===== NUEVA LÓGICA DE ESTADO =====
+        gameState.gameInProgress = true;
+        resumeGameBtn.style.display = 'none';
+
         gameState.currentDifficulty = difficulty;
         gameState.lives = 3;
         gameState.selectedTile = null;
+        gameState.secondsElapsed = 0;
+        gameState.isPaused = false;
+        
+        renderTimer();
+        startTimer();
+        pauseButton.style.display = 'flex';
 
         let baseBoard = generateEmptyBoard();
         generateSolution(baseBoard);
@@ -134,11 +161,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleDifficultyClick(event) {
         const button = event.target.closest('.difficulty-btn');
         if (button && !button.classList.contains('locked')) {
+            // Opcional: Se podría poner un confirm() aquí si (gameState.gameInProgress)
             startGame(button.dataset.difficulty);
         }
     }
 
     function handleBoardClick(event) {
+        if (gameState.isPaused) return;
         const tile = event.target.closest('.tile');
         if (!tile) return;
 
@@ -152,6 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function handleKeypadClick(event) {
+        if (gameState.isPaused) return;
         const key = event.target.closest('.keypad-number');
         if (key) {
             const num = parseInt(key.textContent);
@@ -192,6 +222,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function endGame(isWin) {
+        stopTimer();
+        pauseButton.style.display = 'none';
+        // ===== NUEVA LÓGICA DE ESTADO =====
+        gameState.gameInProgress = false;
+        resumeGameBtn.style.display = 'none';
+        
         if (isWin) {
             gameState.streaks[gameState.currentDifficulty]++;
             gameState.totalWins[gameState.currentDifficulty]++;
@@ -213,12 +249,45 @@ document.addEventListener('DOMContentLoaded', () => {
         startGame(gameState.currentDifficulty);
     }
 
+    // ===== MODIFICADO: Esta es ahora la función de RESET COMPLETO =====
     function goHome() {
+        stopTimer();
+        pauseButton.style.display = 'none';
+        
+        gameState.isPaused = false;
+        gameState.gameInProgress = false;
+        gameState.secondsElapsed = 0;
+        resumeGameBtn.style.display = 'none';
+
         showOverlay('gameOver', false);
+        showOverlay('pause', false);
         showScreen('start');
         createDifficultyButtons();
-        updateStreakDisplay();
     }
+    
+    // ===== NUEVA FUNCIÓN: Ir a casa desde Pausa (sin resetear) =====
+    function goHomeFromPause() {
+        gameState.isPaused = true; // Se mantiene en pausa
+        gameState.gameInProgress = true; // Marcar que hay un juego en progreso
+        
+        showOverlay('pause', false);
+        showScreen('start');
+        
+        resumeGameBtn.style.display = 'block'; // Mostrar botón "Reanudar"
+        pauseButton.style.display = 'none'; // Ocultar botón de pausa del juego
+        
+        createDifficultyButtons(); // Actualizar rachas en botones
+    }
+
+    // ===== NUEVA FUNCIÓN: Reanudar juego desde el menú =====
+    function resumeGame() {
+        gameState.isPaused = false;
+        showScreen('game');
+        resumeGameBtn.style.display = 'none';
+        pauseButton.style.display = 'flex'; // Mostrar botón de pausa en-juego
+        // El timer se reanuda solo gracias al flag isPaused en updateTimer
+    }
+
 
     // --- RENDERIZADO Y UI ---
     function showScreen(screenKey) {
@@ -288,17 +357,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function highlightTilesFromBoard(row, col) {
-        // ===== CORRECCIÓN CLAVE =====
-        // Convertimos las coordenadas a números enteros para evitar errores de cálculo.
         const numRow = parseInt(row);
         const numCol = parseInt(col);
-        // ============================
 
         clearAllHighlights();
         
         const num = gameState.puzzleBoard[numRow][numCol];
         
-        // Usamos las coordenadas numéricas para un cálculo preciso.
         for (let i = 0; i < 9; i++) {
             boardElement.children[numRow * 9 + i].classList.add('highlight'); // Fila
             boardElement.children[i * 9 + numCol].classList.add('highlight'); // Columna
@@ -348,9 +413,37 @@ document.addEventListener('DOMContentLoaded', () => {
             gameState.totalWins = { ...gameState.totalWins, ...loadedWins };
         }
     }
-    function updateStreakDisplay() {
-        const total = Object.values(gameState.streaks).reduce((s, v) => s + v, 0);
-        totalStreakDisplay.textContent = total > 0 ? `Racha Total: ${total}` : '';
+    
+    // ===== ELIMINADO: updateStreakDisplay() =====
+
+
+    // --- LÓGICA DE TIMER Y PAUSA ---
+    
+    function startTimer() {
+        clearInterval(gameState.timerInterval);
+        gameState.timerInterval = setInterval(updateTimer, 1000);
+    }
+
+    function stopTimer() {
+        clearInterval(gameState.timerInterval);
+    }
+
+    function updateTimer() {
+        if (!gameState.isPaused) {
+            gameState.secondsElapsed++;
+            renderTimer();
+        }
+    }
+
+    function renderTimer() {
+        const minutes = Math.floor(gameState.secondsElapsed / 60).toString().padStart(2, '0');
+        const seconds = (gameState.secondsElapsed % 60).toString().padStart(2, '0');
+        timerDisplay.textContent = `${minutes}:${seconds}`;
+    }
+
+    function togglePause() {
+        gameState.isPaused = !gameState.isPaused;
+        showOverlay('pause', gameState.isPaused);
     }
 
     // --- GENERADOR DE SUDOKU Y HELPERS ---
@@ -376,7 +469,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function checkWin() {
-        return gameState.puzzleBoard.every(row => row.every(cell => cell !== 0));
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                if (gameState.puzzleBoard[r][c] === 0) return false;
+            }
+        }
+        return true;
     }
 
     function generateEmptyBoard() {
