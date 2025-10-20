@@ -25,8 +25,9 @@ document.addEventListener('DOMContentLoaded', () => {
         timerInterval: null,
         secondsElapsed: 0,
         isPaused: false,
-        // ===== NUEVO: Flag para partida en progreso =====
-        gameInProgress: false
+        gameInProgress: false,
+        // ===== NUEVO: Para guardar la última jugada =====
+        lastMove: null // {row, col, prevValue}
     };
 
     // --- ELEMENTOS DEL DOM ---
@@ -45,7 +46,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const restartBtn = document.getElementById('restart-button');
     const gameOverMsg = document.getElementById('game-over-message');
     const difficultyButtonsContainer = document.getElementById('difficulty-buttons');
-    // ===== ELIMINADO: totalStreakDisplay =====
     const flashMessage = document.getElementById('flash-message');
     const ingameStreakDisplay = document.getElementById('ingame-streak-display');
     const infoIcon = document.getElementById('info-icon');
@@ -53,10 +53,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const timerDisplay = document.getElementById('timer-display');
     const pauseButton = document.getElementById('pause-button');
     const resumeButton = document.getElementById('resume-button');
-    // ===== NUEVOS ELEMENTOS =====
     const resumeGameBtn = document.getElementById('resume-game-btn');
     const pauseBackToMenuBtn = document.getElementById('pause-back-to-menu');
     const gameOverHomeBtn = document.getElementById('game-over-home-btn');
+    // ===== NUEVO: Botón Deshacer =====
+    const undoButton = document.getElementById('undo-button');
 
 
     // --- LÓGICA DE INICIO ---
@@ -64,12 +65,10 @@ document.addEventListener('DOMContentLoaded', () => {
         loadStreaks();
         loadTotalWins();
         createDifficultyButtons();
-        // ===== ELIMINADO: updateStreakDisplay() =====
         addEventListeners();
     }
 
     function addEventListeners() {
-        // ===== MODIFICADO: Ahora llama a togglePause =====
         backToMenuBtn.addEventListener('click', togglePause);
         restartBtn.addEventListener('click', restartGame);
         infoIcon.addEventListener('click', () => showOverlay('instructions', true));
@@ -83,10 +82,12 @@ document.addEventListener('DOMContentLoaded', () => {
         pauseButton.addEventListener('click', togglePause);
         resumeButton.addEventListener('click', togglePause);
         
-        // ===== NUEVOS LISTENERS =====
         resumeGameBtn.addEventListener('click', resumeGame);
         pauseBackToMenuBtn.addEventListener('click', goHomeFromPause);
         gameOverHomeBtn.addEventListener('click', goHome);
+        
+        // ===== NUEVO: Listener para Deshacer =====
+        undoButton.addEventListener('click', undoLastMove);
     }
 
     function createDifficultyButtons() {
@@ -129,8 +130,9 @@ document.addEventListener('DOMContentLoaded', () => {
         difficultyButtonsContainer.addEventListener('click', handleDifficultyClick);
     }
 
+    let initialPuzzleForResume = [];
+
     function startGame(difficulty) {
-        // ===== NUEVA LÓGICA DE ESTADO =====
         gameState.gameInProgress = true;
         resumeGameBtn.style.display = 'none';
 
@@ -140,6 +142,11 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState.secondsElapsed = 0;
         gameState.isPaused = false;
         
+        // ===== NUEVO: Resetear Deshacer y Errores =====
+        gameState.lastMove = null;
+        undoButton.style.display = 'none';
+        clearAllErrors();
+        
         renderTimer();
         startTimer();
         pauseButton.style.display = 'flex';
@@ -147,11 +154,11 @@ document.addEventListener('DOMContentLoaded', () => {
         let baseBoard = generateEmptyBoard();
         generateSolution(baseBoard);
         gameState.solution = JSON.parse(JSON.stringify(baseBoard));
-        gameState.puzzleBoard = createPuzzle(baseBoard, difficulty);
+        gameState.puzzleBoard = createPuzzle(baseBoard, difficulty); 
 
         updateLivesDisplay();
         updateIngameStreakDisplay();
-        renderBoard();
+        renderBoardImproved();
         renderKeypad();
         
         showScreen('game');
@@ -161,7 +168,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleDifficultyClick(event) {
         const button = event.target.closest('.difficulty-btn');
         if (button && !button.classList.contains('locked')) {
-            // Opcional: Se podría poner un confirm() aquí si (gameState.gameInProgress)
             startGame(button.dataset.difficulty);
         }
     }
@@ -170,12 +176,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (gameState.isPaused) return;
         const tile = event.target.closest('.tile');
         if (!tile) return;
-
-        if (gameState.selectedTile) {
-            gameState.selectedTile.classList.remove('selected');
-        }
-        gameState.selectedTile = tile;
-        gameState.selectedTile.classList.add('selected');
+        
+        gameState.selectedTile = tile; 
         
         highlightTilesFromBoard(tile.dataset.row, tile.dataset.col);
     }
@@ -185,32 +187,73 @@ document.addEventListener('DOMContentLoaded', () => {
         const key = event.target.closest('.keypad-number');
         if (key) {
             const num = parseInt(key.textContent);
-            highlightNumbersFromKeypad(num);
             
-            if (!key.classList.contains('disabled')) {
-                placeNumber(num);
+            if (gameState.selectedTile) {
+                 if (!key.classList.contains('disabled')) {
+                    placeNumber(num);
+                }
+            } else {
+                highlightNumbersFromKeypad(num);
             }
         }
     }
 
     // --- LÓGICA DEL JUEGO ---
+    
+    // ===== MODIFICADO: placeNumber con nueva lógica de error y deshacer =====
     function placeNumber(num) {
         if (!gameState.selectedTile || gameState.selectedTile.classList.contains('hint')) return;
 
+        // Limpia errores de la jugada anterior
+        clearErrorHighlights();
+
         const row = parseInt(gameState.selectedTile.dataset.row);
         const col = parseInt(gameState.selectedTile.dataset.col);
+        
+        // Guarda el estado *antes* de la jugada
+        gameState.lastMove = {
+            row: row,
+            col: col,
+            prevValue: gameState.puzzleBoard[row][col]
+        };
 
+        // Pone el número
         gameState.puzzleBoard[row][col] = num;
         gameState.selectedTile.textContent = num;
         gameState.selectedTile.classList.add('user-filled');
 
+        // Resalta la jugada actual
         highlightTilesFromBoard(row, col);
+        
+        // Muestra el botón deshacer
+        undoButton.style.display = 'flex';
 
         if (gameState.solution[row][col] === num) {
+            // JUGADA CORRECTA
+            gameState.selectedTile.classList.remove('tile-wrong-number');
             if (checkWin()) {
                 endGame(true);
             }
         } else {
+            // JUGADA INCORRECTA
+            if (navigator.vibrate) {
+                navigator.vibrate(200); // Vibración
+            }
+            // Añade clases de error
+            gameState.selectedTile.classList.add('tile-error'); // Flash
+            gameState.selectedTile.classList.add('tile-wrong-number'); // Texto rojo
+            
+            // Resalta el conflicto
+            highlightConflicts(row, col, num);
+            
+            // Quita la animación de flash después de que termine
+            setTimeout(() => {
+                if(gameState.selectedTile) {
+                    gameState.selectedTile.classList.remove('tile-error');
+                }
+            }, 500);
+
+            // Quita vidas
             gameState.lives--;
             updateLivesDisplay();
             showFlashMessage("Número equivocado");
@@ -221,12 +264,48 @@ document.addEventListener('DOMContentLoaded', () => {
         updateKeypad();
     }
     
+    // ===== NUEVA: Función para deshacer la última jugada =====
+    function undoLastMove() {
+        if (!gameState.lastMove) return; // No hay nada que deshacer
+
+        const { row, col, prevValue } = gameState.lastMove;
+        const tile = boardElement.children[row * 9 + col];
+
+        // Restaura el estado lógico y visual
+        gameState.puzzleBoard[row][col] = prevValue;
+        tile.textContent = prevValue === 0 ? '' : prevValue;
+        
+        // Limpia clases de error
+        tile.classList.remove('user-filled', 'tile-wrong-number');
+        clearErrorHighlights();
+        
+        // Si el valor anterior era 0, ya no es 'user-filled'
+        if (prevValue === 0) {
+            tile.classList.remove('user-filled');
+        }
+
+        // Reselecciona la celda y resalta
+        gameState.selectedTile = tile;
+        highlightTilesFromBoard(row, col);
+        
+        // Oculta el botón y limpia la jugada
+        gameState.lastMove = null;
+        undoButton.style.display = 'none';
+        
+        updateKeypad();
+    }
+
+    
     function endGame(isWin) {
         stopTimer();
         pauseButton.style.display = 'none';
-        // ===== NUEVA LÓGICA DE ESTADO =====
         gameState.gameInProgress = false;
         resumeGameBtn.style.display = 'none';
+        
+        // ===== NUEVO: Limpia estado de deshacer y errores =====
+        undoButton.style.display = 'none';
+        gameState.lastMove = null;
+        clearAllErrors();
         
         if (isWin) {
             gameState.streaks[gameState.currentDifficulty]++;
@@ -249,7 +328,6 @@ document.addEventListener('DOMContentLoaded', () => {
         startGame(gameState.currentDifficulty);
     }
 
-    // ===== MODIFICADO: Esta es ahora la función de RESET COMPLETO =====
     function goHome() {
         stopTimer();
         pauseButton.style.display = 'none';
@@ -259,33 +337,45 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState.secondsElapsed = 0;
         resumeGameBtn.style.display = 'none';
 
+        // ===== NUEVO: Limpia estado de deshacer y errores =====
+        undoButton.style.display = 'none';
+        gameState.lastMove = null;
+        clearAllErrors();
+
         showOverlay('gameOver', false);
         showOverlay('pause', false);
         showScreen('start');
         createDifficultyButtons();
     }
     
-    // ===== NUEVA FUNCIÓN: Ir a casa desde Pausa (sin resetear) =====
     function goHomeFromPause() {
-        gameState.isPaused = true; // Se mantiene en pausa
-        gameState.gameInProgress = true; // Marcar que hay un juego en progreso
+        gameState.isPaused = true;
+        gameState.gameInProgress = true;
         
         showOverlay('pause', false);
         showScreen('start');
         
-        resumeGameBtn.style.display = 'block'; // Mostrar botón "Reanudar"
-        pauseButton.style.display = 'none'; // Ocultar botón de pausa del juego
+        resumeGameBtn.style.display = 'block';
+        pauseButton.style.display = 'none';
         
-        createDifficultyButtons(); // Actualizar rachas en botones
+        // ===== NUEVO: Oculta el botón deshacer en el menú =====
+        undoButton.style.display = 'none';
+        
+        createDifficultyButtons();
     }
 
-    // ===== NUEVA FUNCIÓN: Reanudar juego desde el menú =====
     function resumeGame() {
         gameState.isPaused = false;
+        renderBoardImproved();
+        updateKeypad();
         showScreen('game');
         resumeGameBtn.style.display = 'none';
-        pauseButton.style.display = 'flex'; // Mostrar botón de pausa en-juego
-        // El timer se reanuda solo gracias al flag isPaused en updateTimer
+        pauseButton.style.display = 'flex';
+        
+        // ===== NUEVO: Muestra el botón deshacer si hay una jugada =====
+        if (gameState.lastMove) {
+            undoButton.style.display = 'flex';
+        }
     }
 
 
@@ -299,9 +389,10 @@ document.addEventListener('DOMContentLoaded', () => {
         screens[overlayKey].classList.toggle('active', show);
     }
 
-    function renderBoard() {
+    function renderBoardImproved() {
         boardElement.innerHTML = '';
         const fragment = document.createDocumentFragment();
+
         for (let r = 0; r < 9; r++) {
             for (let c = 0; c < 9; c++) {
                 const tile = document.createElement('div');
@@ -309,10 +400,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (c === 2 || c === 5) tile.classList.add('tile-border-right');
                 if (r === 2 || r === 5) tile.classList.add('tile-border-bottom');
 
-                if (gameState.puzzleBoard[r][c] !== 0) {
-                    tile.textContent = gameState.puzzleBoard[r][c];
+                if (initialPuzzleForResume[r][c] !== 0) {
+                    tile.textContent = initialPuzzleForResume[r][c];
                     tile.classList.add('hint');
+                } 
+                else if (gameState.puzzleBoard[r][c] !== 0) {
+                    tile.textContent = gameState.puzzleBoard[r][c];
+                    tile.classList.add('user-filled');
+                    
+                    // ===== NUEVO: Vuelve a pintar de rojo si es un error guardado =====
+                    if (gameState.solution[r][c] !== gameState.puzzleBoard[r][c]) {
+                        tile.classList.add('tile-wrong-number');
+                    }
                 }
+                
                 tile.dataset.row = r;
                 tile.dataset.col = c;
                 fragment.appendChild(tile);
@@ -335,7 +436,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateLivesDisplay() {
-        livesCounter.textContent = '❤️'.repeat(gameState.lives);
+        livesCounter.textContent = ❤️'.repeat(gameState.lives);
     }
 
     function updateIngameStreakDisplay() {
@@ -352,28 +453,46 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LÓGICA DE RESALTADO ---
     function clearAllHighlights() {
         document.querySelectorAll('.tile').forEach(t => {
-            t.classList.remove('highlight', 'keypad-highlight');
+            t.classList.remove('highlight', 'keypad-highlight', 'selected');
         });
     }
+
+    // ===== NUEVO: Limpia solo los resaltados de conflicto =====
+    function clearErrorHighlights() {
+        document.querySelectorAll('.tile-conflict').forEach(t => {
+            t.classList.remove('tile-conflict');
+        });
+    }
+
+    // ===== NUEVO: Limpia TODOS los errores (para reinicio) =====
+    function clearAllErrors() {
+        document.querySelectorAll('.tile-conflict, .tile-wrong-number, .tile-error').forEach(t => {
+            t.classList.remove('tile-conflict', 'tile-wrong-number', 'tile-error');
+        });
+    }
+
 
     function highlightTilesFromBoard(row, col) {
         const numRow = parseInt(row);
         const numCol = parseInt(col);
 
-        clearAllHighlights();
+        clearAllHighlights(); 
         
+        const selectedTileElement = boardElement.children[numRow * 9 + numCol];
+        if(selectedTileElement) selectedTileElement.classList.add('selected');
+
         const num = gameState.puzzleBoard[numRow][numCol];
         
         for (let i = 0; i < 9; i++) {
-            boardElement.children[numRow * 9 + i].classList.add('highlight'); // Fila
-            boardElement.children[i * 9 + numCol].classList.add('highlight'); // Columna
+            boardElement.children[numRow * 9 + i].classList.add('highlight');
+            boardElement.children[i * 9 + numCol].classList.add('highlight');
         }
 
         if (num !== 0) {
             for (let r = 0; r < 9; r++) {
                 for (let c = 0; c < 9; c++) {
                     if (gameState.puzzleBoard[r][c] === num) {
-                        boardElement.children[r * 9 + c].classList.add('highlight');
+                        boardElement.children[r * 9 + c].classList.add('keypad-highlight');
                     }
                 }
             }
@@ -381,13 +500,43 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function highlightNumbersFromKeypad(num) {
-        clearAllHighlights();
+        clearAllHighlights(); 
         
         if (num > 0) {
             for (let r = 0; r < 9; r++) {
                 for (let c = 0; c < 9; c++) {
                     if (gameState.puzzleBoard[r][c] === num) {
                         boardElement.children[r * 9 + c].classList.add('keypad-highlight');
+                    }
+                }
+            }
+        }
+    }
+    
+    // ===== NUEVA: Función para resaltar conflictos =====
+    function highlightConflicts(row, col, num) {
+        const board = gameState.puzzleBoard;
+
+        // Revisar Fila
+        for (let i = 0; i < 9; i++) {
+            if (i !== col && board[row][i] === num) {
+                boardElement.children[row * 9 + i].classList.add('tile-conflict');
+            }
+        }
+        // Revisar Columna
+        for (let i = 0; i < 9; i++) {
+            if (i !== row && board[i][col] === num) {
+                boardElement.children[i * 9 + col].classList.add('tile-conflict');
+            }
+        }
+        // Revisar Caja 3x3
+        const boxRow = Math.floor(row / 3) * 3;
+        const boxCol = Math.floor(col / 3) * 3;
+        for (let i = boxRow; i < boxRow + 3; i++) {
+            for (let j = boxCol; j < boxCol + 3; j++) {
+                if (i !== row || j !== col) {
+                    if (board[i][j] === num) {
+                        boardElement.children[i * 9 + j].classList.add('tile-conflict');
                     }
                 }
             }
@@ -414,9 +563,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // ===== ELIMINADO: updateStreakDisplay() =====
-
-
     // --- LÓGICA DE TIMER Y PAUSA ---
     
     function startTimer() {
@@ -533,17 +679,18 @@ document.addEventListener('DOMContentLoaded', () => {
     function createPuzzle(board, difficulty) {
         const puzzle = JSON.parse(JSON.stringify(board));
         let cellsToRemove = CELLS_TO_REMOVE[difficulty] || 50;
-        let attempts = 0;
+        let attempts = 200;
         
-        while (cellsToRemove > 0 && attempts < 200) {
+        while (cellsToRemove > 0 && attempts > 0) {
             const row = Math.floor(Math.random() * 9);
             const col = Math.floor(Math.random() * 9);
             if (puzzle[row][col] !== 0) {
                 puzzle[row][col] = 0;
                 cellsToRemove--;
             }
-            attempts++;
+            attempts--;
         }
+        initialPuzzleForResume = JSON.parse(JSON.stringify(puzzle));
         return puzzle;
     }
 

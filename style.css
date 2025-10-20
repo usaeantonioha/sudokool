@@ -5,17 +5,17 @@
     --color-hint: #3C3C3C;
     --color-black: #000000;
     --color-text: #143478;
-    /* ===== INICIO DE LA MODIFICACIÓN (Colores) ===== */
-    --color-select: rgba(255, 165, 0, 0.4);   /* Naranja (celda seleccionada) - MANTENIDO */
+    --color-select: rgba(255, 165, 0, 0.4);   
     --color-button: #E0E0E0;
     --color-win-text: #00B414;
     --color-gameover-text: #B41414;
     --color-lives: #FF0000;
     --color-logo-bg: #00AA00;
     --color-logo-text: #FFFFFF;
-    --color-highlight: rgba(0, 174, 239, 0.25); /* Celeste claro (Fila/Columna) */
-    --color-keypad-highlight: rgba(0, 80, 180, 0.35); /* Celeste más oscuro (Números iguales) */
-    /* ===== FIN DE LA MODIFICACIÓN (Colores) ===== */
+    --color-highlight: rgba(0, 174, 239, 0.25);
+    --color-keypad-highlight: rgba(0, 80, 180, 0.35);
+    /* ===== NUEVO: Color de error ===== */
+    --color-error: #D8000C; /* Rojo para errores */
 }
 
 body {
@@ -30,7 +30,7 @@ body {
     -webkit-user-select: none;
     -ms-user-select: none;
     user-select: none;
-    overflow: hidden; /* Previene el rebote del scroll en móviles */
+    overflow: hidden;
 }
 
 .screen {
@@ -45,14 +45,12 @@ body {
 .screen.active { display: flex; }
 
 /* --- Pantalla de Inicio --- */
-/* ===== INICIO DE LA MODIFICACIÓN (Posición) ===== */
 #start-screen {
-    justify-content: flex-start; /* Cambiado de 'space-around' a 'flex-start' */
+    justify-content: flex-start;
     text-align: center;
-    padding-top: 10vh; /* Se añade padding superior para bajar el contenido (pero menos que antes) */
-    gap: 30px; /* Se añade 'gap' para separar el título, el botón de reanudar y los niveles */
+    padding-top: 10vh;
+    gap: 30px;
 }
-/* ===== FIN DE LA MODIFICACIÓN (Posición) ===== */
 
 .header-icons {
     position: absolute;
@@ -91,7 +89,7 @@ body {
     color: white;
     width: 80%;
     max-width: 350px;
-    margin-bottom: 0; /* El 'gap' del contenedor padre se encarga del espacio */
+    margin-bottom: 0;
 }
 #resume-game-btn:hover {
     filter: brightness(0.9);
@@ -156,13 +154,19 @@ body {
 .game-header-right {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 15px; /* Espacio entre los 3 botones */
 }
 #pause-button {
     font-size: 1.2rem;
     line-height: 1;
     padding: 0;
     display: none;
+}
+/* ===== NUEVO: Estilo Botón Deshacer ===== */
+#undo-button {
+    font-size: 1.5rem;
+    padding: 0;
+    display: none; /* Oculto por defecto */
 }
 
 #game-stats-container {
@@ -217,6 +221,7 @@ body {
     background-color: var(--color-light-gray);
     display: flex; justify-content: center; align-items: center;
     font-size: clamp(1rem, 5vw, 2rem); cursor: pointer; box-sizing: border-box;
+    transition: background-color 0.1s; /* Transición suave */
 }
 .tile.hint { color: var(--color-hint); font-weight: bold; }
 .tile.user-filled { color: var(--color-text); font-weight: bold; }
@@ -225,6 +230,18 @@ body {
 .tile.keypad-highlight { background-color: var(--color-keypad-highlight); }
 .tile-border-right { border-right: 3px solid var(--color-grid); }
 .tile-border-bottom { border-bottom: 3px solid var(--color-grid); }
+
+/* ===== NUEVO: Estilos de Error ===== */
+.tile.tile-wrong-number {
+    color: var(--color-error); /* Texto rojo */
+}
+.tile.tile-error {
+    animation: flash-red 0.5s; /* Animación de flash */
+}
+.tile.tile-conflict {
+    background-color: rgba(216, 0, 12, 0.3); /* Fondo rojo para el conflicto */
+}
+
 
 #keypad {
     display: flex;      
@@ -298,7 +315,9 @@ body {
 #flash-message { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background-color: rgba(0,0,0,0.8); color: white; padding: 12px 25px; border-radius: 20px; font-size: 1rem; z-index: 2000; transition: bottom 0.5s ease; }
 #flash-message.show { bottom: 30px; }
 
-@keyframes zoomIn {
-    from { transform: scale(0.8); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
+/* ===== NUEVO: Animación de Error ===== */
+@keyframes flash-red {
+    0% { background-color: var(--color-light-gray); }
+    50% { background-color: rgba(216, 0, 12, 0.5); } /* Rojo flash */
+    100% { background-color: var(--color-light-gray); }
 }
