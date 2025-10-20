@@ -27,9 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
         isPaused: false,
         gameInProgress: false,
         lastMove: null, // {row, col, prevValue, prevNotes}
-        // ===== NUEVO: Estado para Modo Lápiz =====
         isPencilMode: false,
-        notesBoard: [] // Array 9x9 de Sets
+        notesBoard: []
     };
 
     // --- ELEMENTOS DEL DOM ---
@@ -59,7 +58,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const pauseBackToMenuBtn = document.getElementById('pause-back-to-menu');
     const gameOverHomeBtn = document.getElementById('game-over-home-btn');
     const undoButton = document.getElementById('undo-button');
-    // ===== NUEVO: Botón Lápiz =====
     const pencilToggleButton = document.getElementById('pencil-toggle-btn');
 
 
@@ -90,7 +88,6 @@ document.addEventListener('DOMContentLoaded', () => {
         gameOverHomeBtn.addEventListener('click', goHome);
         
         undoButton.addEventListener('click', undoLastMove);
-        // ===== NUEVO: Listener para Lápiz =====
         pencilToggleButton.addEventListener('click', togglePencilMode);
     }
 
@@ -150,11 +147,9 @@ document.addEventListener('DOMContentLoaded', () => {
         undoButton.style.display = 'none';
         clearAllErrors();
         
-        // ===== NUEVO: Resetear Lápiz y Notas =====
         gameState.isPencilMode = false;
         pencilToggleButton.classList.remove('active');
-        pencilToggleButton.style.display = 'flex'; // Mostrar botón lápiz
-        // Inicializa el tablero de notas como un array 9x9 de Sets vacíos
+        pencilToggleButton.style.display = 'flex';
         gameState.notesBoard = Array(9).fill(null).map(() => 
             Array(9).fill(null).map(() => new Set())
         );
@@ -194,12 +189,10 @@ document.addEventListener('DOMContentLoaded', () => {
         highlightTilesFromBoard(tile.dataset.row, tile.dataset.col);
     }
     
-    // ===== MODIFICADO: Para manejar Lápiz o Número =====
     function handleKeypadClick(event) {
         if (gameState.isPaused) return;
         const key = event.target.closest('.keypad-number');
         if (key) {
-            // No hacer nada si el botón está "deshabilitado" (invisible)
             if (key.classList.contains('disabled')) return; 
 
             const num = parseInt(key.textContent);
@@ -211,7 +204,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     placeNumber(num);
                  }
             } else {
-                // Si no hay celda seleccionada, solo resalta
                 highlightNumbersFromKeypad(num);
             }
         }
@@ -219,7 +211,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- LÓGICA DEL JUEGO ---
     
-    // ===== MODIFICADO: Guarda las notas antes de borrarlas =====
     function placeNumber(num) {
         if (!gameState.selectedTile || gameState.selectedTile.classList.contains('hint')) return;
 
@@ -228,25 +219,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const row = parseInt(gameState.selectedTile.dataset.row);
         const col = parseInt(gameState.selectedTile.dataset.col);
         
-        // Guarda el estado *antes* de la jugada
         const notes = gameState.notesBoard[row][col];
         gameState.lastMove = {
             row: row,
             col: col,
             prevValue: gameState.puzzleBoard[row][col],
-            prevNotes: new Set(notes) // <-- Guarda las notas
+            prevNotes: new Set(notes)
         };
         
-        // Limpia las notas de esta celda
         notes.clear();
-        renderTileNotes(row, col); // Actualiza la UI de notas (las oculta)
+        renderTileNotes(row, col);
 
-        // Pone el número
         gameState.puzzleBoard[row][col] = num;
         gameState.selectedTile.querySelector('.tile-number').textContent = num;
         gameState.selectedTile.classList.add('user-filled');
         
-        // Saca el modo notas de la celda si estaba
         gameState.selectedTile.classList.remove('is-notes');
 
 
@@ -284,7 +271,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updateKeypad();
     }
     
-    // ===== MODIFICADO: Restaura las notas al deshacer =====
     function undoLastMove() {
         if (!gameState.lastMove) return;
 
@@ -292,9 +278,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const tile = boardElement.children[row * 9 + col];
         const numberEl = tile.querySelector('.tile-number');
 
-        // Restaura el estado lógico y visual
         gameState.puzzleBoard[row][col] = prevValue;
-        gameState.notesBoard[row][col] = prevNotes; // <-- Restaura las notas
+        gameState.notesBoard[row][col] = prevNotes;
         
         numberEl.textContent = prevValue === 0 ? '' : prevValue;
         
@@ -305,7 +290,6 @@ document.addEventListener('DOMContentLoaded', () => {
             tile.classList.remove('user-filled');
         }
         
-        // Vuelve a renderizar las notas de esta celda
         renderTileNotes(row, col);
 
         gameState.selectedTile = tile;
@@ -321,7 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function endGame(isWin) {
         stopTimer();
         pauseButton.style.display = 'none';
-        pencilToggleButton.style.display = 'none'; // Ocultar lápiz
+        pencilToggleButton.style.display = 'none';
         gameState.gameInProgress = false;
         resumeGameBtn.style.display = 'none';
         
@@ -353,7 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function goHome() {
         stopTimer();
         pauseButton.style.display = 'none';
-        pencilToggleButton.style.display = 'none'; // Ocultar lápiz
+        pencilToggleButton.style.display = 'none';
         
         gameState.isPaused = false;
         gameState.gameInProgress = false;
@@ -379,7 +363,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         resumeGameBtn.style.display = 'block';
         pauseButton.style.display = 'none';
-        pencilToggleButton.style.display = 'none'; // Ocultar lápiz
+        pencilToggleButton.style.display = 'none';
         
         undoButton.style.display = 'none';
         
@@ -388,12 +372,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function resumeGame() {
         gameState.isPaused = false;
-        renderBoardImproved(); // Redibuja el tablero con notas
+        renderBoardImproved();
         updateKeypad();
         showScreen('game');
         resumeGameBtn.style.display = 'none';
         pauseButton.style.display = 'flex';
-        pencilToggleButton.style.display = 'flex'; // Mostrar lápiz
+        pencilToggleButton.style.display = 'flex';
         
         if (gameState.lastMove) {
             undoButton.style.display = 'flex';
@@ -411,7 +395,6 @@ document.addEventListener('DOMContentLoaded', () => {
         screens[overlayKey].classList.toggle('active', show);
     }
 
-    // ===== MODIFICADO: Para construir la estructura de Notas =====
     function renderBoardImproved() {
         boardElement.innerHTML = '';
         const fragment = document.createDocumentFragment();
@@ -426,11 +409,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (c === 2 || c === 5) tile.classList.add('tile-border-right');
                 if (r === 2 || r === 5) tile.classList.add('tile-border-bottom');
 
-                // --- Crear Elemento de Número Principal ---
                 const numberEl = document.createElement('div');
                 numberEl.className = 'tile-number';
                 
-                // --- Crear Cuadrícula de Notas ---
                 const notesGrid = document.createElement('div');
                 notesGrid.className = 'tile-notes-grid';
                 for (let i = 1; i <= 9; i++) {
@@ -439,23 +420,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     notesGrid.appendChild(noteEl);
                 }
                 
-                // --- Poblar datos ---
                 if (initialPuzzleForResume[r][c] !== 0) {
-                    // Es una pista
                     numberEl.textContent = initialPuzzleForResume[r][c];
                     tile.classList.add('hint');
                 } else if (gameState.puzzleBoard[r][c] !== 0) {
-                    // Es un número puesto por el usuario
                     numberEl.textContent = gameState.puzzleBoard[r][c];
                     tile.classList.add('user-filled');
                     if (gameState.solution[r][c] !== gameState.puzzleBoard[r][c]) {
                         tile.classList.add('tile-wrong-number');
                     }
                 } else {
-                    // Celda vacía, comprobar notas
                     const notes = gameState.notesBoard[r][c];
                     if (notes && notes.size > 0) {
-                        tile.classList.add('is-notes'); // Muestra la cuadrícula de notas
+                        tile.classList.add('is-notes');
                         notes.forEach(num => {
                             const noteEl = notesGrid.querySelector('.note-' + num);
                             if(noteEl) noteEl.textContent = num;
@@ -484,7 +461,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updateKeypad();
     }
 
-    // ===== NUEVO: Renderiza solo las notas de una celda =====
     function renderTileNotes(row, col) {
         const tile = boardElement.children[row * 9 + col];
         const notesGrid = tile.querySelector('.tile-notes-grid');
@@ -492,14 +468,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const notes = gameState.notesBoard[row][col];
         
-        // Muestra/oculta la cuadrícula de notas
-        if (notes.size > 0 && gameState.puzzleBoard[row][col] === 0) {
+        if (notes && notes.size > 0 && gameState.puzzleBoard[row][col] === 0) {
             tile.classList.add('is-notes');
         } else {
             tile.classList.remove('is-notes');
         }
 
-        // Actualiza el texto de cada nota
         for (let i = 1; i <= 9; i++) {
             const noteEl = notesGrid.querySelector('.note-' + i);
             if (noteEl) {
@@ -555,13 +529,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const num = gameState.puzzleBoard[numRow][numCol];
         
-        // Resaltado de Fila/Col (Celeste Claro)
         for (let i = 0; i < 9; i++) {
             boardElement.children[numRow * 9 + i].classList.add('highlight');
             boardElement.children[i * 9 + numCol].classList.add('highlight');
         }
 
-        // Resaltado de Números Iguales (Borde Punteado)
         if (num !== 0) {
             for (let r = 0; r < 9; r++) {
                 for (let c = 0; c < 9; c++) {
@@ -615,21 +587,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- LÓGICA DE RACHAS Y VICTORIAS (localStorage) ---
+    
+    // ===== CORRECCIÓN: Funciones de carga con try...catch =====
+    
     function saveStreaks() {
         localStorage.setItem('sudokuStreaks', JSON.stringify(gameState.streaks));
     }
+
     function loadStreaks() {
         const saved = localStorage.getItem('sudokuStreaks');
-        if (saved) gameState.streaks = JSON.parse(saved);
+        if (saved) {
+            try {
+                const parsedStreaks = JSON.parse(saved);
+                // Asegurarse de que es un objeto antes de asignarlo
+                if (typeof parsedStreaks === 'object' && parsedStreaks !== null) {
+                    gameState.streaks = parsedStreaks;
+                } else {
+                    throw new Error("Loaded streaks is not an object.");
+                }
+            } catch (e) {
+                console.error("Error loading streaks from localStorage:", e);
+                localStorage.removeItem('sudokuStreaks'); // Limpiar dato corrupto
+            }
+        }
     }
+
     function saveTotalWins() {
         localStorage.setItem('sudokuTotalWins', JSON.stringify(gameState.totalWins));
     }
+
     function loadTotalWins() {
         const saved = localStorage.getItem('sudokuTotalWins');
         if (saved) {
-            const loadedWins = JSON.parse(saved);
-            gameState.totalWins = { ...gameState.totalWins, ...loadedWins };
+            try {
+                const loadedWins = JSON.parse(saved);
+                // Asegurarse de que es un objeto antes de hacer spread
+                if (typeof loadedWins === 'object' && loadedWins !== null) {
+                    gameState.totalWins = { ...gameState.totalWins, ...loadedWins };
+                } else {
+                    throw new Error("Loaded wins is not an object.");
+                }
+            } catch (e) {
+                console.error("Error loading total wins from localStorage:", e);
+                localStorage.removeItem('sudokuTotalWins'); // Limpiar dato corrupto
+            }
         }
     }
     
@@ -662,19 +663,16 @@ document.addEventListener('DOMContentLoaded', () => {
         showOverlay('pause', gameState.isPaused);
     }
     
-    // ===== NUEVO: Activa/Desactiva el modo lápiz =====
     function togglePencilMode() {
         gameState.isPencilMode = !gameState.isPencilMode;
         pencilToggleButton.classList.toggle('active', gameState.isPencilMode);
     }
     
-    // ===== NUEVO: Añade o quita una nota =====
     function toggleNote(num) {
         if (!gameState.selectedTile) return;
         const row = parseInt(gameState.selectedTile.dataset.row);
         const col = parseInt(gameState.selectedTile.dataset.col);
 
-        // No permitir notas si ya hay un número puesto
         if (gameState.puzzleBoard[row][col] !== 0) return;
 
         const notes = gameState.notesBoard[row][col];
@@ -683,7 +681,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             notes.add(num);
         }
-        renderTileNotes(row, col); // Actualiza la UI de la celda
+        renderTileNotes(row, col);
     }
 
 
