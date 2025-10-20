@@ -26,8 +26,10 @@ document.addEventListener('DOMContentLoaded', () => {
         secondsElapsed: 0,
         isPaused: false,
         gameInProgress: false,
-        // ===== NUEVO: Para guardar la última jugada =====
-        lastMove: null // {row, col, prevValue}
+        lastMove: null, // {row, col, prevValue, prevNotes}
+        // ===== NUEVO: Estado para Modo Lápiz =====
+        isPencilMode: false,
+        notesBoard: [] // Array 9x9 de Sets
     };
 
     // --- ELEMENTOS DEL DOM ---
@@ -56,8 +58,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const resumeGameBtn = document.getElementById('resume-game-btn');
     const pauseBackToMenuBtn = document.getElementById('pause-back-to-menu');
     const gameOverHomeBtn = document.getElementById('game-over-home-btn');
-    // ===== NUEVO: Botón Deshacer =====
     const undoButton = document.getElementById('undo-button');
+    // ===== NUEVO: Botón Lápiz =====
+    const pencilToggleButton = document.getElementById('pencil-toggle-btn');
 
 
     // --- LÓGICA DE INICIO ---
@@ -86,8 +89,9 @@ document.addEventListener('DOMContentLoaded', () => {
         pauseBackToMenuBtn.addEventListener('click', goHomeFromPause);
         gameOverHomeBtn.addEventListener('click', goHome);
         
-        // ===== NUEVO: Listener para Deshacer =====
         undoButton.addEventListener('click', undoLastMove);
+        // ===== NUEVO: Listener para Lápiz =====
+        pencilToggleButton.addEventListener('click', togglePencilMode);
     }
 
     function createDifficultyButtons() {
@@ -142,10 +146,18 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState.secondsElapsed = 0;
         gameState.isPaused = false;
         
-        // ===== NUEVO: Resetear Deshacer y Errores =====
         gameState.lastMove = null;
         undoButton.style.display = 'none';
         clearAllErrors();
+        
+        // ===== NUEVO: Resetear Lápiz y Notas =====
+        gameState.isPencilMode = false;
+        pencilToggleButton.classList.remove('active');
+        pencilToggleButton.style.display = 'flex'; // Mostrar botón lápiz
+        // Inicializa el tablero de notas como un array 9x9 de Sets vacíos
+        gameState.notesBoard = Array(9).fill(null).map(() => 
+            Array(9).fill(null).map(() => new Set())
+        );
         
         renderTimer();
         startTimer();
@@ -182,17 +194,24 @@ document.addEventListener('DOMContentLoaded', () => {
         highlightTilesFromBoard(tile.dataset.row, tile.dataset.col);
     }
     
+    // ===== MODIFICADO: Para manejar Lápiz o Número =====
     function handleKeypadClick(event) {
         if (gameState.isPaused) return;
         const key = event.target.closest('.keypad-number');
         if (key) {
+            // No hacer nada si el botón está "deshabilitado" (invisible)
+            if (key.classList.contains('disabled')) return; 
+
             const num = parseInt(key.textContent);
             
             if (gameState.selectedTile) {
-                 if (!key.classList.contains('disabled')) {
+                 if (gameState.isPencilMode) {
+                    toggleNote(num);
+                 } else {
                     placeNumber(num);
-                }
+                 }
             } else {
+                // Si no hay celda seleccionada, solo resalta
                 highlightNumbersFromKeypad(num);
             }
         }
@@ -200,60 +219,61 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- LÓGICA DEL JUEGO ---
     
-    // ===== MODIFICADO: placeNumber con nueva lógica de error y deshacer =====
+    // ===== MODIFICADO: Guarda las notas antes de borrarlas =====
     function placeNumber(num) {
         if (!gameState.selectedTile || gameState.selectedTile.classList.contains('hint')) return;
 
-        // Limpia errores de la jugada anterior
         clearErrorHighlights();
 
         const row = parseInt(gameState.selectedTile.dataset.row);
         const col = parseInt(gameState.selectedTile.dataset.col);
         
         // Guarda el estado *antes* de la jugada
+        const notes = gameState.notesBoard[row][col];
         gameState.lastMove = {
             row: row,
             col: col,
-            prevValue: gameState.puzzleBoard[row][col]
+            prevValue: gameState.puzzleBoard[row][col],
+            prevNotes: new Set(notes) // <-- Guarda las notas
         };
+        
+        // Limpia las notas de esta celda
+        notes.clear();
+        renderTileNotes(row, col); // Actualiza la UI de notas (las oculta)
 
         // Pone el número
         gameState.puzzleBoard[row][col] = num;
-        gameState.selectedTile.textContent = num;
+        gameState.selectedTile.querySelector('.tile-number').textContent = num;
         gameState.selectedTile.classList.add('user-filled');
+        
+        // Saca el modo notas de la celda si estaba
+        gameState.selectedTile.classList.remove('is-notes');
 
-        // Resalta la jugada actual
+
         highlightTilesFromBoard(row, col);
         
-        // Muestra el botón deshacer
         undoButton.style.display = 'flex';
 
         if (gameState.solution[row][col] === num) {
-            // JUGADA CORRECTA
             gameState.selectedTile.classList.remove('tile-wrong-number');
             if (checkWin()) {
                 endGame(true);
             }
         } else {
-            // JUGADA INCORRECTA
             if (navigator.vibrate) {
-                navigator.vibrate(200); // Vibración
+                navigator.vibrate(200);
             }
-            // Añade clases de error
-            gameState.selectedTile.classList.add('tile-error'); // Flash
-            gameState.selectedTile.classList.add('tile-wrong-number'); // Texto rojo
+            gameState.selectedTile.classList.add('tile-error');
+            gameState.selectedTile.classList.add('tile-wrong-number');
             
-            // Resalta el conflicto
             highlightConflicts(row, col, num);
             
-            // Quita la animación de flash después de que termine
             setTimeout(() => {
                 if(gameState.selectedTile) {
                     gameState.selectedTile.classList.remove('tile-error');
                 }
             }, 500);
 
-            // Quita vidas
             gameState.lives--;
             updateLivesDisplay();
             showFlashMessage("Número equivocado");
@@ -264,31 +284,33 @@ document.addEventListener('DOMContentLoaded', () => {
         updateKeypad();
     }
     
-    // ===== NUEVA: Función para deshacer la última jugada =====
+    // ===== MODIFICADO: Restaura las notas al deshacer =====
     function undoLastMove() {
-        if (!gameState.lastMove) return; // No hay nada que deshacer
+        if (!gameState.lastMove) return;
 
-        const { row, col, prevValue } = gameState.lastMove;
+        const { row, col, prevValue, prevNotes } = gameState.lastMove;
         const tile = boardElement.children[row * 9 + col];
+        const numberEl = tile.querySelector('.tile-number');
 
         // Restaura el estado lógico y visual
         gameState.puzzleBoard[row][col] = prevValue;
-        tile.textContent = prevValue === 0 ? '' : prevValue;
+        gameState.notesBoard[row][col] = prevNotes; // <-- Restaura las notas
         
-        // Limpia clases de error
+        numberEl.textContent = prevValue === 0 ? '' : prevValue;
+        
         tile.classList.remove('user-filled', 'tile-wrong-number');
         clearErrorHighlights();
         
-        // Si el valor anterior era 0, ya no es 'user-filled'
         if (prevValue === 0) {
             tile.classList.remove('user-filled');
         }
+        
+        // Vuelve a renderizar las notas de esta celda
+        renderTileNotes(row, col);
 
-        // Reselecciona la celda y resalta
         gameState.selectedTile = tile;
         highlightTilesFromBoard(row, col);
         
-        // Oculta el botón y limpia la jugada
         gameState.lastMove = null;
         undoButton.style.display = 'none';
         
@@ -299,10 +321,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function endGame(isWin) {
         stopTimer();
         pauseButton.style.display = 'none';
+        pencilToggleButton.style.display = 'none'; // Ocultar lápiz
         gameState.gameInProgress = false;
         resumeGameBtn.style.display = 'none';
         
-        // ===== NUEVO: Limpia estado de deshacer y errores =====
         undoButton.style.display = 'none';
         gameState.lastMove = null;
         clearAllErrors();
@@ -331,13 +353,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function goHome() {
         stopTimer();
         pauseButton.style.display = 'none';
+        pencilToggleButton.style.display = 'none'; // Ocultar lápiz
         
         gameState.isPaused = false;
         gameState.gameInProgress = false;
         gameState.secondsElapsed = 0;
         resumeGameBtn.style.display = 'none';
 
-        // ===== NUEVO: Limpia estado de deshacer y errores =====
         undoButton.style.display = 'none';
         gameState.lastMove = null;
         clearAllErrors();
@@ -357,8 +379,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         resumeGameBtn.style.display = 'block';
         pauseButton.style.display = 'none';
+        pencilToggleButton.style.display = 'none'; // Ocultar lápiz
         
-        // ===== NUEVO: Oculta el botón deshacer en el menú =====
         undoButton.style.display = 'none';
         
         createDifficultyButtons();
@@ -366,13 +388,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function resumeGame() {
         gameState.isPaused = false;
-        renderBoardImproved();
+        renderBoardImproved(); // Redibuja el tablero con notas
         updateKeypad();
         showScreen('game');
         resumeGameBtn.style.display = 'none';
         pauseButton.style.display = 'flex';
+        pencilToggleButton.style.display = 'flex'; // Mostrar lápiz
         
-        // ===== NUEVO: Muestra el botón deshacer si hay una jugada =====
         if (gameState.lastMove) {
             undoButton.style.display = 'flex';
         }
@@ -389,6 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
         screens[overlayKey].classList.toggle('active', show);
     }
 
+    // ===== MODIFICADO: Para construir la estructura de Notas =====
     function renderBoardImproved() {
         boardElement.innerHTML = '';
         const fragment = document.createDocumentFragment();
@@ -397,25 +420,51 @@ document.addEventListener('DOMContentLoaded', () => {
             for (let c = 0; c < 9; c++) {
                 const tile = document.createElement('div');
                 tile.className = 'tile';
+                tile.dataset.row = r;
+                tile.dataset.col = c;
+                
                 if (c === 2 || c === 5) tile.classList.add('tile-border-right');
                 if (r === 2 || r === 5) tile.classList.add('tile-border-bottom');
 
+                // --- Crear Elemento de Número Principal ---
+                const numberEl = document.createElement('div');
+                numberEl.className = 'tile-number';
+                
+                // --- Crear Cuadrícula de Notas ---
+                const notesGrid = document.createElement('div');
+                notesGrid.className = 'tile-notes-grid';
+                for (let i = 1; i <= 9; i++) {
+                    const noteEl = document.createElement('div');
+                    noteEl.className = 'tile-note note-' + i;
+                    notesGrid.appendChild(noteEl);
+                }
+                
+                // --- Poblar datos ---
                 if (initialPuzzleForResume[r][c] !== 0) {
-                    tile.textContent = initialPuzzleForResume[r][c];
+                    // Es una pista
+                    numberEl.textContent = initialPuzzleForResume[r][c];
                     tile.classList.add('hint');
-                } 
-                else if (gameState.puzzleBoard[r][c] !== 0) {
-                    tile.textContent = gameState.puzzleBoard[r][c];
+                } else if (gameState.puzzleBoard[r][c] !== 0) {
+                    // Es un número puesto por el usuario
+                    numberEl.textContent = gameState.puzzleBoard[r][c];
                     tile.classList.add('user-filled');
-                    
-                    // ===== NUEVO: Vuelve a pintar de rojo si es un error guardado =====
                     if (gameState.solution[r][c] !== gameState.puzzleBoard[r][c]) {
                         tile.classList.add('tile-wrong-number');
                     }
+                } else {
+                    // Celda vacía, comprobar notas
+                    const notes = gameState.notesBoard[r][c];
+                    if (notes && notes.size > 0) {
+                        tile.classList.add('is-notes'); // Muestra la cuadrícula de notas
+                        notes.forEach(num => {
+                            const noteEl = notesGrid.querySelector('.note-' + num);
+                            if(noteEl) noteEl.textContent = num;
+                        });
+                    }
                 }
                 
-                tile.dataset.row = r;
-                tile.dataset.col = c;
+                tile.appendChild(numberEl);
+                tile.appendChild(notesGrid);
                 fragment.appendChild(tile);
             }
         }
@@ -435,8 +484,33 @@ document.addEventListener('DOMContentLoaded', () => {
         updateKeypad();
     }
 
+    // ===== NUEVO: Renderiza solo las notas de una celda =====
+    function renderTileNotes(row, col) {
+        const tile = boardElement.children[row * 9 + col];
+        const notesGrid = tile.querySelector('.tile-notes-grid');
+        if (!notesGrid) return;
+
+        const notes = gameState.notesBoard[row][col];
+        
+        // Muestra/oculta la cuadrícula de notas
+        if (notes.size > 0 && gameState.puzzleBoard[row][col] === 0) {
+            tile.classList.add('is-notes');
+        } else {
+            tile.classList.remove('is-notes');
+        }
+
+        // Actualiza el texto de cada nota
+        for (let i = 1; i <= 9; i++) {
+            const noteEl = notesGrid.querySelector('.note-' + i);
+            if (noteEl) {
+                noteEl.textContent = notes.has(i) ? i : '';
+            }
+        }
+    }
+
+
     function updateLivesDisplay() {
-        livesCounter.textContent = ❤️'.repeat(gameState.lives);
+        livesCounter.textContent = '❤️'.repeat(gameState.lives);
     }
 
     function updateIngameStreakDisplay() {
@@ -457,14 +531,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ===== NUEVO: Limpia solo los resaltados de conflicto =====
     function clearErrorHighlights() {
         document.querySelectorAll('.tile-conflict').forEach(t => {
             t.classList.remove('tile-conflict');
         });
     }
 
-    // ===== NUEVO: Limpia TODOS los errores (para reinicio) =====
     function clearAllErrors() {
         document.querySelectorAll('.tile-conflict, .tile-wrong-number, .tile-error').forEach(t => {
             t.classList.remove('tile-conflict', 'tile-wrong-number', 'tile-error');
@@ -483,11 +555,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const num = gameState.puzzleBoard[numRow][numCol];
         
+        // Resaltado de Fila/Col (Celeste Claro)
         for (let i = 0; i < 9; i++) {
             boardElement.children[numRow * 9 + i].classList.add('highlight');
             boardElement.children[i * 9 + numCol].classList.add('highlight');
         }
 
+        // Resaltado de Números Iguales (Borde Punteado)
         if (num !== 0) {
             for (let r = 0; r < 9; r++) {
                 for (let c = 0; c < 9; c++) {
@@ -513,23 +587,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // ===== NUEVA: Función para resaltar conflictos =====
     function highlightConflicts(row, col, num) {
         const board = gameState.puzzleBoard;
 
-        // Revisar Fila
         for (let i = 0; i < 9; i++) {
             if (i !== col && board[row][i] === num) {
                 boardElement.children[row * 9 + i].classList.add('tile-conflict');
             }
         }
-        // Revisar Columna
         for (let i = 0; i < 9; i++) {
             if (i !== row && board[i][col] === num) {
                 boardElement.children[i * 9 + col].classList.add('tile-conflict');
             }
         }
-        // Revisar Caja 3x3
         const boxRow = Math.floor(row / 3) * 3;
         const boxCol = Math.floor(col / 3) * 3;
         for (let i = boxRow; i < boxRow + 3; i++) {
@@ -591,6 +661,31 @@ document.addEventListener('DOMContentLoaded', () => {
         gameState.isPaused = !gameState.isPaused;
         showOverlay('pause', gameState.isPaused);
     }
+    
+    // ===== NUEVO: Activa/Desactiva el modo lápiz =====
+    function togglePencilMode() {
+        gameState.isPencilMode = !gameState.isPencilMode;
+        pencilToggleButton.classList.toggle('active', gameState.isPencilMode);
+    }
+    
+    // ===== NUEVO: Añade o quita una nota =====
+    function toggleNote(num) {
+        if (!gameState.selectedTile) return;
+        const row = parseInt(gameState.selectedTile.dataset.row);
+        const col = parseInt(gameState.selectedTile.dataset.col);
+
+        // No permitir notas si ya hay un número puesto
+        if (gameState.puzzleBoard[row][col] !== 0) return;
+
+        const notes = gameState.notesBoard[row][col];
+        if (notes.has(num)) {
+            notes.delete(num);
+        } else {
+            notes.add(num);
+        }
+        renderTileNotes(row, col); // Actualiza la UI de la celda
+    }
+
 
     // --- GENERADOR DE SUDOKU Y HELPERS ---
     function getNumberCounts() {
