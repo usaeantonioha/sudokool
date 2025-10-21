@@ -11,25 +11,24 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     const DEFAULT_SETTINGS = {
         theme: 'auto', boardFont: 'Manrope', showHintButton: true, showPencilButton: true, showUndoButton: true,
-        // Colores eliminados
+        useCustomColors: false, // Mantener la clave aunque no se use la UI
+        customColors: { /* Mantener estructura por si acaso */ },
         isMuted: false
     };
     const DEFAULT_STREAKS = { fácil: 0, medio: 0, difícil: 0, experto: 0 };
     const DEFAULT_WINS = { fácil: 0, medio: 0, difícil: 0, experto: 0 };
     const DEFAULT_ACHIEVEMENTS = {};
     const DEFAULT_LEADERBOARDS = { daily: [] };
-    // Tiempos promedio (en segundos)
     const AVERAGE_TIMES = { fácil: 300, medio: 600, difícil: 1200, experto: 1800 };
 
-
-    // --- ESTADO DEL JUEGO (Inicializado con defaults) ---
+    // --- ESTADO DEL JUEGO (Inicializado con defaults profundos) ---
     let gameState = {
         solution: [], puzzleBoard: [], lives: 3, selectedTile: null, currentDifficulty: DIFFICULTIES.MEDIO,
-        streaks: { ...DEFAULT_STREAKS },
-        totalWins: { ...DEFAULT_WINS },
+        streaks: JSON.parse(JSON.stringify(DEFAULT_STREAKS)),
+        totalWins: JSON.parse(JSON.stringify(DEFAULT_WINS)),
         timerInterval: null, secondsElapsed: 0, isPaused: false, gameInProgress: false, lastMove: null,
         isPencilMode: false, notesBoard: [], isMuted: false, isDailyChallenge: false, hintUsed: false,
-        achievements: { ...DEFAULT_ACHIEVEMENTS },
+        achievements: JSON.parse(JSON.stringify(DEFAULT_ACHIEVEMENTS)),
         leaderboards: JSON.parse(JSON.stringify(DEFAULT_LEADERBOARDS)),
         gameStats: { hasUsedUndo: false, notesPlaced: 0 },
         settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS))
@@ -44,35 +43,13 @@ document.addEventListener('DOMContentLoaded', () => {
         tabButtons, tabContents, settingsButton, shareDailyResultBtn, themeSelect, fontSelect,
         /* Eliminados: customColorsToggle, customColorsSection, colorPickers, resetColorsBtn, */
         muteToggleSetting, showHintToggle, showPencilToggle, showUndoToggle, muteToggleButton,
-        sharePuzzleBtn, // Nuevo
-        timeComparisonElement; // Nuevo
+        sharePuzzleBtn, timeComparisonElement;
 
+    // --- Función para obtener elementos del DOM de forma segura ---
     function getElements() {
         screens = { start: document.getElementById('start-screen'), game: document.getElementById('game-screen'), gameOver: document.getElementById('game-over-screen'), instructions: document.getElementById('instructions-screen'), about: document.getElementById('about-screen'), pause: document.getElementById('pause-screen'), hintOverlay: document.getElementById('hint-overlay-screen'), leaderboard: document.getElementById('leaderboard-screen'), settings: document.getElementById('settings-screen') };
-        boardElement = document.getElementById('board'); keypadElement = document.getElementById('keypad');
-        livesCounter = document.getElementById('lives-counter'); backToMenuBtn = document.getElementById('back-to-menu');
-        restartBtn = document.getElementById('restart-button'); gameOverMsg = document.getElementById('game-over-message');
-        difficultyButtonsContainer = document.getElementById('difficulty-buttons'); flashMessage = document.getElementById('flash-message');
-        ingameStreakDisplay = document.getElementById('ingame-streak-display'); infoIcon = document.getElementById('info-icon');
-        mainMenuLogo = document.getElementById('main-menu-logo'); timerDisplay = document.getElementById('timer-display');
-        pauseButton = document.getElementById('pause-button'); resumeButton = document.getElementById('resume-button');
-        resumeGameBtn = document.getElementById('resume-game-btn'); pauseBackToMenuBtn = document.getElementById('pause-back-to-menu');
-        gameOverHomeBtn = document.getElementById('game-over-home-btn'); undoButton = document.getElementById('undo-button');
-        pencilToggleButton = document.getElementById('pencil-toggle-btn'); dailyChallengeButton = document.getElementById('daily-challenge-btn');
-        hintButton = document.getElementById('hint-button'); hintExplanation = document.getElementById('hint-explanation');
-        hintOkButton = document.getElementById('hint-ok-btn'); confettiCanvas = document.getElementById('confetti-canvas');
-        leaderboardButton = document.getElementById('leaderboard-btn'); goToLeaderboardBtn = document.getElementById('go-to-leaderboard-btn');
-        achievementsList = document.getElementById('achievements-list'); leaderboardTableBody = document.querySelector('#leaderboard-table tbody');
-        tabButtons = document.querySelectorAll('.tab-btn'); tabContents = document.querySelectorAll('.tab-content');
-        settingsButton = document.getElementById('settings-btn'); shareDailyResultBtn = document.getElementById('share-daily-result-btn');
-        themeSelect = document.getElementById('theme-select'); fontSelect = document.getElementById('font-select');
-        muteToggleSetting = document.getElementById('mute-toggle-setting'); showHintToggle = document.getElementById('show-hint-toggle');
-        showPencilToggle = document.getElementById('show-pencil-toggle'); showUndoToggle = document.getElementById('show-undo-toggle');
-        muteToggleButton = document.getElementById('mute-toggle-btn');
-        sharePuzzleBtn = document.getElementById('share-puzzle-btn'); // Nuevo
-        timeComparisonElement = document.getElementById('time-comparison'); // Nuevo
-
-        const essentialElements = { boardElement, keypadElement, difficultyButtonsContainer, settingsButton, startScreen: screens.start, gameScreen: screens.game, settingsScreen: screens.settings };
+        boardElement = document.getElementById('board'); keypadElement = document.getElementById('keypad'); livesCounter = document.getElementById('lives-counter'); backToMenuBtn = document.getElementById('back-to-menu'); restartBtn = document.getElementById('restart-button'); gameOverMsg = document.getElementById('game-over-message'); difficultyButtonsContainer = document.getElementById('difficulty-buttons'); flashMessage = document.getElementById('flash-message'); ingameStreakDisplay = document.getElementById('ingame-streak-display'); infoIcon = document.getElementById('info-icon'); mainMenuLogo = document.getElementById('main-menu-logo'); timerDisplay = document.getElementById('timer-display'); pauseButton = document.getElementById('pause-button'); resumeButton = document.getElementById('resume-button'); resumeGameBtn = document.getElementById('resume-game-btn'); pauseBackToMenuBtn = document.getElementById('pause-back-to-menu'); gameOverHomeBtn = document.getElementById('game-over-home-btn'); undoButton = document.getElementById('undo-button'); pencilToggleButton = document.getElementById('pencil-toggle-btn'); dailyChallengeButton = document.getElementById('daily-challenge-btn'); hintButton = document.getElementById('hint-button'); hintExplanation = document.getElementById('hint-explanation'); hintOkButton = document.getElementById('hint-ok-btn'); confettiCanvas = document.getElementById('confetti-canvas'); leaderboardButton = document.getElementById('leaderboard-btn'); goToLeaderboardBtn = document.getElementById('go-to-leaderboard-btn'); achievementsList = document.getElementById('achievements-list'); leaderboardTableBody = document.querySelector('#leaderboard-table tbody'); tabButtons = document.querySelectorAll('.tab-btn'); tabContents = document.querySelectorAll('.tab-content'); settingsButton = document.getElementById('settings-btn'); shareDailyResultBtn = document.getElementById('share-daily-result-btn'); themeSelect = document.getElementById('theme-select'); fontSelect = document.getElementById('font-select'); muteToggleSetting = document.getElementById('mute-toggle-setting'); showHintToggle = document.getElementById('show-hint-toggle'); showPencilToggle = document.getElementById('show-pencil-toggle'); showUndoToggle = document.getElementById('show-undo-toggle'); muteToggleButton = document.getElementById('mute-toggle-btn'); sharePuzzleBtn = document.getElementById('share-puzzle-btn'); timeComparisonElement = document.getElementById('time-comparison');
+        const essentialElements = { boardElement, keypadElement, difficultyButtonsContainer, settingsButton, startScreen: screens.start, gameScreen: screens.game, settingsScreen: screens.settings, themeSelect, fontSelect, muteToggleSetting, muteToggleButton };
         for (const key in essentialElements) if (!essentialElements[key]) throw new Error(`Elemento esencial del DOM no encontrado: ${key}. Verifica el HTML.`);
     }
 
@@ -94,20 +71,24 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             getElements();
             setupConfetti();
+            // Carga robusta de datos
             loadSettings(); loadStreaks(); loadTotalWins(); loadAchievements(); loadLeaderboards();
-            applySettings();
-            // Cargar puzzle compartido si existe en la URL
+            // Aplicar ajustes visuales (con try-catch propio)
+            try { applySettings(); }
+            catch(e) { console.error("Error aplicando ajustes:",e,"Restaurando defaults."); gameState.settings=JSON.parse(JSON.stringify(DEFAULT_SETTINGS)); applySettings(); }
+            // Crear UI
+            createDifficultyButtons();
+            addEventListeners();
+            // Cargar puzzle compartido si existe
             const urlParams = new URLSearchParams(window.location.search);
             const puzzleCode = urlParams.get('puzzle');
             if (puzzleCode) {
-                loadPuzzleFromCode(puzzleCode); // Carga el puzzle compartido e inicia el juego
-            } else {
-                createDifficultyButtons(); // Carga normal
-                addEventListeners();
+                // Retrasar carga para asegurar que todo esté listo
+                setTimeout(() => loadPuzzleFromCode(puzzleCode), 100);
             }
         } catch(e) {
-            console.error("CRITICAL ERROR during initialization:", e);
-            document.body.innerHTML = `<div style="padding: 20px; text-align: center; color: black; background-color: white; font-family: sans-serif;"><h1>Error Inesperado</h1><p>Ocurrió un problema al cargar el juego.</p><p><strong>Solución Sugerida:</strong> Borra los datos de navegación y recarga.</p><details><summary>Detalles Técnicos</summary><pre style="text-align: left; background-color: #eee; padding: 10px; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word;">${e.stack || e}</pre></details></div>`;
+             console.error("CRITICAL ERROR during initialization:", e);
+             document.body.innerHTML = `<div style="padding: 20px; text-align: center; color: black; background-color: white; font-family: sans-serif;"><h1>Error Inesperado</h1><p>Ocurrió un problema al cargar el juego.</p><p><strong>Solución Sugerida:</strong> Intenta borrar los datos de navegación para este sitio (caché y datos del sitio) y recarga la página.</p><details><summary>Detalles Técnicos</summary><pre style="text-align: left; background-color: #eee; padding: 10px; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word;">${e.stack || e}</pre></details></div>`;
         }
     }
 
@@ -131,11 +112,11 @@ document.addEventListener('DOMContentLoaded', () => {
             pencilToggleButton?.addEventListener('click', togglePencilMode);
             dailyChallengeButton?.addEventListener('click', startDailyChallenge);
             hintButton?.addEventListener('click', provideHint);
-            hintOkButton?.addEventListener('click', () => { clearHintHighlights(); showOverlay('hintOverlay', false); }); // Limpia resaltados de pista
+            hintOkButton?.addEventListener('click', () => { clearHintHighlights(); showOverlay('hintOverlay', false); });
             leaderboardButton?.addEventListener('click', () => { playClickSound(); renderLeaderboardsPage(); showOverlay('leaderboard', true); });
             goToLeaderboardBtn?.addEventListener('click', () => { playClickSound(); showOverlay('gameOver', false); renderLeaderboardsPage(); showOverlay('leaderboard', true); });
             shareDailyResultBtn?.addEventListener('click', shareDailyResult);
-            sharePuzzleBtn?.addEventListener('click', shareCurrentPuzzle); // Nuevo listener
+            sharePuzzleBtn?.addEventListener('click', shareCurrentPuzzle);
             tabButtons?.forEach(btn => btn.addEventListener('click', handleTabClick));
             themeSelect?.addEventListener('change', handleThemeChange);
             fontSelect?.addEventListener('change', handleFontChange);
@@ -159,59 +140,54 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function createDifficultyButtons() {
-        if (!difficultyButtonsContainer) return;
+        if (!difficultyButtonsContainer) { console.error("difficultyButtonsContainer no encontrado al crear botones."); return; } // Más robustez
         difficultyButtonsContainer.innerHTML = ''; const f = document.createDocumentFragment();
         const l = [{key:'fácil',name:'Fácil'},{key:'medio',name:'Medio'},{key:'difícil',name:'Difícil'},{key:'experto',name:'Experto'}];
-        l.forEach(v=>{const b=document.createElement('button');b.className='difficulty-btn';b.dataset.difficulty=v.key;const t=document.createElement('span');t.textContent=v.name;b.appendChild(t);b.classList.add(`btn-${v.key}`);const s=(gameState.streaks&&typeof gameState.streaks==='object')?gameState.streaks[v.key]||0:0;if(s>0){const sp=document.createElement('span');sp.className='streak-display-menu';sp.textContent=`👑 ${s}`;b.appendChild(sp);}f.appendChild(b);});
+        l.forEach(v=>{const b=document.createElement('button');b.className='difficulty-btn';b.dataset.difficulty=v.key;const t=document.createElement('span');t.textContent=v.name;b.appendChild(t);b.classList.add(`btn-${v.key}`);const s=(gameState.streaks&&typeof gameState.streaks==='object'&&gameState.streaks[v.key])?gameState.streaks[v.key]:0;if(s>0){const sp=document.createElement('span');sp.className='streak-display-menu';sp.textContent=`👑 ${s}`;b.appendChild(sp);}f.appendChild(b);});
         difficultyButtonsContainer.appendChild(f); difficultyButtonsContainer.addEventListener('click', handleDifficultyClick);
     }
 
     let initialPuzzleForResume = []; let randomSeed = 1;
 
-    function startGame(difficulty, puzzleToLoad = null) { // Acepta puzzle opcional
-        cancelAnimationFrame(confettiAnimationId); if(confettiCtx)confettiCtx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
-        gameState.gameInProgress=true; gameState.isDailyChallenge=false;
-        if(resumeGameBtn)resumeGameBtn.style.display='none'; if(goToLeaderboardBtn)goToLeaderboardBtn.style.display='none'; if(shareDailyResultBtn)shareDailyResultBtn.style.display='none';
-        gameState.currentDifficulty=difficulty; gameState.lives=3; gameState.selectedTile=null;
-        gameState.secondsElapsed=0; gameState.isPaused=false;
-        gameState.lastMove=null; if(undoButton)undoButton.style.display='none'; clearAllErrors();
-        gameState.isPencilMode=false; if(pencilToggleButton)pencilToggleButton.classList.remove('active');
-        gameState.hintUsed=false; if(hintButton)hintButton.classList.remove('disabled');
-        gameState.notesBoard=Array(9).fill(null).map(()=>Array(9).fill(null).map(()=>new Set()));
-        gameState.gameStats={hasUsedUndo:false,notesPlaced:0};
-        applyButtonVisibility();
-        renderTimer(); startTimer(); if(pauseButton)pauseButton.style.display='flex';
+    function startGame(difficulty, puzzleToLoad = null) {
+        try {
+            cancelAnimationFrame(confettiAnimationId); if(confettiCtx)confettiCtx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
+            gameState.gameInProgress=true; gameState.isDailyChallenge=false;
+            if(resumeGameBtn)resumeGameBtn.style.display='none'; if(goToLeaderboardBtn)goToLeaderboardBtn.style.display='none'; if(shareDailyResultBtn)shareDailyResultBtn.style.display='none';
+            gameState.currentDifficulty=difficulty; gameState.lives=3; gameState.selectedTile=null;
+            gameState.secondsElapsed=0; gameState.isPaused=false;
+            gameState.lastMove=null; if(undoButton)undoButton.style.display='none'; clearAllErrors();
+            gameState.isPencilMode=false; if(pencilToggleButton)pencilToggleButton.classList.remove('active');
+            gameState.hintUsed=false; if(hintButton)hintButton.classList.remove('disabled');
+            gameState.notesBoard=Array(9).fill(null).map(()=>Array(9).fill(null).map(()=>new Set()));
+            gameState.gameStats={hasUsedUndo:false,notesPlaced:0};
+            applyButtonVisibility();
+            renderTimer(); startTimer(); if(pauseButton)pauseButton.style.display='flex';
 
-        if (puzzleToLoad) {
-             // Carga desde código compartido
-            gameState.puzzleBoard = puzzleToLoad.map(row => [...row]); // Clonar
-            initialPuzzleForResume = puzzleToLoad.map(row => [...row]); // Guardar estado inicial
-            // Necesitamos la solución para validar y para pistas. Generarla basada en el puzzle es complejo.
-            // Por simplicidad, generaremos una nueva solución y la usaremos. Esto *podría* hacer que un puzzle compartido inválido sea "solucionable".
-            let solutionBoard = puzzleToLoad.map(row => [...row]);
-            if (!generateSolution(solutionBoard, Math.random)) {
-                console.error("No se pudo generar una solución para el puzzle compartido.");
-                showFlashMessage("Error al cargar puzzle compartido.");
-                goHome(); // Volver al inicio si falla
-                return;
+            if (puzzleToLoad) {
+                 gameState.puzzleBoard = puzzleToLoad.map(row => [...row]);
+                 initialPuzzleForResume = puzzleToLoad.map(row => [...row]);
+                 let solutionBoard = puzzleToLoad.map(row => [...row]);
+                 if (!generateSolution(solutionBoard, Math.random)) { throw new Error("No se pudo generar solución para puzzle compartido."); }
+                 gameState.solution = solutionBoard;
+                 const emptyCells = puzzleToLoad.flat().filter(c => c === 0).length;
+                 if (emptyCells > CELLS_TO_REMOVE.experto - 5) gameState.currentDifficulty = DIFFICULTIES.EXPERTO;
+                 else if (emptyCells > CELLS_TO_REMOVE.difícil - 5) gameState.currentDifficulty = DIFFICULTIES.DIFÍCIL;
+                 else if (emptyCells > CELLS_TO_REMOVE.medio - 5) gameState.currentDifficulty = DIFFICULTIES.MEDIO;
+                 else gameState.currentDifficulty = DIFFICULTIES.FÁCIL;
+            } else {
+                 let b=generateEmptyBoard(); generateSolution(b,Math.random);
+                 gameState.solution=JSON.parse(JSON.stringify(b));
+                 gameState.puzzleBoard=createPuzzle(b,difficulty,Math.random);
             }
-            gameState.solution = solutionBoard;
-            // Estimar dificultad basada en celdas vacías (no ideal, pero funciona)
-            const emptyCells = puzzleToLoad.flat().filter(c => c === 0).length;
-            if (emptyCells > CELLS_TO_REMOVE.experto - 5) gameState.currentDifficulty = DIFFICULTIES.EXPERTO;
-            else if (emptyCells > CELLS_TO_REMOVE.difícil - 5) gameState.currentDifficulty = DIFFICULTIES.DIFÍCIL;
-            else if (emptyCells > CELLS_TO_REMOVE.medio - 5) gameState.currentDifficulty = DIFFICULTIES.MEDIO;
-            else gameState.currentDifficulty = DIFFICULTIES.FÁCIL;
 
-        } else {
-            // Generación normal
-            let b=generateEmptyBoard(); generateSolution(b,Math.random);
-            gameState.solution=JSON.parse(JSON.stringify(b));
-            gameState.puzzleBoard=createPuzzle(b,difficulty,Math.random);
+            updateLivesDisplay(); updateIngameStreakDisplay(); renderBoardImproved(); renderKeypad();
+            showScreen('game');
+        } catch (e) {
+            console.error("Error iniciando juego:", e);
+            showFlashMessage("Error al iniciar la partida.");
+            goHome(); // Intenta volver al inicio si falla
         }
-
-        updateLivesDisplay(); updateIngameStreakDisplay(); renderBoardImproved(); renderKeypad();
-        showScreen('game');
     }
 
     // --- MANEJADORES DE EVENTOS ---
@@ -222,7 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LÓGICA DEL JUEGO ---
     function placeNumber(num){if(!gameState.selectedTile||gameState.selectedTile.classList.contains('hint'))return;clearErrorHighlights();clearHintHighlights();const r=parseInt(gameState.selectedTile.dataset.row),c=parseInt(gameState.selectedTile.dataset.col);if(isNaN(r)||isNaN(c)||r<0||r>8||c<0||c>8)return;if(gameState.selectedTile.classList.contains('tile-wrong-number')){playErrorSound();showFlashMessage("Deshaz tu jugada anterior primero");return;}const nts=gameState.notesBoard?.[r]?.[c]||new Set();gameState.lastMove={row:r,col:c,prevValue:gameState.puzzleBoard?.[r]?.[c]||0,prevNotes:new Set(nts)};if(nts)nts.clear();renderTileNotes(r,c);if(!gameState.puzzleBoard[r])gameState.puzzleBoard[r]=[];gameState.puzzleBoard[r][c]=num;const numEl=gameState.selectedTile.querySelector('.tile-number');if(numEl)numEl.textContent=num.toString();else console.warn("NumEl missing");gameState.selectedTile.classList.add('user-filled');gameState.selectedTile.classList.remove('is-notes');highlightTilesFromBoard(r,c);if(undoButton)undoButton.style.display='none';if(gameState.solution?.[r]?.[c]===num){gameState.selectedTile.classList.remove('tile-wrong-number');autoCleanNotes(r,c,num);if(checkWin())endGame(true);}else{playErrorSound();if(navigator.vibrate)navigator.vibrate(200);gameState.selectedTile.classList.add('tile-error','tile-wrong-number');highlightConflicts(r,c,num);setTimeout(()=>{if(gameState.selectedTile)gameState.selectedTile.classList.remove('tile-error');},500);if(gameState.settings.showUndoButton&&undoButton)undoButton.style.display='flex';gameState.lives--;updateLivesDisplay();showFlashMessage("Número equivocado");if(gameState.lives<=0)endGame(false);}updateKeypad();}
     function undoLastMove(){if(!gameState.lastMove)return;playClickSound();gameState.gameStats.hasUsedUndo=true;const{row:r,col:c,prevValue:pv,prevNotes:pn}=gameState.lastMove;const t=boardElement?.children[r*9+c];if(!t)return;const ne=t.querySelector('.tile-number');if(!gameState.puzzleBoard[r])gameState.puzzleBoard[r]=[];gameState.puzzleBoard[r][c]=pv;if(!gameState.notesBoard[r])gameState.notesBoard[r]=[];gameState.notesBoard[r][c]=pn;if(ne)ne.textContent=pv===0?'':pv.toString();t.classList.remove('user-filled','tile-wrong-number');clearErrorHighlights();clearHintHighlights();if(pv===0)t.classList.remove('user-filled');renderTileNotes(r,c);gameState.selectedTile=t;highlightTilesFromBoard(r,c);gameState.lastMove=null;if(undoButton)undoButton.style.display='none';updateKeypad();}
-    function endGame(isWin){stopTimer();if(pauseButton)pauseButton.style.display='none';if(pencilToggleButton)pencilToggleButton.style.display='none';if(hintButton)hintButton.style.display='none';gameState.gameInProgress=false;if(resumeGameBtn)resumeGameBtn.style.display='none';if(undoButton)undoButton.style.display='none';gameState.lastMove=null;clearAllErrors();clearHintHighlights();const timeComparisonText = ''; if(isWin){playWinSound();launchConfetti();gameState.streaks[gameState.currentDifficulty]++;gameState.totalWins[gameState.currentDifficulty]++;saveTotalWins();checkAchievements();if(gameState.isDailyChallenge){saveToLeaderboard(gameState.secondsElapsed);if(goToLeaderboardBtn)goToLeaderboardBtn.style.display='block';if(shareDailyResultBtn)shareDailyResultBtn.style.display='block';} else {const avgTime = AVERAGE_TIMES[gameState.currentDifficulty]; if(avgTime){const diff = gameState.secondsElapsed - avgTime; timeComparisonText = diff <= 0 ? `(${Math.abs(diff)}s más rápido que el promedio)` : `(${diff}s más lento que el promedio)`;}}if(gameOverMsg){gameOverMsg.textContent='¡FELICITACIONES!';gameOverMsg.className='win';}}else{gameState.streaks[gameState.currentDifficulty]=0;if(gameOverMsg){gameOverMsg.textContent='Game Over';gameOverMsg.className='lose';}}if(timeComparisonElement)timeComparisonElement.textContent = timeComparisonText; saveStreaks();showOverlay('gameOver',true);}
+    function endGame(isWin){stopTimer();if(pauseButton)pauseButton.style.display='none';if(pencilToggleButton)pencilToggleButton.style.display='none';if(hintButton)hintButton.style.display='none';gameState.gameInProgress=false;if(resumeGameBtn)resumeGameBtn.style.display='none';if(undoButton)undoButton.style.display='none';gameState.lastMove=null;clearAllErrors();clearHintHighlights();let timeComparisonText='';if(isWin){playWinSound();launchConfetti();gameState.streaks[gameState.currentDifficulty]++;gameState.totalWins[gameState.currentDifficulty]++;saveTotalWins();checkAchievements();if(gameState.isDailyChallenge){saveToLeaderboard(gameState.secondsElapsed);if(goToLeaderboardBtn)goToLeaderboardBtn.style.display='block';if(shareDailyResultBtn)shareDailyResultBtn.style.display='block';}else{const avgTime=AVERAGE_TIMES[gameState.currentDifficulty];if(avgTime){const diff=gameState.secondsElapsed-avgTime;timeComparisonText=diff<=0?`(${Math.abs(diff)}s más rápido que el promedio)`:`(${diff}s más lento que el promedio)`;}}if(gameOverMsg){gameOverMsg.textContent='¡FELICITACIONES!';gameOverMsg.className='win';}}else{gameState.streaks[gameState.currentDifficulty]=0;if(gameOverMsg){gameOverMsg.textContent='Game Over';gameOverMsg.className='lose';}}if(timeComparisonElement)timeComparisonElement.textContent=timeComparisonText;saveStreaks();showOverlay('gameOver',true);}
     function restartGame(){playClickSound();showOverlay('gameOver',false);if(goToLeaderboardBtn)goToLeaderboardBtn.style.display='none';if(shareDailyResultBtn)shareDailyResultBtn.style.display='none';startGame(gameState.currentDifficulty);}
     function goHome(){playClickSound();stopTimer();if(pauseButton)pauseButton.style.display='none';if(pencilToggleButton)pencilToggleButton.style.display='none';if(hintButton)hintButton.style.display='none';gameState.isPaused=false;gameState.gameInProgress=false;gameState.secondsElapsed=0;if(resumeGameBtn)resumeGameBtn.style.display='none';if(goToLeaderboardBtn)goToLeaderboardBtn.style.display='none';if(shareDailyResultBtn)shareDailyResultBtn.style.display='none';if(undoButton)undoButton.style.display='none';gameState.lastMove=null;clearAllErrors();clearHintHighlights();showOverlay('gameOver',false);showOverlay('pause',false);showScreen('start');createDifficultyButtons();}
     function goHomeFromPause(){playClickSound();gameState.isPaused=true;gameState.gameInProgress=true;showOverlay('pause',false);showScreen('start');if(resumeGameBtn)resumeGameBtn.style.display='block';if(pauseButton)pauseButton.style.display='none';if(pencilToggleButton)pencilToggleButton.style.display='none';if(hintButton)hintButton.style.display='none';if(undoButton)undoButton.style.display='none';createDifficultyButtons();}
@@ -234,7 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderBoardImproved(){if(!boardElement)return;boardElement.innerHTML='';const f=document.createDocumentFragment();for(let r=0;r<9;r++){for(let c=0;c<9;c++){const t=document.createElement('div');t.className='tile';t.dataset.row=r;t.dataset.col=c;if(c===2||c===5)t.classList.add('tile-border-right');if(r===2||r===5)t.classList.add('tile-border-bottom');const nEl=document.createElement('div');nEl.className='tile-number';const nGrid=document.createElement('div');nGrid.className='tile-notes-grid';for(let i=1;i<=9;i++){const nE=document.createElement('div');nE.className='tile-note note-'+i;nGrid.appendChild(nE);}const initialNum=initialPuzzleForResume?.[r]?.[c];const currentNum=gameState.puzzleBoard?.[r]?.[c];const solutionNum=gameState.solution?.[r]?.[c];if(initialNum!==undefined&&initialNum!==0){nEl.textContent=initialNum.toString();t.classList.add('hint');}else if(currentNum!==undefined&&currentNum!==0){nEl.textContent=currentNum.toString();t.classList.add('user-filled');if(solutionNum!==undefined&&currentNum!==solutionNum)t.classList.add('tile-wrong-number');}else{const nts=gameState.notesBoard?.[r]?.[c];if(nts&&nts.size>0){t.classList.add('is-notes');nts.forEach(num=>{const nE=nGrid.querySelector('.note-'+num);if(nE)nE.textContent=num.toString();});}}t.appendChild(nEl);t.appendChild(nGrid);f.appendChild(t);}}boardElement.appendChild(f);}
     function renderKeypad(){if(!keypadElement)return;keypadElement.innerHTML='';const f=document.createDocumentFragment();for(let i=1;i<=9;i++){const k=document.createElement('button');k.className='keypad-number';k.textContent=i.toString();f.appendChild(k);}keypadElement.appendChild(f);updateKeypad();}
     function renderTileNotes(r,c){const t=boardElement?.children[r*9+c];if(!t)return;const nG=t.querySelector('.tile-notes-grid');if(!nG)return;const nts=gameState.notesBoard?.[r]?.[c];const showNotes=nts&&nts.size>0&&gameState.puzzleBoard?.[r]?.[c]===0;t.classList.toggle('is-notes',showNotes);for(let i=1;i<=9;i++){const nE=nG.querySelector('.note-'+i);if(nE){const hasNote=nts&&nts.has(i);nE.textContent=hasNote?i.toString():'';nE.classList.toggle('visible',hasNote);}}}
-    function updateLivesDisplay(){if(livesCounter)livesCounter.textContent='❤️'.repeat(gameState.lives);}
+    function updateLivesDisplay(){if(livesCounter)livesCounter.textContent='❤️'.repeat(Math.max(0,gameState.lives));} // Asegura >= 0
     function updateIngameStreakDisplay(){if(!ingameStreakDisplay)return;const s=(gameState.streaks&&gameState.currentDifficulty)?gameState.streaks[gameState.currentDifficulty]||0:0;ingameStreakDisplay.innerHTML=s>0?`👑 <span class="ingame-streak-number">${s}</span>`:'';}
     function showFlashMessage(m){if(!flashMessage)return;flashMessage.textContent=m;flashMessage.classList.add('show');setTimeout(()=>flashMessage.classList.remove('show'),1500);}
 
@@ -242,23 +218,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function clearAllHighlights(){document.querySelectorAll('.tile').forEach(t=>t.classList.remove('highlight','keypad-highlight','selected'));}
     function clearErrorHighlights(){document.querySelectorAll('.tile-conflict').forEach(t=>t.classList.remove('tile-conflict'));}
     function clearAllErrors(){document.querySelectorAll('.tile-conflict, .tile-wrong-number, .tile-error').forEach(t=>t.classList.remove('tile-conflict','tile-wrong-number','tile-error'));}
-    // Nuevo: Limpiar resaltados de pista
-    function clearHintHighlights() { document.querySelectorAll('.tile-hint-target, .tile-hint-involved').forEach(t => t.classList.remove('tile-hint-target', 'tile-hint-involved')); }
+    function clearHintHighlights(){document.querySelectorAll('.tile-hint-target, .tile-hint-involved').forEach(t=>t.classList.remove('tile-hint-target','tile-hint-involved'));}
     function highlightTilesFromBoard(row,col){if(!boardElement)return;const r=parseInt(row),c=parseInt(col);if(isNaN(r)||isNaN(c))return;clearAllHighlights();const t=boardElement.children[r*9+c];if(t)t.classList.add('selected');const n=gameState.puzzleBoard?.[r]?.[c];if(n===undefined)return;for(let i=0;i<9;i++){const rowTile=boardElement.children[r*9+i];if(rowTile)rowTile.classList.add('highlight');const colTile=boardElement.children[i*9+c];if(colTile)colTile.classList.add('highlight');}if(n!==0){for(let i=0;i<9;i++)for(let j=0;j<9;j++)if(gameState.puzzleBoard?.[i]?.[j]===n){const numTile=boardElement.children[i*9+j];if(numTile)numTile.classList.add('keypad-highlight');}}}
     function highlightNumbersFromKeypad(n){clearAllHighlights();if(n>0){for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(gameState.puzzleBoard?.[r]?.[c]===n){const numTile=boardElement?.children[r*9+c];if(numTile)numTile.classList.add('keypad-highlight');}}}
     function highlightConflicts(r,c,n){const b=gameState.puzzleBoard;for(let i=0;i<9;i++){if(i!==c&&b?.[r]?.[i]===n){const tile=boardElement?.children[r*9+i];if(tile)tile.classList.add('tile-conflict');}if(i!==r&&b?.[i]?.[c]===n){const tile=boardElement?.children[i*9+c];if(tile)tile.classList.add('tile-conflict');}}const br=Math.floor(r/3)*3,bc=Math.floor(c/3)*3;for(let i=br;i<br+3;i++)for(let j=bc;j<bc+3;j++)if(i!==r||j!==c)if(b?.[i]?.[j]===n){const tile=boardElement?.children[i*9+j];if(tile)tile.classList.add('tile-conflict');}}
-    // Nuevo: Resaltar celdas de pista
-    function highlightHintCells(targetCoords, involvedCoords = []) {
-        clearHintHighlights(); // Limpia anteriores
-        const targetTile = boardElement?.children[targetCoords.row * 9 + targetCoords.col];
-        if (targetTile) targetTile.classList.add('tile-hint-target');
-        involvedCoords.forEach(coords => {
-            const involvedTile = boardElement?.children[coords.row * 9 + coords.col];
-            if (involvedTile) involvedTile.classList.add('tile-hint-involved');
-        });
-    }
+    function highlightHintCells(targetCoords,involvedCoords=[]){clearHintHighlights();const targetTile=boardElement?.children[targetCoords.row*9+targetCoords.col];if(targetTile)targetTile.classList.add('tile-hint-target');involvedCoords.forEach(coords=>{const involvedTile=boardElement?.children[coords.row*9+coords.col];if(involvedTile)involvedTile.classList.add('tile-hint-involved');});}
 
     // --- LÓGICA DE GUARDADO (localStorage) ---
+    // ===== CORRECCIÓN: Funciones de carga robustecidas =====
     function saveStreaks(){try{localStorage.setItem('sudokuStreaks',JSON.stringify(gameState.streaks));}catch(e){console.error("Error saving streaks:",e);}}
     function loadStreaks(){const key='sudokuStreaks'; const defaultVal={...DEFAULT_STREAKS}; try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'){gameState.streaks={...defaultVal,...p};return;}throw new Error("Invalid format");}gameState.streaks=defaultVal;}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.streaks=defaultVal;}}
     function saveTotalWins(){try{localStorage.setItem('sudokuTotalWins',JSON.stringify(gameState.totalWins));}catch(e){console.error("Error saving wins:",e);}}
@@ -267,8 +234,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function loadAchievements(){const key='sudokuAchievements'; const defaultVal={...DEFAULT_ACHIEVEMENTS}; try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'){gameState.achievements=p;return;}throw new Error("Invalid format");}gameState.achievements=defaultVal;}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.achievements=defaultVal;}}
     function saveLeaderboards(){try{localStorage.setItem('sudokuLeaderboards',JSON.stringify(gameState.leaderboards));}catch(e){console.error("Err save leaders:",e);}}
     function loadLeaderboards(){const key='sudokuLeaderboards'; const defaultVal=JSON.parse(JSON.stringify(DEFAULT_LEADERBOARDS)); try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'&&p.daily&&Array.isArray(p.daily)){gameState.leaderboards=p;return;}throw new Error("Invalid format");}gameState.leaderboards=defaultVal;}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.leaderboards=defaultVal;}}
-    function saveSetting(key,value){try{let s=gameState.settings;if(key.includes('.')){const k=key.split('.');if(s[k[0]]!==undefined)s[k[0]][k[1]]=value;}else s[key]=value;localStorage.setItem('sudokuSettings',JSON.stringify(s));}catch(e){console.error("Err save setting:",key,e);}}
-    function loadSettings(){const key='sudokuSettings'; let saved=null; try{const s=localStorage.getItem(key);if(s){saved=JSON.parse(s);if(typeof saved!=='object'||saved===null)throw new Error("Invalid format");}}catch(e){console.error(`Error loading/parsing ${key}:`,e,"Using defaults.");localStorage.removeItem(key);saved=null;}gameState.settings=deepMerge(JSON.parse(JSON.stringify(DEFAULT_SETTINGS)),saved||{});gameState.isMuted=gameState.settings.isMuted;if(muteToggleButton)muteToggleButton.classList.toggle('muted',gameState.isMuted);}
+    function saveSetting(key,value){try{let s=gameState.settings;if(key.includes('.')){const k=key.split('.');if(s[k[0]]!==undefined&&typeof s[k[0]]==='object')s[k[0]][k[1]]=value;else console.warn(`Cannot save nested setting: ${key}`);}else s[key]=value;localStorage.setItem('sudokuSettings',JSON.stringify(s));}catch(e){console.error("Err save setting:",key,e);}}
+    function loadSettings() {const key='sudokuSettings'; let saved=null; try{const s=localStorage.getItem(key);if(s){saved=JSON.parse(s);if(typeof saved!=='object'||saved===null)throw new Error("Invalid format");}}catch(e){console.error(`Error loading/parsing ${key}:`,e,"Using defaults.");localStorage.removeItem(key);saved=null;}gameState.settings=deepMerge(JSON.parse(JSON.stringify(DEFAULT_SETTINGS)),saved||{});gameState.isMuted=gameState.settings.isMuted;if(muteToggleButton)muteToggleButton.classList.toggle('muted',gameState.isMuted);}
 
     // --- LÓGICA DE TIMER Y PAUSA ---
     function startTimer(){clearInterval(gameState.timerInterval);gameState.timerInterval=setInterval(updateTimer,1000);}
@@ -290,30 +257,19 @@ document.addEventListener('DOMContentLoaded', () => {
     function applyFont(f){let ff='var(--font-default)';if(f==='Roboto Slab')ff='var(--font-serif)';else if(f==='Source Code Pro')ff='var(--font-mono)';document.documentElement.style.setProperty('--font-board',ff);}
     function handleMuteChange(event){const m=event.target.checked;saveSetting('isMuted',m);gameState.isMuted=m;if(muteToggleButton)muteToggleButton.classList.toggle('muted',m);if(!m)playClickSound();}
     function handleButtonVisibilityChange(key,v){saveSetting(key,v);applyButtonVisibility();playClickSound();}
-    function applyButtonVisibility(){if(hintButton)hintButton.style.display=gameState.settings.showHintButton?'flex':'none';if(pencilToggleButton)pencilToggleButton.style.display=gameState.settings.showPencilButton?'flex':'none';if(undoButton&&!gameState.settings.showUndoButton&&undoButton.style.display==='flex')undoButton.style.display='none';}
+    function applyButtonVisibility(){if(hintButton)hintButton.style.display=(gameState.settings.showHintButton&&gameState.gameInProgress)?'flex':'none';if(pencilToggleButton)pencilToggleButton.style.display=(gameState.settings.showPencilButton&&gameState.gameInProgress)?'flex':'none';if(undoButton&&!gameState.settings.showUndoButton&&undoButton.style.display==='flex')undoButton.style.display='none';}
     // Funciones colores eliminadas
     function setupSettingsScreen(){if(!themeSelect||!fontSelect||/*!customColorsToggle||!customColorsSection||*/!muteToggleSetting||!showHintToggle||!showPencilToggle||!showUndoToggle)return;themeSelect.value=gameState.settings.theme;fontSelect.value=gameState.settings.boardFont;/*customColorsToggle.checked=gameState.settings.useCustomColors;customColorsSection.style.display=gameState.settings.useCustomColors?'block':'none';*/muteToggleSetting.checked=gameState.isMuted;showHintToggle.checked=gameState.settings.showHintButton;showPencilToggle.checked=gameState.settings.showPencilButton;showUndoToggle.checked=gameState.settings.showUndoButton;}
-    function deepMerge(t,s){if(!s)return t;for(const k in s){if(s.hasOwnProperty(k)){const sk=s[k];if(sk&&typeof sk==='object'&&!Array.isArray(sk)){if(!t[k]||typeof t[k]!=='object')t[k]={};deepMerge(t[k],sk);}else if(sk!==undefined)t[k]=sk;}}return t;}
-    function applySettings() {
-        if (!document.body) return;
-        try {
-            if (gameState.settings.theme === 'auto') applyDynamicTheme(); else document.body.dataset.theme = gameState.settings.theme;
-            applyFont(gameState.settings.boardFont);
-            // applyCustomColors(gameState.settings.useCustomColors); // Eliminado
-            if (muteToggleButton) muteToggleButton.classList.toggle('muted', gameState.isMuted);
-        } catch(e) { console.error("Error al aplicar settings:", e); document.body.dataset.theme = 'light'; applyFont(DEFAULT_SETTINGS.boardFont); }
-    }
+    function deepMerge(t, s) { if (!s) return t; for (const k in s) { if (s.hasOwnProperty(k)) { const sk = s[k]; const tk = t[k]; if (sk && typeof sk === 'object' && !Array.isArray(sk)) { if (!tk || typeof tk !== 'object' || Array.isArray(tk)) { t[k] = {}; } deepMerge(t[k], sk); } else if (sk !== undefined) { t[k] = sk; } } } return t; }
+    function applySettings(){if(!document.body)return;try{if(gameState.settings.theme==='auto')applyDynamicTheme();else document.body.dataset.theme=gameState.settings.theme;applyFont(gameState.settings.boardFont);/*applyCustomColors(gameState.settings.useCustomColors);*/if(muteToggleButton)muteToggleButton.classList.toggle('muted',gameState.isMuted);}catch(e){console.error("Error al aplicar settings:",e);document.body.dataset.theme='light';applyFont(DEFAULT_SETTINGS.boardFont);}}
 
 
     // --- LÓGICA DE DESAFÍO DIARIO Y PISTAS ---
     function setSeed(s){randomSeed=s;} function seededRandom(){let x=Math.sin(randomSeed++)*1e4;return x-Math.floor(x);}
     function startDailyChallenge(){playClickSound();cancelAnimationFrame(confettiAnimationId);if(confettiCtx)confettiCtx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);gameState.gameInProgress=true;gameState.isDailyChallenge=true;if(resumeGameBtn)resumeGameBtn.style.display='none';if(goToLeaderboardBtn)goToLeaderboardBtn.style.display='none';if(shareDailyResultBtn)shareDailyResultBtn.style.display='none';gameState.currentDifficulty=DIFFICULTIES.MEDIO;gameState.lives=3;gameState.selectedTile=null;gameState.secondsElapsed=0;gameState.isPaused=false;gameState.lastMove=null;if(undoButton)undoButton.style.display='none';clearAllErrors();gameState.isPencilMode=false;if(pencilToggleButton)pencilToggleButton.classList.remove('active');gameState.hintUsed=false;if(hintButton)hintButton.classList.remove('disabled');gameState.notesBoard=Array(9).fill(null).map(()=>Array(9).fill(null).map(()=>new Set()));gameState.gameStats={hasUsedUndo:false,notesPlaced:0};applyButtonVisibility();renderTimer();startTimer();if(pauseButton)pauseButton.style.display='flex';const d=new Date(),seed=parseInt(`${d.getFullYear()}${('0'+(d.getMonth()+1)).slice(-2)}${('0'+d.getDate()).slice(-2)}`);setSeed(seed);let b=generateEmptyBoard();generateSolution(b,seededRandom);gameState.solution=JSON.parse(JSON.stringify(b));gameState.puzzleBoard=createPuzzle(b,DIFFICULTIES.MEDIO,seededRandom);updateLivesDisplay();updateIngameStreakDisplay();renderBoardImproved();renderKeypad();showScreen('game');}
-    // ===== MODIFICADO: provideHint usa highlightHintCells =====
-    function provideHint(){if(gameState.hintUsed||!hintButton)return;playClickSound();clearHintHighlights();let h=findNakedSingle();if(!h)h=findHiddenSingle();if(h){gameState.hintUsed=true;hintButton.classList.add('disabled');gameState.secondsElapsed+=60;renderTimer();showFlashMessage("Pista usada: +1 minuto");const{row:r,col:c,num:n,logic:l,involved}=h;if(!gameState.puzzleBoard[r])gameState.puzzleBoard[r]=[];gameState.puzzleBoard[r][c]=n;if(initialPuzzleForResume?.[r])initialPuzzleForResume[r][c]=n;if(gameState.notesBoard?.[r]?.[c])gameState.notesBoard[r][c].clear();renderBoardImproved();updateKeypad();const t=boardElement?.children[r*9+c];if(t){gameState.selectedTile=t;highlightTilesFromBoard(r,c);highlightHintCells({row:r,col:c},involved); // Resalta celdas de pista}if(hintExplanation)hintExplanation.innerHTML=l;showOverlay('hintOverlay',true);}else showFlashMessage("No se encontraron pistas simples");}
-    // ===== MODIFICADO: findNakedSingle devuelve celdas involucradas =====
-    function findNakedSingle(){for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(gameState.puzzleBoard?.[r]?.[c]===0){let p=new Set([1,2,3,4,5,6,7,8,9]);let involved=[];for(let i=0;i<9;i++){const valR=gameState.puzzleBoard?.[r]?.[i];if(valR!==0&&valR!==undefined){p.delete(valR);involved.push({row:r,col:i});}}for(let i=0;i<9;i++){const valC=gameState.puzzleBoard?.[i]?.[c];if(valC!==0&&valC!==undefined){p.delete(valC);involved.push({row:i,col:c});}}const br=Math.floor(r/3)*3,bc=Math.floor(c/3)*3;for(let i=br;i<br+3;i++)for(let j=bc;j<bc+3;j++){const valB=gameState.puzzleBoard?.[i]?.[j];if(valB!==0&&valB!==undefined){p.delete(valB);involved.push({row:i,col:j});}}if(p.size===1){const n=p.values().next().value;return{row:r,col:c,num:n,logic:`En <span class="hint-cell">F${r+1},C${c+1}</span>, el <strong>${n}</strong> es el único posible (ver celdas resaltadas).`,involved:involved};}}return null;}
-    // ===== MODIFICADO: findHiddenSingle (simplificado y devuelve celdas) =====
-    function findHiddenSingle(){for(let r=0;r<9;r++)for(let n=1;n<=9;n++){let co=0,lc=-1,involved=[];if([...(gameState.puzzleBoard?.[r]||[])].includes(n))continue;for(let c=0;c<9;c++)if(gameState.puzzleBoard?.[r]?.[c]===0&&isPossible(r,c,n)){co++;lc=c;}if(co===1){// Encontrar celdas involucradas (las otras vacías donde NO puede ir n)for(let c=0;c<9;c++){if(c!==lc && gameState.puzzleBoard?.[r]?.[c]===0 && !isPossible(r,c,n)){involved.push({row:r, col:c});}}return{row:r,col:lc,num:n,logic:`En la <span class="hint-cell">Fila ${r+1}</span>, <span class="hint-cell">C${lc+1}</span> es el único lugar para <strong>${n}</strong> (ver celdas resaltadas).`,involved:involved};}}/*...(col/box omitted)...*/return null;}
+    function provideHint(){if(gameState.hintUsed||!hintButton)return;playClickSound();clearHintHighlights();let h=findNakedSingle();if(!h)h=findHiddenSingle();if(h){gameState.hintUsed=true;hintButton.classList.add('disabled');gameState.secondsElapsed+=60;renderTimer();showFlashMessage("Pista usada: +1 minuto");const{row:r,col:c,num:n,logic:l,involved}=h;if(!gameState.puzzleBoard[r])gameState.puzzleBoard[r]=[];gameState.puzzleBoard[r][c]=n;if(initialPuzzleForResume?.[r])initialPuzzleForResume[r][c]=n;if(gameState.notesBoard?.[r]?.[c])gameState.notesBoard[r][c].clear();renderBoardImproved();updateKeypad();const t=boardElement?.children[r*9+c];if(t){gameState.selectedTile=t;highlightTilesFromBoard(r,c);highlightHintCells({row:r,col:c},involved);}if(hintExplanation)hintExplanation.innerHTML=l;showOverlay('hintOverlay',true);}else showFlashMessage("No se encontraron pistas simples");}
+    function findNakedSingle(){for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(gameState.puzzleBoard?.[r]?.[c]===0){let p=new Set([1,2,3,4,5,6,7,8,9]);let involved=[];for(let i=0;i<9;i++){const vr=gameState.puzzleBoard?.[r]?.[i];if(vr!==0&&vr!==undefined){p.delete(vr);involved.push({row:r,col:i});}}for(let i=0;i<9;i++){const vc=gameState.puzzleBoard?.[i]?.[c];if(vc!==0&&vc!==undefined){p.delete(vc);involved.push({row:i,col:c});}}const br=Math.floor(r/3)*3,bc=Math.floor(c/3)*3;for(let i=br;i<br+3;i++)for(let j=bc;j<bc+3;j++){const vb=gameState.puzzleBoard?.[i]?.[j];if(vb!==0&&vb!==undefined){p.delete(vb);involved.push({row:i,col:j});}}if(p.size===1){const n=p.values().next().value;return{row:r,col:c,num:n,logic:`En <span class="hint-cell">F${r+1},C${c+1}</span>, el <strong>${n}</strong> es el único posible (ver celdas amarillas).`,involved:involved};}}return null;}
+    function findHiddenSingle(){for(let r=0;r<9;r++)for(let n=1;n<=9;n++){let co=0,lc=-1,inv=[];if([...(gameState.puzzleBoard?.[r]||[])].includes(n))continue;for(let c=0;c<9;c++)if(gameState.puzzleBoard?.[r]?.[c]===0&&isPossible(r,c,n)){co++;lc=c;}if(co===1){for(let c=0;c<9;c++){if(gameState.puzzleBoard?.[r]?.[c]!==0)inv.push({row:r,col:c});}return{row:r,col:lc,num:n,logic:`En la <span class="hint-cell">Fila ${r+1}</span>, <span class="hint-cell">C${lc+1}</span> es el único lugar para <strong>${n}</strong> (ver celdas amarillas).`,involved:inv};}}/*...(col/box omitted)...*/return null;}
     function isPossible(r,c,n){for(let i=0;i<9;i++)if(gameState.puzzleBoard?.[r]?.[i]===n)return false;for(let i=0;i<9;i++)if(gameState.puzzleBoard?.[i]?.[c]===n)return false;const br=Math.floor(r/3)*3,bc=Math.floor(c/3)*3;for(let i=br;i<br+3;i++)for(let j=bc;j<bc+3;j++)if(gameState.puzzleBoard?.[i]?.[j]===n)return false;return true;}
 
     // --- LÓGICA DE LOGROS Y CLASIFICACIÓN ---
@@ -324,90 +280,28 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderLeaderboardsPage(){if(!leaderboardTableBody)return;leaderboardTableBody.innerHTML='';const s=gameState.leaderboards.daily||[];if(s.length===0){leaderboardTableBody.innerHTML='<tr><td colspan="3">Aún no hay récords. ¡Juega el Desafío Diario!</td></tr>';return;}s.forEach((sc,i)=>{const tr=document.createElement('tr');tr.innerHTML=`<td>#${i+1}</td><td>${formatTime(sc.time)}</td><td>${sc.date}</td>`;leaderboardTableBody.appendChild(tr);});}
 
     // --- LÓGICA PARA COMPARTIR ---
-    function generatePuzzleCode() {
-        // Codifica el puzzle inicial como string de 81 dígitos (0 para vacío)
-        if (!initialPuzzleForResume || initialPuzzleForResume.length !== 9) return null;
-        try {
-            const code = initialPuzzleForResume.flat().join('');
-            // Simple Base64 para ofuscar un poco y acortar si hay muchos ceros
-            return btoa(code);
-        } catch (e) {
-            console.error("Error generating puzzle code:", e);
-            return null;
-        }
-    }
-    function loadPuzzleFromCode(code) {
-        try {
-            const decoded = atob(code);
-            if (decoded.length !== 81 || !/^[0-9]{81}$/.test(decoded)) {
-                throw new Error("Invalid puzzle code format");
-            }
-            const puzzleGrid = [];
-            for (let i = 0; i < 9; i++) {
-                puzzleGrid.push(decoded.substring(i * 9, (i + 1) * 9).split('').map(Number));
-            }
-            // Inicia el juego con este puzzle (dificultad estimada)
-            startGame(DIFFICULTIES.MEDIO, puzzleGrid); // Usa startGame con el puzzle cargado
-            showFlashMessage("Puzzle compartido cargado.");
-            // Elimina el parámetro de la URL para evitar recargas accidentales
-            window.history.replaceState({}, document.title, window.location.pathname);
-        } catch (e) {
-            console.error("Error loading puzzle from code:", e);
-            showFlashMessage("Error al cargar puzzle compartido.");
-            createDifficultyButtons(); // Carga normal si falla
-            addEventListeners();
-        }
-    }
-    async function shareCurrentPuzzle() {
-        playClickSound();
-        const code = generatePuzzleCode();
-        if (!code) {
-            showFlashMessage("No se pudo generar código para compartir.");
-            return;
-        }
-        const url = `${window.location.origin}${window.location.pathname}?puzzle=${code}`;
-        const text = `¡Te reto a resolver este puzzle de Sudoku Pro!`;
-        try {
-            if (navigator.share) await navigator.share({ title: 'Sudoku Pro Puzzle', text: text, url: url });
-            else if (navigator.clipboard) await navigator.clipboard.writeText(`${text} ${url}`);
-            else throw new Error('Share/Clipboard not supported');
-            showFlashMessage("¡Enlace del puzzle copiado/compartido!");
-        } catch(e) { console.error('Error sharing puzzle:',e); showFlashMessage("No se pudo compartir o copiar el enlace."); }
-        showOverlay('pause', false); // Cierra el menú de pausa
-    }
+    function generatePuzzleCode(){if(!initialPuzzleForResume||initialPuzzleForResume.length!==9)return null;try{const code=initialPuzzleForResume.flat().join('');return btoa(code);}catch(e){console.error("Error generating puzzle code:",e);return null;}}
+    function loadPuzzleFromCode(code){try{const decoded=atob(code);if(decoded.length!==81||!/^[0-9]{81}$/.test(decoded))throw new Error("Invalid puzzle code format");const puzzleGrid=[];for(let i=0;i<9;i++)puzzleGrid.push(decoded.substring(i*9,(i+1)*9).split('').map(Number));startGame(DIFFICULTIES.MEDIO,puzzleGrid);showFlashMessage("Puzzle compartido cargado.");window.history.replaceState({},document.title,window.location.pathname);}catch(e){console.error("Error loading puzzle from code:",e);showFlashMessage("Error al cargar puzzle compartido.");createDifficultyButtons();addEventListeners();}} // Carga normal si falla
+    async function shareCurrentPuzzle(){playClickSound();const code=generatePuzzleCode();if(!code){showFlashMessage("No se pudo generar código.");return;}const url=`${window.location.origin}${window.location.pathname}?puzzle=${code}`;const text=`¡Te reto a resolver este puzzle de Sudoku Pro!`;try{if(navigator.share)await navigator.share({title:'Sudoku Pro Puzzle',text:text,url:url});else if(navigator.clipboard)await navigator.clipboard.writeText(`${text} ${url}`);else throw new Error('Share/Clipboard not supported');showFlashMessage("¡Enlace del puzzle copiado/compartido!");}catch(e){console.error('Error sharing puzzle:',e);showFlashMessage("No se pudo compartir o copiar el enlace.");}showOverlay('pause',false);}
     async function shareDailyResult(){playClickSound();const t=formatTime(gameState.secondsElapsed),d=new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'}),tx=`¡Sudoku Pro: Desafío Diario del ${d} completado en ${t}! ¿Puedes superarlo? #SudokuPro`,u=window.location.href.split('?')[0];try{if(navigator.share)await navigator.share({title:'Resultado Sudoku Pro',text:tx,url:u});else if(navigator.clipboard)await navigator.clipboard.writeText(`${tx} ${u}`);else throw new Error('Share/Clipboard not supported');showFlashMessage("¡Resultado copiado/compartido!");}catch(e){console.error('Error sharing:',e);showFlashMessage("No se pudo compartir o copiar.");}}
 
     // --- GENERADOR DE SUDOKU Y HELPERS ---
     function getNumberCounts(){const c={};for(let i=1;i<=9;i++)c[i]=0;for(let r=0;r<9;r++)for(let j=0;j<9;j++)if(gameState.puzzleBoard?.[r]?.[j]!==0)c[gameState.puzzleBoard[r][j]]++;return c;}
-    function updateKeypad() {
-        if (!keypadElement) return;
-        try {
-            const counts = getNumberCounts();
-            const correctCounts = {};
-            for(let i=1; i<=9; i++) correctCounts[i]=0;
-            for(let r=0; r<9; r++) for(let c=0; c<9; c++) { const n=gameState.puzzleBoard?.[r]?.[c]; if(n!==0&&n!==undefined&&n===gameState.solution?.[r]?.[c]) correctCounts[n]++; }
-            keypadElement.querySelectorAll('.keypad-number').forEach(key => {
-                const num = parseInt(key.textContent); if(isNaN(num)) return;
-                const isComplete = correctCounts[num] === 9;
-                key.classList.toggle('completed', isComplete);
-                // Contador eliminado
-                key.style.visibility = isComplete ? 'hidden' : 'visible';
-            });
-        } catch(e) { console.error("Error updating keypad:", e); }
-    }
+    function updateKeypad(){if(!keypadElement)return;try{const counts=getNumberCounts();const correctCounts={};for(let i=1;i<=9;i++)correctCounts[i]=0;for(let r=0;r<9;r++)for(let c=0;c<9;c++){const n=gameState.puzzleBoard?.[r]?.[c];if(n!==0&&n!==undefined&&n===gameState.solution?.[r]?.[c])correctCounts[n]++;}keypadElement.querySelectorAll('.keypad-number').forEach(key=>{const num=parseInt(key.textContent);if(isNaN(num))return;const isComplete=correctCounts[num]===9;key.classList.toggle('completed',isComplete);/* Contador eliminado */key.style.visibility=isComplete?'hidden':'visible';});}catch(e){console.error("Error updating keypad:",e);}}
     function checkWin(){for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(gameState.puzzleBoard?.[r]?.[c]===0)return false;return true;}
     function generateEmptyBoard(){return Array(9).fill(0).map(()=>Array(9).fill(0));}
     function shuffle(a,rnd=Math.random){for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
     function findEmpty(b){for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(b?.[r]?.[c]===0)return[r,c];return null;}
     function isValid(b,n,p){const[r,c]=p;for(let i=0;i<9;i++){if(b?.[r]?.[i]===n&&c!==i)return false;if(b?.[i]?.[c]===n&&r!==i)return false;}const br=Math.floor(r/3)*3,bc=Math.floor(c/3)*3;for(let i=br;i<br+3;i++)for(let j=bc;j<bc+3;j++)if(b?.[i]?.[j]===n&&(i!==r||j!==c))return false;return true;}
     function generateSolution(b,rnd=Math.random){const e=findEmpty(b);if(!e)return true;const[r,c]=e,nums=shuffle(Array.from({length:9},(_,i)=>i+1),rnd);for(const n of nums){if(isValid(b,n,[r,c])){b[r][c]=n;if(generateSolution(b,rnd))return true;b[r][c]=0;}}return false;}
-    function createPuzzle(b,d,rnd=Math.random){const p=JSON.parse(JSON.stringify(b));let rem=CELLS_TO_REMOVE[d]||50,att=200;while(rem>0&&att>0){const r=Math.floor(rnd()*9),c=Math.floor(rnd()*9);if(p?.[r]?.[c]!==0){p[r][c]=0;rem--;}att--;}try{initialPuzzleForResume=JSON.parse(JSON.stringify(p));}catch(e){console.error("Error cloning initial puzzle:",e);initialPuzzleForResume=p;}return p;}
+    function createPuzzle(b,d,rnd=Math.random){try{const p=JSON.parse(JSON.stringify(b));let rem=CELLS_TO_REMOVE[d]||50,att=200;while(rem>0&&att>0){const r=Math.floor(rnd()*9),c=Math.floor(rnd()*9);if(p?.[r]?.[c]!==0){p[r][c]=0;rem--;}att--;}initialPuzzleForResume=JSON.parse(JSON.stringify(p));return p;}catch(e){console.error("Error creating puzzle:",e);initialPuzzleForResume=b;return b;}} // Fallback
 
     // --- INICIALIZACIÓN FINAL ---
+    // Engloba todo en un try...catch final por si acaso
     try {
         initialize();
     } catch (error) {
-        console.error("CRITICAL ERROR during initialization:", error);
-        document.body.innerHTML = `<div style="padding: 20px; text-align: center; color: black; background-color: white; font-family: sans-serif;"><h1>Error Inesperado</h1><p>Ocurrió un problema al cargar el juego.</p><p><strong>Solución Sugerida:</strong> Intenta borrar los datos de navegación para este sitio (caché y datos del sitio) y recarga la página.</p><details><summary>Detalles Técnicos</summary><pre style="text-align: left; background-color: #eee; padding: 10px; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word;">${error.stack || error}</pre></details></div>`;
+        console.error("CRITICAL ERROR during initialization - Fallback:", error);
+        document.body.innerHTML = `<div style="padding: 20px; text-align: center; color: black; background-color: white; font-family: sans-serif;"><h1>Error Inesperado</h1><p>Ocurrió un problema grave al cargar el juego.</p><p><strong>Solución Sugerida:</strong> Intenta borrar los datos de navegación para este sitio (caché y datos del sitio) y recarga la página.</p><details><summary>Detalles Técnicos</summary><pre style="text-align: left; background-color: #eee; padding: 10px; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word;">${error.stack || error}</pre></details></div>`;
     }
 });
