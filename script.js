@@ -39,27 +39,20 @@ document.addEventListener('DOMContentLoaded', () => {
         undoButton, pencilToggleButton, dailyChallengeButton, hintButton, hintExplanation, hintOkButton,
         confettiCanvas, leaderboardButton, goToLeaderboardBtn, achievementsList, leaderboardTableBody,
         tabButtons, tabContents, settingsButton, shareDailyResultBtn, themeSelect, fontSelect,
-        muteToggleSetting, showHintToggle, showPencilToggle, showUndoToggle, /* muteToggleButton, */ // Removido de aquí
+        muteToggleSetting, showHintToggle, showPencilToggle, showUndoToggle, /* muteToggleButton, */ // Removido
         sharePuzzleBtn, timeComparisonElement;
 
-    // --- Función para obtener elementos del DOM de forma segura ---
+    // --- Función para obtener elementos del DOM ---
     function getElements() {
         screens = { start: document.getElementById('start-screen'), game: document.getElementById('game-screen'), gameOver: document.getElementById('game-over-screen'), instructions: document.getElementById('instructions-screen'), about: document.getElementById('about-screen'), pause: document.getElementById('pause-screen'), hintOverlay: document.getElementById('hint-overlay-screen'), leaderboard: document.getElementById('leaderboard-screen'), settings: document.getElementById('settings-screen') };
         boardElement = document.getElementById('board'); keypadElement = document.getElementById('keypad'); livesCounter = document.getElementById('lives-counter'); backToMenuBtn = document.getElementById('back-to-menu'); restartBtn = document.getElementById('restart-button'); gameOverMsg = document.getElementById('game-over-message'); difficultyButtonsContainer = document.getElementById('difficulty-buttons'); flashMessage = document.getElementById('flash-message'); ingameStreakDisplay = document.getElementById('ingame-streak-display'); infoIcon = document.getElementById('info-icon'); mainMenuLogo = document.getElementById('main-menu-logo'); timerDisplay = document.getElementById('timer-display'); pauseButton = document.getElementById('pause-button'); resumeButton = document.getElementById('resume-button'); resumeGameBtn = document.getElementById('resume-game-btn'); pauseBackToMenuBtn = document.getElementById('pause-back-to-menu'); gameOverHomeBtn = document.getElementById('game-over-home-btn'); undoButton = document.getElementById('undo-button'); pencilToggleButton = document.getElementById('pencil-toggle-btn'); dailyChallengeButton = document.getElementById('daily-challenge-btn'); hintButton = document.getElementById('hint-button'); hintExplanation = document.getElementById('hint-explanation'); hintOkButton = document.getElementById('hint-ok-btn'); confettiCanvas = document.getElementById('confetti-canvas'); leaderboardButton = document.getElementById('leaderboard-btn'); goToLeaderboardBtn = document.getElementById('go-to-leaderboard-btn'); achievementsList = document.getElementById('achievements-list'); leaderboardTableBody = document.querySelector('#leaderboard-table tbody'); tabButtons = document.querySelectorAll('.tab-btn'); tabContents = document.querySelectorAll('.tab-content'); settingsButton = document.getElementById('settings-btn'); shareDailyResultBtn = document.getElementById('share-daily-result-btn'); themeSelect = document.getElementById('theme-select'); fontSelect = document.getElementById('font-select'); muteToggleSetting = document.getElementById('mute-toggle-setting'); showHintToggle = document.getElementById('show-hint-toggle'); showPencilToggle = document.getElementById('show-pencil-toggle'); showUndoToggle = document.getElementById('show-undo-toggle');
-        // muteToggleButton = document.getElementById('mute-toggle-btn'); // Ya no se busca aquí
+        // muteToggleButton = document.getElementById('mute-toggle-btn'); // Removido
         sharePuzzleBtn = document.getElementById('share-puzzle-btn'); timeComparisonElement = document.getElementById('time-comparison');
 
-        // ===== CORRECCIÓN: Lista de elementos esenciales actualizada =====
-        const essentialElements = {
-             boardElement, keypadElement, difficultyButtonsContainer, settingsButton,
-             startScreen: screens.start, gameScreen: screens.game, settingsScreen: screens.settings,
-             themeSelect, fontSelect, muteToggleSetting // muteToggleButton ya no es esencial aquí
-             // Añadir otros elementos críticos si fuera necesario
-        };
+        const essentialElements = { boardElement, keypadElement, difficultyButtonsContainer, settingsButton, startScreen: screens.start, gameScreen: screens.game, settingsScreen: screens.settings, themeSelect, fontSelect, muteToggleSetting /* muteToggleButton ya no es esencial aquí */ };
         for (const key in essentialElements) {
             if (!essentialElements[key]) {
-                 // Lanza un error más descriptivo que incluye el ID esperado si es posible
-                 let expectedId = key.replace(/([A-Z])/g, '-$1').toLowerCase(); // Convierte camelCase a kebab-case
+                 let expectedId = key.replace(/([A-Z])/g, '-$1').toLowerCase();
                  if (key.endsWith('Screen')) expectedId = key.replace('Screen','-screen');
                  throw new Error(`Elemento esencial del DOM no encontrado: '${key}' (esperaba ID similar a '${expectedId}'). Verifica el HTML.`);
             }
@@ -81,17 +74,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- LÓGICA DE INICIO ---
     function initialize() {
-        // Mover getElements al inicio del try...catch global
-        // El try...catch global ahora maneja errores de getElements también
-        getElements();
-        setupConfetti();
-        loadSettings(); loadStreaks(); loadTotalWins(); loadAchievements(); loadLeaderboards();
-        applySettings();
-        createDifficultyButtons();
-        addEventListeners();
-        const urlParams = new URLSearchParams(window.location.search);
-        const puzzleCode = urlParams.get('puzzle');
-        if (puzzleCode) setTimeout(() => loadPuzzleFromCode(puzzleCode), 100);
+        try {
+            getElements();
+            setupConfetti();
+            loadSettings(); loadStreaks(); loadTotalWins(); loadAchievements(); loadLeaderboards();
+            applySettings();
+            createDifficultyButtons();
+            addEventListeners();
+            const urlParams = new URLSearchParams(window.location.search);
+            const puzzleCode = urlParams.get('puzzle');
+            if (puzzleCode) setTimeout(() => loadPuzzleFromCode(puzzleCode), 100);
+        } catch(e) {
+             console.error("CRITICAL ERROR during initialization:", e);
+             document.body.innerHTML = `<div style="padding: 20px; text-align: center; color: black; background-color: white; font-family: sans-serif;"><h1>Error Inesperado</h1><p>Ocurrió un problema al cargar el juego.</p><p><strong>Solución Sugerida:</strong> Intenta borrar los datos de navegación para este sitio (caché y datos del sitio) y recarga la página.</p><details><summary>Detalles Técnicos</summary><pre style="text-align: left; background-color: #eee; padding: 10px; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word;">${e.stack || e}</pre></details></div>`;
+        }
     }
 
     function addEventListeners() {
@@ -126,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showHintToggle?.addEventListener('change', (e) => handleButtonVisibilityChange('showHintButton', e.target.checked));
             showPencilToggle?.addEventListener('change', (e) => handleButtonVisibilityChange('showPencilButton', e.target.checked));
             showUndoToggle?.addEventListener('change', (e) => handleButtonVisibilityChange('showUndoButton', e.target.checked));
-            // Listener para muteToggleButton principal eliminado, ya no existe
+            // Listener para muteToggleButton principal eliminado
         } catch (e) { console.error("Error asignando event listeners:", e); }
     }
 
@@ -148,6 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
         difficultyButtonsContainer.appendChild(f); difficultyButtonsContainer.addEventListener('click', handleDifficultyClick);
     }
 
+
     let initialPuzzleForResume = []; let randomSeed = 1;
 
     function startGame(difficulty, puzzleToLoad = null) {
@@ -162,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
             gameState.hintUsed=false; if(hintButton)hintButton.classList.remove('disabled');
             gameState.notesBoard=Array(9).fill(null).map(()=>Array(9).fill(null).map(()=>new Set()));
             gameState.gameStats={hasUsedUndo:false,notesPlaced:0};
-            applyButtonVisibility(); // Asegura visibilidad correcta
+            applyButtonVisibility();
             renderTimer(); startTimer(); if(pauseButton)pauseButton.style.display='flex';
 
             if (puzzleToLoad) {
@@ -224,15 +221,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LÓGICA DE GUARDADO (localStorage) ---
     // ===== CORRECCIÓN: Funciones de carga robustecidas =====
     function saveStreaks(){try{localStorage.setItem('sudokuStreaks',JSON.stringify(gameState.streaks));}catch(e){console.error("Error saving streaks:",e);}}
-    function loadStreaks(){const key='sudokuStreaks'; const defaultVal={...DEFAULT_STREAKS}; try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object' && Object.keys(p).every(k => typeof p[k] === 'number')){gameState.streaks={...defaultVal,...p};return;}throw new Error("Invalid format");}gameState.streaks=defaultVal;}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.streaks=defaultVal;}}
+    function loadStreaks(){const key='sudokuStreaks'; const defaultVal={...DEFAULT_STREAKS}; try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'&&Object.keys(p).every(k=>['fácil','medio','difícil','experto'].includes(k)&&typeof p[k]==='number')){gameState.streaks={...defaultVal,...p};return;}throw new Error("Invalid format");}gameState.streaks=defaultVal;}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.streaks=defaultVal;}}
     function saveTotalWins(){try{localStorage.setItem('sudokuTotalWins',JSON.stringify(gameState.totalWins));}catch(e){console.error("Error saving wins:",e);}}
-    function loadTotalWins(){const key='sudokuTotalWins'; const defaultVal={...DEFAULT_WINS}; try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object' && Object.keys(p).every(k => typeof p[k] === 'number')){gameState.totalWins={...defaultVal,...p};return;}throw new Error("Invalid format");}gameState.totalWins=defaultVal;}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.totalWins=defaultVal;}}
+    function loadTotalWins(){const key='sudokuTotalWins'; const defaultVal={...DEFAULT_WINS}; try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'&&Object.keys(p).every(k=>['fácil','medio','difícil','experto'].includes(k)&&typeof p[k]==='number')){gameState.totalWins={...defaultVal,...p};return;}throw new Error("Invalid format");}gameState.totalWins=defaultVal;}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.totalWins=defaultVal;}}
     function saveAchievements(){try{localStorage.setItem('sudokuAchievements',JSON.stringify(gameState.achievements));}catch(e){console.error("Err save achieve:",e);}}
     function loadAchievements(){const key='sudokuAchievements'; const defaultVal={...DEFAULT_ACHIEVEMENTS}; try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'){gameState.achievements=p;return;}throw new Error("Invalid format");}gameState.achievements=defaultVal;}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.achievements=defaultVal;}}
     function saveLeaderboards(){try{localStorage.setItem('sudokuLeaderboards',JSON.stringify(gameState.leaderboards));}catch(e){console.error("Err save leaders:",e);}}
     function loadLeaderboards(){const key='sudokuLeaderboards'; const defaultVal=JSON.parse(JSON.stringify(DEFAULT_LEADERBOARDS)); try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'&&p.daily&&Array.isArray(p.daily)&&p.daily.every(sc=>typeof sc==='object'&&typeof sc.time==='number'&&typeof sc.date==='string')){gameState.leaderboards=p;return;}throw new Error("Invalid format");}gameState.leaderboards=defaultVal;}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.leaderboards=defaultVal;}}
     function saveSetting(key,value){try{let s=gameState.settings;if(key.includes('.')){const k=key.split('.');if(s[k[0]]!==undefined&&typeof s[k[0]]==='object')s[k[0]][k[1]]=value;else console.warn(`Cannot save nested setting: ${key}`);}else s[key]=value;localStorage.setItem('sudokuSettings',JSON.stringify(s));}catch(e){console.error("Err save setting:",key,e);}}
-    function loadSettings() {const key='sudokuSettings'; let saved = null; try {const s=localStorage.getItem(key); if(s){saved=JSON.parse(s); if(typeof saved !=='object'||saved===null)throw new Error("Invalid format");}} catch(e){console.error(`Error loading/parsing ${key}:`,e,"Using defaults.");localStorage.removeItem(key);saved=null;}gameState.settings=deepMerge(JSON.parse(JSON.stringify(DEFAULT_SETTINGS)),saved||{});/* Asegura que customColors esté vacío si no se usa */ if (!gameState.settings.useCustomColors) gameState.settings.customColors = {}; gameState.isMuted=gameState.settings.isMuted;if(muteToggleButton)muteToggleButton.classList.toggle('muted',gameState.isMuted);}
+    function loadSettings() {const key='sudokuSettings'; let saved = null; try {const s=localStorage.getItem(key); if(s){saved=JSON.parse(s); if(typeof saved !=='object'||saved===null)throw new Error("Invalid format");}} catch(e){console.error(`Error loading/parsing ${key}:`,e,"Using defaults.");localStorage.removeItem(key);saved=null;}gameState.settings=deepMerge(JSON.parse(JSON.stringify(DEFAULT_SETTINGS)),saved||{});/* Eliminado customColors */ gameState.isMuted=gameState.settings.isMuted;/* MuteToggleButton eliminado de aquí */}
 
     // --- LÓGICA DE TIMER Y PAUSA ---
     function startTimer(){clearInterval(gameState.timerInterval);gameState.timerInterval=setInterval(updateTimer,1000);}
@@ -252,13 +249,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function applyDynamicTheme(){const h=new Date().getHours();let t='light';if(h>=19||h<6)t='dark';else if(h>=16)t='sepia';document.body.dataset.theme=t;}
     function handleFontChange(event){const n=event.target.value;saveSetting('boardFont',n);applyFont(n);playClickSound();}
     function applyFont(f){let ff='var(--font-default)';if(f==='Roboto Slab')ff='var(--font-serif)';else if(f==='Source Code Pro')ff='var(--font-mono)';document.documentElement.style.setProperty('--font-board',ff);}
-    function handleMuteChange(event){const m=event.target.checked;saveSetting('isMuted',m);gameState.isMuted=m;if(muteToggleButton)muteToggleButton.classList.toggle('muted',m);if(!m)playClickSound();}
+    function handleMuteChange(event){const m=event.target.checked;saveSetting('isMuted',m);gameState.isMuted=m;/* muteToggleButton eliminado */if(!m)playClickSound();}
     function handleButtonVisibilityChange(key,v){saveSetting(key,v);applyButtonVisibility();playClickSound();}
     function applyButtonVisibility(){if(hintButton)hintButton.style.display=(gameState.settings.showHintButton&&gameState.gameInProgress)?'flex':'none';if(pencilToggleButton)pencilToggleButton.style.display=(gameState.settings.showPencilButton&&gameState.gameInProgress)?'flex':'none';if(undoButton&&!gameState.settings.showUndoButton&&undoButton.style.display==='flex')undoButton.style.display='none';}
     // Funciones colores eliminadas
     function setupSettingsScreen(){if(!themeSelect||!fontSelect||/*!customColorsToggle||!customColorsSection||*/!muteToggleSetting||!showHintToggle||!showPencilToggle||!showUndoToggle)return;themeSelect.value=gameState.settings.theme;fontSelect.value=gameState.settings.boardFont;/*customColorsToggle.checked=gameState.settings.useCustomColors;customColorsSection.style.display=gameState.settings.useCustomColors?'block':'none';*/muteToggleSetting.checked=gameState.isMuted;showHintToggle.checked=gameState.settings.showHintButton;showPencilToggle.checked=gameState.settings.showPencilButton;showUndoToggle.checked=gameState.settings.showUndoButton;}
     function deepMerge(t, s) { if (!s) return t; for (const k in s) { if (s.hasOwnProperty(k)) { const sk = s[k]; const tk = t?.[k]; if (sk && typeof sk === 'object' && !Array.isArray(sk)) { if (!tk || typeof tk !== 'object' || Array.isArray(tk)) { t[k] = {}; } deepMerge(t[k], sk); } else if (sk !== undefined) { t[k] = sk; } } } return t; }
-    function applySettings(){if(!document.body)return;try{if(gameState.settings.theme==='auto')applyDynamicTheme();else document.body.dataset.theme=gameState.settings.theme;applyFont(gameState.settings.boardFont);/*applyCustomColors(gameState.settings.useCustomColors);*/if(muteToggleButton)muteToggleButton.classList.toggle('muted',gameState.isMuted);}catch(e){console.error("Error al aplicar settings:",e);document.body.dataset.theme='light';applyFont(DEFAULT_SETTINGS.boardFont);}}
+    function applySettings(){if(!document.body)return;try{if(gameState.settings.theme==='auto')applyDynamicTheme();else document.body.dataset.theme=gameState.settings.theme;applyFont(gameState.settings.boardFont);/*applyCustomColors(gameState.settings.useCustomColors);*/ /* muteToggleButton eliminado */}catch(e){console.error("Error al aplicar settings:",e);document.body.dataset.theme='light';applyFont(DEFAULT_SETTINGS.boardFont);}}
 
 
     // --- LÓGICA DE DESAFÍO DIARIO Y PISTAS ---
@@ -278,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- LÓGICA PARA COMPARTIR ---
     function generatePuzzleCode(){if(!initialPuzzleForResume||initialPuzzleForResume.length!==9)return null;try{const code=initialPuzzleForResume.flat().join('');return btoa(code);}catch(e){console.error("Error generating puzzle code:",e);return null;}}
-    function loadPuzzleFromCode(code){try{const decoded=atob(code);if(decoded.length!==81||!/^[0-9]{81}$/.test(decoded))throw new Error("Invalid puzzle code format");const puzzleGrid=[];for(let i=0;i<9;i++)puzzleGrid.push(decoded.substring(i*9,(i+1)*9).split('').map(Number));startGame(DIFFICULTIES.MEDIO,puzzleGrid);showFlashMessage("Puzzle compartido cargado.");window.history.replaceState({},document.title,window.location.pathname);}catch(e){console.error("Error loading puzzle from code:",e);showFlashMessage("Error al cargar puzzle compartido.");createDifficultyButtons();addEventListeners();}} // Carga normal si falla
+    function loadPuzzleFromCode(code){try{const decoded=atob(code);if(decoded.length!==81||!/^[0-9]{81}$/.test(decoded))throw new Error("Invalid puzzle code format");const puzzleGrid=[];for(let i=0;i<9;i++)puzzleGrid.push(decoded.substring(i*9,(i+1)*9).split('').map(Number));startGame(DIFFICULTIES.MEDIO,puzzleGrid);showFlashMessage("Puzzle compartido cargado.");window.history.replaceState({},document.title,window.location.pathname);}catch(e){console.error("Error loading puzzle from code:",e);showFlashMessage("Error al cargar puzzle compartido.");createDifficultyButtons();/* No llamar a addEventListeners aquí de nuevo */}}
     async function shareCurrentPuzzle(){playClickSound();const code=generatePuzzleCode();if(!code){showFlashMessage("No se pudo generar código.");return;}const url=`${window.location.origin}${window.location.pathname}?puzzle=${code}`;const text=`¡Te reto a resolver este puzzle de Sudoku Pro!`;try{if(navigator.share)await navigator.share({title:'Sudoku Pro Puzzle',text:text,url:url});else if(navigator.clipboard)await navigator.clipboard.writeText(`${text} ${url}`);else throw new Error('Share/Clipboard not supported');showFlashMessage("¡Enlace del puzzle copiado/compartido!");}catch(e){console.error('Error sharing puzzle:',e);showFlashMessage("No se pudo compartir o copiar el enlace.");}showOverlay('pause',false);}
     async function shareDailyResult(){playClickSound();const t=formatTime(gameState.secondsElapsed),d=new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'}),tx=`¡Sudoku Pro: Desafío Diario del ${d} completado en ${t}! ¿Puedes superarlo? #SudokuPro`,u=window.location.href.split('?')[0];try{if(navigator.share)await navigator.share({title:'Resultado Sudoku Pro',text:tx,url:u});else if(navigator.clipboard)await navigator.clipboard.writeText(`${tx} ${u}`);else throw new Error('Share/Clipboard not supported');showFlashMessage("¡Resultado copiado/compartido!");}catch(e){console.error('Error sharing:',e);showFlashMessage("No se pudo compartir o copiar.");}}
 
