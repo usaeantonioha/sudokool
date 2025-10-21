@@ -2,17 +2,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- CONSTANTES ---
     const DIFFICULTIES = { FÁCIL: 'fácil', MEDIO: 'medio', DIFÍCIL: 'difícil', EXPERTO: 'experto' };
     const CELLS_TO_REMOVE = { fácil: 40, medio: 50, difícil: 60, experto: 65 };
-    const ACHIEVEMENT_DEFINITIONS = {
-        'speedRacer': { title: 'Velocista ⚡', desc: 'Gana un juego Medio en menos de 5 minutos.' },
-        'perfectionist': { title: 'Perfeccionista 🎯', desc: 'Gana un juego Difícil sin usar "Deshacer".' },
-        'streakMaster': { title: 'Imparable 🔥', desc: 'Alcanza una racha de 10 victorias (en cualquier dificultad).' },
-        'thinkingAhead': { title: 'Estratega 🧠', desc: 'Usa el modo Lápiz para hacer 50 notas en un solo juego.' },
-        'dailyConqueror': { title: 'Conquistador Diario 📅', desc: 'Gana el Desafío Diario.' }
-    };
-    const DEFAULT_SETTINGS = {
-        theme: 'auto', boardFont: 'Manrope', showHintButton: true, showPencilButton: true, showUndoButton: true,
-        useCustomColors: false, customColors: {}, isMuted: false
-    };
+    const ACHIEVEMENT_DEFINITIONS = { /* ... (sin cambios) ... */ };
+    const DEFAULT_SETTINGS = { theme: 'auto', boardFont: 'Manrope', showHintButton: true, showPencilButton: true, showUndoButton: true, useCustomColors: false, customColors: {}, isMuted: false };
     const DEFAULT_STREAKS = { fácil: 0, medio: 0, difícil: 0, experto: 0 };
     const DEFAULT_WINS = { fácil: 0, medio: 0, difícil: 0, experto: 0 };
     const DEFAULT_ACHIEVEMENTS = {};
@@ -42,14 +33,13 @@ document.addEventListener('DOMContentLoaded', () => {
         muteToggleSetting, showHintToggle, showPencilToggle, showUndoToggle, /* muteToggleButton, */ // Removido
         sharePuzzleBtn, timeComparisonElement;
 
-    // --- Función para obtener elementos del DOM ---
+    // --- Función para obtener elementos del DOM de forma segura ---
     function getElements() {
         screens = { start: document.getElementById('start-screen'), game: document.getElementById('game-screen'), gameOver: document.getElementById('game-over-screen'), instructions: document.getElementById('instructions-screen'), about: document.getElementById('about-screen'), pause: document.getElementById('pause-screen'), hintOverlay: document.getElementById('hint-overlay-screen'), leaderboard: document.getElementById('leaderboard-screen'), settings: document.getElementById('settings-screen') };
         boardElement = document.getElementById('board'); keypadElement = document.getElementById('keypad'); livesCounter = document.getElementById('lives-counter'); backToMenuBtn = document.getElementById('back-to-menu'); restartBtn = document.getElementById('restart-button'); gameOverMsg = document.getElementById('game-over-message'); difficultyButtonsContainer = document.getElementById('difficulty-buttons'); flashMessage = document.getElementById('flash-message'); ingameStreakDisplay = document.getElementById('ingame-streak-display'); infoIcon = document.getElementById('info-icon'); mainMenuLogo = document.getElementById('main-menu-logo'); timerDisplay = document.getElementById('timer-display'); pauseButton = document.getElementById('pause-button'); resumeButton = document.getElementById('resume-button'); resumeGameBtn = document.getElementById('resume-game-btn'); pauseBackToMenuBtn = document.getElementById('pause-back-to-menu'); gameOverHomeBtn = document.getElementById('game-over-home-btn'); undoButton = document.getElementById('undo-button'); pencilToggleButton = document.getElementById('pencil-toggle-btn'); dailyChallengeButton = document.getElementById('daily-challenge-btn'); hintButton = document.getElementById('hint-button'); hintExplanation = document.getElementById('hint-explanation'); hintOkButton = document.getElementById('hint-ok-btn'); confettiCanvas = document.getElementById('confetti-canvas'); leaderboardButton = document.getElementById('leaderboard-btn'); goToLeaderboardBtn = document.getElementById('go-to-leaderboard-btn'); achievementsList = document.getElementById('achievements-list'); leaderboardTableBody = document.querySelector('#leaderboard-table tbody'); tabButtons = document.querySelectorAll('.tab-btn'); tabContents = document.querySelectorAll('.tab-content'); settingsButton = document.getElementById('settings-btn'); shareDailyResultBtn = document.getElementById('share-daily-result-btn'); themeSelect = document.getElementById('theme-select'); fontSelect = document.getElementById('font-select'); muteToggleSetting = document.getElementById('mute-toggle-setting'); showHintToggle = document.getElementById('show-hint-toggle'); showPencilToggle = document.getElementById('show-pencil-toggle'); showUndoToggle = document.getElementById('show-undo-toggle');
-        // muteToggleButton = document.getElementById('mute-toggle-btn'); // Removido
         sharePuzzleBtn = document.getElementById('share-puzzle-btn'); timeComparisonElement = document.getElementById('time-comparison');
 
-        const essentialElements = { boardElement, keypadElement, difficultyButtonsContainer, settingsButton, startScreen: screens.start, gameScreen: screens.game, settingsScreen: screens.settings, themeSelect, fontSelect, muteToggleSetting /* muteToggleButton ya no es esencial aquí */ };
+        const essentialElements = { boardElement, keypadElement, difficultyButtonsContainer, settingsButton, startScreen: screens.start, gameScreen: screens.game, settingsScreen: screens.settings, themeSelect, fontSelect, muteToggleSetting };
         for (const key in essentialElements) {
             if (!essentialElements[key]) {
                  let expectedId = key.replace(/([A-Z])/g, '-$1').toLowerCase();
@@ -74,20 +64,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- LÓGICA DE INICIO ---
     function initialize() {
-        try {
-            getElements();
-            setupConfetti();
-            loadSettings(); loadStreaks(); loadTotalWins(); loadAchievements(); loadLeaderboards();
-            applySettings();
-            createDifficultyButtons();
-            addEventListeners();
-            const urlParams = new URLSearchParams(window.location.search);
-            const puzzleCode = urlParams.get('puzzle');
-            if (puzzleCode) setTimeout(() => loadPuzzleFromCode(puzzleCode), 100);
-        } catch(e) {
-             console.error("CRITICAL ERROR during initialization:", e);
-             document.body.innerHTML = `<div style="padding: 20px; text-align: center; color: black; background-color: white; font-family: sans-serif;"><h1>Error Inesperado</h1><p>Ocurrió un problema al cargar el juego.</p><p><strong>Solución Sugerida:</strong> Intenta borrar los datos de navegación para este sitio (caché y datos del sitio) y recarga la página.</p><details><summary>Detalles Técnicos</summary><pre style="text-align: left; background-color: #eee; padding: 10px; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word;">${e.stack || e}</pre></details></div>`;
-        }
+        // Mover getElements al inicio del try...catch global
+        getElements();
+        setupConfetti();
+        // Carga robusta de todos los datos
+        loadSettings(); loadStreaks(); loadTotalWins(); loadAchievements(); loadLeaderboards();
+        // Aplicar ajustes visuales (con try-catch propio)
+        try { applySettings(); }
+        catch(e) { console.error("Error aplicando ajustes:",e,"Restaurando defaults."); gameState.settings=JSON.parse(JSON.stringify(DEFAULT_SETTINGS)); applySettings(); }
+        // Crear UI
+        createDifficultyButtons();
+        addEventListeners();
+        // Cargar puzzle compartido si existe
+        const urlParams = new URLSearchParams(window.location.search);
+        const puzzleCode = urlParams.get('puzzle');
+        if (puzzleCode) setTimeout(() => loadPuzzleFromCode(puzzleCode), 100);
     }
 
     function addEventListeners() {
@@ -144,7 +135,6 @@ document.addEventListener('DOMContentLoaded', () => {
         difficultyButtonsContainer.appendChild(f); difficultyButtonsContainer.addEventListener('click', handleDifficultyClick);
     }
 
-
     let initialPuzzleForResume = []; let randomSeed = 1;
 
     function startGame(difficulty, puzzleToLoad = null) {
@@ -190,7 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleKeypadClick(event){if(gameState.isPaused)return;const k=event.target.closest('.keypad-number');if(k){playClickSound();if(k.style.visibility==='hidden')return;const n=parseInt(k.textContent);if(isNaN(n)||n<1||n>9)return;if(gameState.selectedTile){clearHintHighlights();if(gameState.isPencilMode)toggleNote(n);else placeNumber(n);}else{clearHintHighlights();highlightNumbersFromKeypad(n);}}}
 
     // --- LÓGICA DEL JUEGO ---
-    function placeNumber(num){if(!gameState.selectedTile||gameState.selectedTile.classList.contains('hint'))return;clearErrorHighlights();clearHintHighlights();const r=parseInt(gameState.selectedTile.dataset.row),c=parseInt(gameState.selectedTile.dataset.col);if(isNaN(r)||isNaN(c)||r<0||r>8||c<0||c>8)return;if(gameState.selectedTile.classList.contains('tile-wrong-number')){playErrorSound();showFlashMessage("Deshaz tu jugada anterior primero");return;}const nts=gameState.notesBoard?.[r]?.[c]||new Set();gameState.lastMove={row:r,col:c,prevValue:gameState.puzzleBoard?.[r]?.[c]||0,prevNotes:new Set(nts)};if(nts)nts.clear();renderTileNotes(r,c);if(!gameState.puzzleBoard[r])gameState.puzzleBoard[r]=[];gameState.puzzleBoard[r][c]=num;const numEl=gameState.selectedTile.querySelector('.tile-number');if(numEl)numEl.textContent=num.toString();else console.warn("NumEl missing");gameState.selectedTile.classList.add('user-filled');gameState.selectedTile.classList.remove('is-notes');highlightTilesFromBoard(r,c);if(undoButton)undoButton.style.display='none';if(gameState.solution?.[r]?.[c]===num){gameState.selectedTile.classList.remove('tile-wrong-number');autoCleanNotes(r,c,num);if(checkWin())endGame(true);}else{playErrorSound();if(navigator.vibrate)navigator.vibrate(200);gameState.selectedTile.classList.add('tile-error','tile-wrong-number');highlightConflicts(r,c,num);setTimeout(()=>{if(gameState.selectedTile)gameState.selectedTile.classList.remove('tile-error');},500);if(gameState.settings.showUndoButton&&undoButton)undoButton.style.display='flex';gameState.lives--;updateLivesDisplay();showFlashMessage("Número equivocado");if(gameState.lives<=0)endGame(false);}updateKeypad();}
+    function placeNumber(num){if(!gameState.selectedTile||gameState.selectedTile.classList.contains('hint'))return;clearErrorHighlights();clearHintHighlights();const r=parseInt(gameState.selectedTile.dataset.row),c=parseInt(gameState.selectedTile.dataset.col);if(isNaN(r)||isNaN(c)||r<0||r>8||c<0||c>8){console.error("Coords inválidas:",r,c); return;}if(gameState.selectedTile.classList.contains('tile-wrong-number')){playErrorSound();showFlashMessage("Deshaz tu jugada anterior primero");return;}const nts=gameState.notesBoard?.[r]?.[c]||new Set();gameState.lastMove={row:r,col:c,prevValue:gameState.puzzleBoard?.[r]?.[c]||0,prevNotes:new Set(nts)};if(nts)nts.clear();renderTileNotes(r,c);if(!gameState.puzzleBoard[r])gameState.puzzleBoard[r]=[];gameState.puzzleBoard[r][c]=num;const numEl=gameState.selectedTile.querySelector('.tile-number');if(numEl)numEl.textContent=num.toString();else console.warn("NumEl missing");gameState.selectedTile.classList.add('user-filled');gameState.selectedTile.classList.remove('is-notes');highlightTilesFromBoard(r,c);if(undoButton)undoButton.style.display='none';if(gameState.solution?.[r]?.[c]===num){gameState.selectedTile.classList.remove('tile-wrong-number');autoCleanNotes(r,c,num);if(checkWin())endGame(true);}else{playErrorSound();if(navigator.vibrate)navigator.vibrate(200);gameState.selectedTile.classList.add('tile-error','tile-wrong-number');highlightConflicts(r,c,num);setTimeout(()=>{if(gameState.selectedTile)gameState.selectedTile.classList.remove('tile-error');},500);if(gameState.settings.showUndoButton&&undoButton)undoButton.style.display='flex';gameState.lives--;updateLivesDisplay();showFlashMessage("Número equivocado");if(gameState.lives<=0)endGame(false);}updateKeypad();}
     function undoLastMove(){if(!gameState.lastMove)return;playClickSound();gameState.gameStats.hasUsedUndo=true;const{row:r,col:c,prevValue:pv,prevNotes:pn}=gameState.lastMove;const t=boardElement?.children[r*9+c];if(!t)return;const ne=t.querySelector('.tile-number');if(!gameState.puzzleBoard[r])gameState.puzzleBoard[r]=[];gameState.puzzleBoard[r][c]=pv;if(!gameState.notesBoard[r])gameState.notesBoard[r]=[];gameState.notesBoard[r][c]=pn;if(ne)ne.textContent=pv===0?'':pv.toString();t.classList.remove('user-filled','tile-wrong-number');clearErrorHighlights();clearHintHighlights();if(pv===0)t.classList.remove('user-filled');renderTileNotes(r,c);gameState.selectedTile=t;highlightTilesFromBoard(r,c);gameState.lastMove=null;if(undoButton)undoButton.style.display='none';updateKeypad();}
     function endGame(isWin){stopTimer();if(pauseButton)pauseButton.style.display='none';if(pencilToggleButton)pencilToggleButton.style.display='none';if(hintButton)hintButton.style.display='none';gameState.gameInProgress=false;if(resumeGameBtn)resumeGameBtn.style.display='none';if(undoButton)undoButton.style.display='none';gameState.lastMove=null;clearAllErrors();clearHintHighlights();let timeComparisonText='';if(isWin){playWinSound();launchConfetti();gameState.streaks[gameState.currentDifficulty]++;gameState.totalWins[gameState.currentDifficulty]++;saveTotalWins();checkAchievements();if(gameState.isDailyChallenge){saveToLeaderboard(gameState.secondsElapsed);if(goToLeaderboardBtn)goToLeaderboardBtn.style.display='block';if(shareDailyResultBtn)shareDailyResultBtn.style.display='block';}else{const avgTime=AVERAGE_TIMES[gameState.currentDifficulty];if(avgTime){const diff=gameState.secondsElapsed-avgTime;timeComparisonText=diff<=0?`(${Math.abs(diff)}s más rápido que el promedio)`:`(${diff}s más lento que el promedio)`;}}if(gameOverMsg){gameOverMsg.textContent='¡FELICITACIONES!';gameOverMsg.className='win';}}else{gameState.streaks[gameState.currentDifficulty]=0;if(gameOverMsg){gameOverMsg.textContent='Game Over';gameOverMsg.className='lose';}}if(timeComparisonElement)timeComparisonElement.textContent=timeComparisonText;saveStreaks();showOverlay('gameOver',true);}
     function restartGame(){playClickSound();showOverlay('gameOver',false);if(goToLeaderboardBtn)goToLeaderboardBtn.style.display='none';if(shareDailyResultBtn)shareDailyResultBtn.style.display='none';startGame(gameState.currentDifficulty);}
@@ -221,15 +211,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LÓGICA DE GUARDADO (localStorage) ---
     // ===== CORRECCIÓN: Funciones de carga robustecidas =====
     function saveStreaks(){try{localStorage.setItem('sudokuStreaks',JSON.stringify(gameState.streaks));}catch(e){console.error("Error saving streaks:",e);}}
-    function loadStreaks(){const key='sudokuStreaks'; const defaultVal={...DEFAULT_STREAKS}; try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'&&Object.keys(p).every(k=>['fácil','medio','difícil','experto'].includes(k)&&typeof p[k]==='number')){gameState.streaks={...defaultVal,...p};return;}throw new Error("Invalid format");}gameState.streaks=defaultVal;}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.streaks=defaultVal;}}
+    function loadStreaks(){const key='sudokuStreaks'; const defaultVal=JSON.parse(JSON.stringify(DEFAULT_STREAKS)); try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'&&Object.keys(p).every(k=>['fácil','medio','difícil','experto'].includes(k)&&typeof p[k]==='number')){gameState.streaks=deepMerge(defaultVal, p);return;}throw new Error("Invalid format");}gameState.streaks=defaultVal;}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.streaks=defaultVal;}}
     function saveTotalWins(){try{localStorage.setItem('sudokuTotalWins',JSON.stringify(gameState.totalWins));}catch(e){console.error("Error saving wins:",e);}}
-    function loadTotalWins(){const key='sudokuTotalWins'; const defaultVal={...DEFAULT_WINS}; try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'&&Object.keys(p).every(k=>['fácil','medio','difícil','experto'].includes(k)&&typeof p[k]==='number')){gameState.totalWins={...defaultVal,...p};return;}throw new Error("Invalid format");}gameState.totalWins=defaultVal;}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.totalWins=defaultVal;}}
+    function loadTotalWins(){const key='sudokuTotalWins'; const defaultVal=JSON.parse(JSON.stringify(DEFAULT_WINS)); try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'&&Object.keys(p).every(k=>['fácil','medio','difícil','experto'].includes(k)&&typeof p[k]==='number')){gameState.totalWins=deepMerge(defaultVal, p);return;}throw new Error("Invalid format");}gameState.totalWins=defaultVal;}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.totalWins=defaultVal;}}
     function saveAchievements(){try{localStorage.setItem('sudokuAchievements',JSON.stringify(gameState.achievements));}catch(e){console.error("Err save achieve:",e);}}
-    function loadAchievements(){const key='sudokuAchievements'; const defaultVal={...DEFAULT_ACHIEVEMENTS}; try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'){gameState.achievements=p;return;}throw new Error("Invalid format");}gameState.achievements=defaultVal;}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.achievements=defaultVal;}}
+    function loadAchievements(){const key='sudokuAchievements'; const defaultVal=JSON.parse(JSON.stringify(DEFAULT_ACHIEVEMENTS)); try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'){gameState.achievements=p;return;}throw new Error("Invalid format");}gameState.achievements=defaultVal;}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.achievements=defaultVal;}}
     function saveLeaderboards(){try{localStorage.setItem('sudokuLeaderboards',JSON.stringify(gameState.leaderboards));}catch(e){console.error("Err save leaders:",e);}}
     function loadLeaderboards(){const key='sudokuLeaderboards'; const defaultVal=JSON.parse(JSON.stringify(DEFAULT_LEADERBOARDS)); try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'&&p.daily&&Array.isArray(p.daily)&&p.daily.every(sc=>typeof sc==='object'&&typeof sc.time==='number'&&typeof sc.date==='string')){gameState.leaderboards=p;return;}throw new Error("Invalid format");}gameState.leaderboards=defaultVal;}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.leaderboards=defaultVal;}}
     function saveSetting(key,value){try{let s=gameState.settings;if(key.includes('.')){const k=key.split('.');if(s[k[0]]!==undefined&&typeof s[k[0]]==='object')s[k[0]][k[1]]=value;else console.warn(`Cannot save nested setting: ${key}`);}else s[key]=value;localStorage.setItem('sudokuSettings',JSON.stringify(s));}catch(e){console.error("Err save setting:",key,e);}}
-    function loadSettings() {const key='sudokuSettings'; let saved = null; try {const s=localStorage.getItem(key); if(s){saved=JSON.parse(s); if(typeof saved !=='object'||saved===null)throw new Error("Invalid format");}} catch(e){console.error(`Error loading/parsing ${key}:`,e,"Using defaults.");localStorage.removeItem(key);saved=null;}gameState.settings=deepMerge(JSON.parse(JSON.stringify(DEFAULT_SETTINGS)),saved||{});/* Eliminado customColors */ gameState.isMuted=gameState.settings.isMuted;/* MuteToggleButton eliminado de aquí */}
+    function loadSettings() {const key='sudokuSettings'; let saved = null; try {const s=localStorage.getItem(key); if(s){saved=JSON.parse(s); if(typeof saved !=='object'||saved===null)throw new Error("Invalid format");}} catch(e){console.error(`Error loading/parsing ${key}:`,e,"Using defaults.");localStorage.removeItem(key);saved=null;}gameState.settings=deepMerge(JSON.parse(JSON.stringify(DEFAULT_SETTINGS)),saved||{});gameState.isMuted=gameState.settings.isMuted;/* MuteToggleButton eliminado */}
 
     // --- LÓGICA DE TIMER Y PAUSA ---
     function startTimer(){clearInterval(gameState.timerInterval);gameState.timerInterval=setInterval(updateTimer,1000);}

@@ -3,7 +3,7 @@
     --font-default: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     --font-serif: 'Roboto Slab', serif;
     --font-mono: 'Source Code Pro', monospace;
-    --font-board: var(--font-default);
+    --font-board: var(--font-default); /* Variable para la fuente del tablero */
 }
 
 :root {
@@ -16,9 +16,7 @@
     --color-highlight: rgba(0, 174, 239, 0.25); --color-error: #D8000C;
     --overlay-bg: rgba(255, 255, 255, 0.6); --overlay-border: rgba(255, 255, 255, 0.2);
     --shadow-color: rgba(0,0,0,0.1);
-    /* Nuevos colores para pistas visuales */
-    --color-hint-target: rgba(76, 175, 80, 0.5); /* Verde */
-    --color-hint-involved: rgba(255, 235, 59, 0.5); /* Amarillo */
+    --color-hint-target: rgba(76, 175, 80, 0.5); --color-hint-involved: rgba(255, 235, 59, 0.5);
 }
 body[data-theme="dark"] {
     --color-bg: #121212; --color-grid: #888888; --color-light-gray: #333333;
@@ -26,8 +24,7 @@ body[data-theme="dark"] {
     --color-button: #3C3C3C; --color-button-text: #CCCCCC; --color-win-text: #34A853;
     --color-gameover-text: #EA4335; --overlay-bg: rgba(30, 30, 30, 0.6);
     --overlay-border: rgba(255, 255, 255, 0.1); --shadow-color: rgba(0,0,0,0.3);
-    --color-hint-target: rgba(129, 199, 132, 0.6); /* Verde más claro */
-    --color-hint-involved: rgba(255, 245, 157, 0.5); /* Amarillo más claro */
+    --color-hint-target: rgba(129, 199, 132, 0.6); --color-hint-involved: rgba(255, 245, 157, 0.5);
 }
 body[data-theme="sepia"] {
     --color-bg: #f4ecd8; --color-grid: #5a4a3a; --color-light-gray: #e6dac8;
@@ -35,8 +32,7 @@ body[data-theme="sepia"] {
     --color-button: #d6c6b2; --color-button-text: #4a3c2c; --color-win-text: #006400;
     --color-gameover-text: #a04000; --overlay-bg: rgba(244, 236, 216, 0.6);
     --overlay-border: rgba(255, 255, 255, 0.2); --shadow-color: rgba(90, 74, 58, 0.15);
-    --color-hint-target: rgba(100, 140, 100, 0.5);
-    --color-hint-involved: rgba(210, 190, 100, 0.5);
+    --color-hint-target: rgba(100, 140, 100, 0.5); --color-hint-involved: rgba(210, 190, 100, 0.5);
 }
 body[data-theme="neon"] {
     --color-bg: #0a0a0a; --color-grid: #00ffff; --color-light-gray: #222222;
@@ -45,8 +41,7 @@ body[data-theme="neon"] {
     --color-button-text: #f0f0f0; --color-win-text: #00ff00; --color-gameover-text: #ff4136;
     --color-highlight: rgba(0, 255, 255, 0.2); --overlay-bg: rgba(10, 10, 10, 0.6);
     --overlay-border: rgba(0, 255, 255, 0.3); --shadow-color: rgba(0, 255, 255, 0.1);
-    --color-hint-target: rgba(0, 255, 0, 0.4); /* Verde neón */
-    --color-hint-involved: rgba(255, 255, 0, 0.4); /* Amarillo neón */
+    --color-hint-target: rgba(0, 255, 0, 0.4); --color-hint-involved: rgba(255, 255, 0, 0.4);
 }
 body[data-theme="minimalist"] {
     --color-bg: #ffffff; --color-grid: #cccccc; --color-light-gray: #f5f5f5;
@@ -55,8 +50,7 @@ body[data-theme="minimalist"] {
     --color-gameover-text: #dc3545; --overlay-bg: rgba(255, 255, 255, 0.7);
     --overlay-border: rgba(0, 0, 0, 0.1); --shadow-color: rgba(0,0,0,0.05);
     --thick-border-width: 1px; --thick-border-color: var(--color-grid);
-    --color-hint-target: rgba(40, 167, 69, 0.4);
-    --color-hint-involved: rgba(255, 193, 7, 0.4);
+    --color-hint-target: rgba(40, 167, 69, 0.4); --color-hint-involved: rgba(255, 193, 7, 0.4);
 }
 
 body {
@@ -65,20 +59,35 @@ body {
     user-select: none; -webkit-user-select: none; -ms-user-select: none; overflow: hidden;
     transition: background-color 0.3s, color 0.3s;
 }
-.overlay-box, #board, .keypad-number, #back-to-menu { transition: background-color 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s, opacity 0.3s; }
+
+.overlay-box, #board, .keypad-number, #back-to-menu {
+    transition: background-color 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s, opacity 0.3s;
+}
 .keypad-number.disabled { transition: none; }
-body[data-theme="dark"] #board, body[data-theme="dark"] .keypad-number, body[data-theme="neon"] #board, body[data-theme="neon"] .keypad-number { background-color: var(--color-bg); }
+
+/* Re-coloreado general */
+body[data-theme="dark"] #board, body[data-theme="dark"] .keypad-number,
+body[data-theme="neon"] #board, body[data-theme="neon"] .keypad-number { background-color: var(--color-bg); }
 body[data-theme="sepia"] #board, body[data-theme="sepia"] .keypad-number { background-color: #fff; }
 body[data-theme="minimalist"] #board, body[data-theme="minimalist"] .keypad-number { background-color: #fff; }
+
 body[data-theme] #back-to-menu { background-color: var(--color-button); color: var(--color-button-text); }
-body[data-theme="dark"] .keypad-number.disabled, body[data-theme="neon"] .keypad-number.disabled { background-color: var(--color-bg) !important; }
+body[data-theme="dark"] .keypad-number.disabled,
+body[data-theme="neon"] .keypad-number.disabled { background-color: var(--color-bg) !important; }
 
 #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 500; }
 .screen { width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; padding: 4vh 15px 15px 15px; box-sizing: border-box; }
 .screen.active { display: flex; }
 
 /* --- Pantalla de Inicio --- */
-#start-screen { justify-content: flex-start; text-align: center; padding-top: 10vh; gap: 15px; position: relative; }
+#start-screen {
+    justify-content: flex-start; text-align: center;
+    padding-top: max(8vh, 50px); /* Asegura un padding mínimo arriba */
+    padding-bottom: 30px; /* Espacio abajo */
+    gap: 15px;
+    /* Elimina position: relative; ya no es necesario */
+    overflow-y: auto; /* Permite scroll si el contenido es muy alto */
+}
 .header-icons { position: absolute; top: 15px; left: 15px; right: 15px; display: flex; justify-content: space-between; width: auto; align-items: center; }
 .header-icons-left, .header-icons-right { display: flex; gap: 15px; }
 .icon-btn { width: 40px; height: 40px; border-radius: 50%; background-color: var(--color-hint); color: var(--color-bg); display: flex; justify-content: center; align-items: center; font-size: 1.5rem; font-weight: bold; border: none; cursor: pointer; transition: background-color 0.3s, color 0.3s; }
@@ -88,12 +97,14 @@ body[data-theme] .icon-btn { background-color: var(--color-button); color: var(-
 
 .title-container { display: flex; align-items: center; justify-content: center; margin-bottom: 0; }
 .colorful-title { font-size: clamp(2.2rem, 10vw, 3rem); font-weight: bold; }
+/* ... (colores título) ... */
 .colorful-title span:nth-child(1){color:#4285F4}.colorful-title span:nth-child(2){color:#DB4437}.colorful-title span:nth-child(3){color:#F4B400}.colorful-title span:nth-child(4){color:#4285F4}.colorful-title span:nth-child(5){color:#0F9D58}.colorful-title span:nth-child(6){color:#DB4437}.colorful-title span:nth-child(7){margin-left:.5ch}.colorful-title span:nth-child(8){color:#F4B400}.colorful-title span:nth-child(9){color:#4285F4}.colorful-title span:nth-child(10){color:#0F9D58}
 
 #resume-game-btn, #daily-challenge-btn { padding: 15px; font-size: 1.4rem; font-weight: bold; border-radius: 15px; border: none; box-shadow: 0 4px 6px var(--shadow-color); cursor: pointer; transition: all 0.2s; width: 80%; max-width: 350px; margin-bottom: 0; }
 #resume-game-btn { background-color: var(--color-win-text); color: white; }
 #daily-challenge-btn { background-color: #673AB7; color: white; }
 #resume-game-btn:hover, #daily-challenge-btn:hover { filter: brightness(0.9); }
+
 #difficulty-buttons { display: flex; flex-direction: column; gap: 15px; width: 80%; max-width: 350px; }
 .difficulty-btn { padding: 15px; font-size: 1.4rem; font-weight: bold; border-radius: 15px; border: none; box-shadow: 0 4px 6px var(--shadow-color); cursor: pointer; transition: all 0.2s; position: relative; display: flex; justify-content: space-between; align-items: center; color: white; }
 .difficulty-btn:hover { filter: brightness(0.9); }
@@ -103,9 +114,26 @@ body[data-theme] .streak-display-menu { color: var(--color-hint); }
 .logo-btn { width: 40px; height: 40px; font-size: 1.5rem; border-radius: 50%; background-color: var(--color-hint); color: var(--color-bg); display: flex; justify-content: center; align-items: center; font-weight: bold; cursor: pointer; border: none; transition: background-color 0.3s, color 0.3s; }
 body[data-theme] .logo-btn { background-color: var(--color-button); color: var(--color-button-text); }
 
-.bottom-button-container { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 80%; max-width: 350px; }
-#leaderboard-btn { padding: 12px; font-size: 1.2rem; font-weight: bold; border-radius: 15px; border: none; box-shadow: 0 4px 6px var(--shadow-color); cursor: pointer; transition: all 0.2s; background-color: var(--color-button); color: var(--color-button-text); width: 100%; margin-bottom: 0; }
+/* --- Contenedor y Botón Clasificación Abajo --- */
+/* ===== MODIFICADO: Eliminado position absolute, añadido margen ===== */
+.bottom-button-container {
+    /* position: absolute; */ /* Eliminado */
+    /* bottom: 30px; */ /* Eliminado */
+    /* left: 50%; */ /* Eliminado */
+    /* transform: translateX(-50%); */ /* Eliminado */
+    width: 80%;
+    max-width: 350px;
+    margin-top: 25px; /* Añade espacio arriba */
+    margin-bottom: 15px; /* Espacio extra abajo */
+}
+#leaderboard-btn {
+    padding: 12px; font-size: 1.2rem; font-weight: bold; border-radius: 15px;
+    border: none; box-shadow: 0 4px 6px var(--shadow-color); cursor: pointer;
+    transition: all 0.2s; background-color: var(--color-button);
+    color: var(--color-button-text); width: 100%; margin-bottom: 0;
+}
 #leaderboard-btn:hover { filter: brightness(0.9); }
+
 
 /* --- Pantalla de Juego --- */
 #game-screen { justify-content: flex-start; }
@@ -141,10 +169,7 @@ body[data-theme="dark"] .tile.keypad-highlight, body[data-theme="sepia"] .tile.k
 .tile-border-right { border-right: 3px solid var(--color-grid); transition: border-color 0.3s; } .tile-border-bottom { border-bottom: 3px solid var(--color-grid); transition: border-color 0.3s; }
 body[style*="--thick-border-width"] .tile-border-right { border-right-width: var(--thick-border-width, 3px); border-right-color: var(--thick-border-color, var(--color-grid)); } body[style*="--thick-border-width"] .tile-border-bottom { border-bottom-width: var(--thick-border-width, 3px); border-bottom-color: var(--thick-border-color, var(--color-grid)); }
 .tile.tile-error { animation: flash-red 0.5s; } .tile.tile-conflict { background-color: rgba(216, 0, 12, 0.3); }
-
-/* --- Estilos para Pistas Visuales --- */
-.tile.tile-hint-target { background-color: var(--color-hint-target); }
-.tile.tile-hint-involved { background-color: var(--color-hint-involved); }
+.tile.tile-hint-target { background-color: var(--color-hint-target); } .tile.tile-hint-involved { background-color: var(--color-hint-involved); }
 
 .tile-notes-grid { display: none; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 .tile.is-notes .tile-notes-grid { display: grid; } .tile.is-notes .tile-number { display: none; }
@@ -175,8 +200,7 @@ body[data-theme] .overlay-btn-secondary { background-color: #555; } body[data-th
 .instructions-text { text-align: left; max-width: 400px; margin-bottom: 20px; line-height: 1.5; }
 #hint-explanation .hint-cell { font-weight: bold; color: var(--color-text); background-color: var(--color-light-gray); padding: 2px 6px; border-radius: 4px; display: inline-block; margin: 0 2px; transition: background-color 0.3s, color 0.3s; }
 .creator-name { font-size: 1.2rem; font-weight: bold; }
-/* Comparación de Tiempo */
-.time-comparison { font-size: 1rem; color: var(--color-hint); margin-top: -10px; margin-bottom: 15px; }
+.time-comparison { font-size: 1rem; color: var(--color-hint); margin-top: -10px; margin-bottom: 15px; transition: color 0.3s; }
 
 /* --- Pestañas y Logros --- */
 .tabs { display: flex; justify-content: center; margin-bottom: 20px; border-bottom: 2px solid var(--color-button); transition: border-color 0.3s; }
