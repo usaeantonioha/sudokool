@@ -13,10 +13,10 @@
 
     <canvas id="confetti-canvas"></canvas>
 
-    <section id="start-screen" class="screen active">
+    <section id="start-screen" class="screen active screen-enter">
         <header class="header-icons">
             <div class="header-icons-left">
-                <button id="main-menu-logo" class="logo-btn" aria-label="Información, Acerca de y Logros">S</button>
+                <button id="main-menu-logo" class="logo-btn" aria-label="Información, Logros y Acerca de">S</button>
             </div>
             <div class="header-icons-right">
                 <button id="settings-btn" class="icon-btn" aria-label="Configuración">⚙️</button>
@@ -29,12 +29,12 @@
             </h1>
         </div>
 
-        <button id="resume-game-btn" class="resume-btn" style="display: none;">Reanudar Partida</button>
-        <button id="daily-challenge-btn" class="daily-btn">Desafío Diario</button>
+        <button id="resume-game-btn" class="resume-btn neumorphic" style="display: none;">Reanudar Partida</button>
+        <button id="daily-challenge-btn" class="daily-btn neumorphic">Desafío Diario</button>
         <nav id="difficulty-buttons"></nav>
 
         <div class="bottom-button-container">
-             <button id="leaderboard-btn" class="leaderboard-btn">🏆 Clasificación</button>
+             <button id="leaderboard-btn" class="leaderboard-btn neumorphic">🏆 Clasificación</button>
         </div>
     </section>
 
@@ -45,16 +45,27 @@
             <div class="info-item"> <span id="game-difficulty-display"></span> </div>
             <div class="info-item info-errors"> <span>Errores:</span> <span id="error-counter">0/3</span> </div>
             <div class="info-item info-time"> <span>Tiempo:</span> <span id="timer-display">00:00</span> </div>
-            <button id="pause-button" class="icon-btn pause-btn-ingame" aria-label="Pausar juego">||</button>
+            <button id="pause-button" class="pause-btn-ingame" aria-label="Pausar juego">
+                 <span class="pause-text">Pausa</span>
+                 <svg class="action-icon-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path></svg>
+            </button>
         </div>
 
         <div class="game-content-area">
             <div id="board"></div>
             <div id="action-bar">
-                <button id="undo-button" class="action-btn" aria-label="Deshacer jugada" style="display: none;"><span class="action-icon">↩️</span><span class="action-text">Deshacer</span></button>
-                <button id="erase-button" class="action-btn" aria-label="Borrar celda"><span class="action-icon"> B </span><span class="action-text">Borrar</span></button>
-                <button id="pencil-toggle-btn" class="action-btn" aria-label="Modo Lápiz" style="display: none;"><span class="action-icon">✏️</span><span class="action-text">Notas</span></button>
-                <button id="hint-button" class="action-btn" aria-label="Pedir Pista" style="display: none;"><span class="action-icon">💡</span><span class="action-text">Pista</span></button>
+                <button id="erase-button" class="action-btn" aria-label="Borrar celda">
+                    <svg class="action-icon-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19.78 2.22a2.49 2.49 0 0 0-3.53 0L7.1 11.36a1 1 0 0 0 0 1.41l7.07 7.07a1 1 0 0 0 1.41 0l4.24-4.24a2.49 2.49 0 0 0 0-3.53zm-3.53 3.53l2.83 2.83-8.49 8.49-2.83-2.83zM6 21H3v-3l7.74-7.74 3 3z"></path></svg>
+                    <span class="action-text">Borrar</span>
+                </button>
+                <button id="pencil-toggle-btn" class="action-btn" aria-label="Modo Lápiz" style="display: none;">
+                    <svg class="action-icon-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"></path></svg>
+                    <span class="action-text">Notas</span>
+                </button>
+                <button id="hint-button" class="action-btn" aria-label="Pedir Pista" style="display: none;">
+                    <svg class="action-icon-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"></path></svg>
+                    <span class="action-text">Pista</span>
+                </button>
             </div>
             <div id="keypad"></div>
         </div>
@@ -66,7 +77,7 @@
 
     <div id="game-over-screen" class="overlay">
         <div class="overlay-box">
-            <h2 id="game-over-message"></h2>
+            <h2 id="game-over-message" class="win-message"></h2>
              <p id="time-comparison" class="time-comparison"></p>
             <button id="share-daily-result-btn" class="overlay-btn overlay-btn-share" style="display: none;">Compartir Resultado</button>
             <button id="go-to-leaderboard-btn" class="overlay-btn" style="display: none;">Ver Clasificación</button>
@@ -81,15 +92,15 @@
         <div class="overlay-box overlay-box-large">
             <div class="tabs">
                 <button class="tab-btn active" data-tab="info-tab">Información</button>
-                <button class="tab-btn" data-tab="about-tab">Acerca de</button>
                 <button class="tab-btn" data-tab="achievements-tab">Logros</button>
+                <button class="tab-btn" data-tab="about-tab">Acerca de</button>
             </div>
             <div id="info-tab" class="tab-content active">
                  <h2>Cómo Jugar Sudoku</h2>
                  <p class="instructions-text"> El objetivo es rellenar una cuadrícula de 9×9 celdas dividida en subcuadrículas de 3×3 ("cajas" o "regiones") con las cifras del 1 al 9 partiendo de algunos números ya dispuestos en algunas de las celdas. <br><br> No se debe repetir ninguna cifra en una misma <strong>fila</strong>, <strong>columna</strong> o <strong>subcuadrícula (caja)</strong>. ¡Usa la lógica para completar el puzzle! </p>
             </div>
-            <div id="about-tab" class="tab-content"> <h2>Creado por</h2> <p class="creator-name">Enzo</p> </div>
             <div id="achievements-tab" class="tab-content"> <h2>Logros 🎖️</h2> <ul id="achievements-list" class="achievements-list"></ul> </div>
+            <div id="about-tab" class="tab-content"> <h2>Creado por</h2> <p class="creator-name">Enzo</p> </div>
             <button class="overlay-btn back-btn">Volver</button>
         </div>
     </div>
@@ -127,33 +138,15 @@
             <h2>⚙️ Configuración</h2>
             <div class="settings-section">
                 <h3>Apariencia</h3>
-                <div class="setting-item">
-                    <label for="theme-select">Tema:</label>
-                    <select id="theme-select">
-                        <option value="auto">Automático (Claro)</option>
-                        <option value="light">Claro</option>
-                        <option value="sepia">Sepia</option>
-                        <option value="dark">Oscuro</option>
-                        <option value="neon">Neón</option>
-                        <option value="minimalist">Minimalista</option>
-                    </select>
-                </div>
-                <div class="setting-item">
-                    <label for="font-select">Fuente Números:</label>
-                    <select id="font-select">
-                        <option value="Manrope">Predeterminada</option>
-                        <option value="Roboto Slab">Serif</option>
-                        <option value="Source Code Pro">Monoespaciada</option>
-                    </select>
-                </div>
+                <div class="setting-item"><label for="theme-select">Tema:</label><select id="theme-select"><option value="auto">Automático (Claro)</option><option value="light">Claro</option><option value="sepia">Sepia</option><option value="dark">Oscuro</option><option value="neon">Neón</option><option value="minimalist">Minimalista</option></select></div>
+                <div class="setting-item"><label for="font-select">Fuente Números:</label><select id="font-select"><option value="Manrope">Predeterminada</option><option value="Roboto Slab">Serif</option><option value="Source Code Pro">Monoespaciada</option></select></div>
             </div>
             <div class="settings-section">
                 <h3>Juego</h3>
                  <div class="setting-item toggle-setting"><label for="mute-toggle-setting">Silenciar Sonidos:</label><input type="checkbox" id="mute-toggle-setting" class="toggle-switch"></div>
                  <div class="setting-item toggle-setting"><label for="show-hint-toggle">Mostrar Botón Pista:</label><input type="checkbox" id="show-hint-toggle" class="toggle-switch" checked></div>
                  <div class="setting-item toggle-setting"><label for="show-pencil-toggle">Mostrar Botón Lápiz:</label><input type="checkbox" id="show-pencil-toggle" class="toggle-switch" checked></div>
-                 <div class="setting-item toggle-setting"><label for="show-undo-toggle">Mostrar Botón Deshacer (en error):</label><input type="checkbox" id="show-undo-toggle" class="toggle-switch" checked></div>
-            </div>
+                 </div>
             <button class="overlay-btn back-btn">Cerrar</button>
         </div>
     </div>

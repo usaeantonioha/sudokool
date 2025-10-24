@@ -1,48 +1,43 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- CONSTANTES ---
     const DIFFICULTIES = { FÁCIL: 'fácil', MEDIO: 'medio', DIFÍCIL: 'difícil', EXPERTO: 'experto' };
-    const CELLS_TO_REMOVE = { fácil: 40, medio: 50, difícil: 60, experto: 65 };
-    const ACHIEVEMENT_DEFINITIONS = { 'speedRacer': { title: 'Velocista ⚡', desc: 'Gana un juego Medio en menos de 5 minutos.' }, 'perfectionist': { title: 'Perfeccionista 🎯', desc: 'Gana un juego Difícil sin usar "Deshacer".' }, 'streakMaster': { title: 'Imparable 🔥', desc: 'Alcanza una racha de 10 victorias.' }, 'thinkingAhead': { title: 'Estratega 🧠', desc: 'Usa el modo Lápiz para hacer 50 notas.' }, 'dailyConqueror': { title: 'Conquistador Diario 📅', desc: 'Gana el Desafío Diario.' } };
-    const DEFAULT_SETTINGS = { theme: 'auto', boardFont: 'Manrope', showHintButton: true, showPencilButton: true, showUndoButton: true, isMuted: false }; // Colores eliminados
-    const DEFAULT_STREAKS = { fácil: 0, medio: 0, difícil: 0, experto: 0 };
-    const DEFAULT_WINS = { fácil: 0, medio: 0, difícil: 0, experto: 0 };
+    const CELLS_TO_REMOVE = { fácil: 35, medio: 45, difícil: 53, experto: 58 };
+    const ACHIEVEMENT_DEFINITIONS = { 'speedRacer':{title:'Velocista ⚡',desc:'Gana un juego Medio en menos de 5 minutos.'},'perfectionist':{title:'Perfeccionista 🎯',desc:'Gana un juego Difícil sin usar Pistas.'},'streakMaster':{title:'Imparable 🔥',desc:'Alcanza una racha de 10 victorias.'},'thinkingAhead':{title:'Estratega 🧠',desc:'Usa el modo Lápiz para hacer 50 notas.'},'dailyConqueror':{title:'Conquistador Diario 📅',desc:'Gana el Desafío Diario.'} };
+    const DEFAULT_SETTINGS = { theme:'auto',boardFont:'Manrope',showHintButton:true,showPencilButton:true,/*showUndoButton:true,*/isMuted:false }; // Undo eliminado
+    const DEFAULT_STREAKS = { fácil:0,medio:0,difícil:0,experto:0 };
+    const DEFAULT_WINS = { fácil:0,medio:0,difícil:0,experto:0 };
     const DEFAULT_ACHIEVEMENTS = {};
-    const DEFAULT_LEADERBOARDS = { daily: [] };
-    const AVERAGE_TIMES = { fácil: 300, medio: 600, difícil: 1200, experto: 1800 };
+    const DEFAULT_LEADERBOARDS = { daily:[] };
+    const AVERAGE_TIMES = { fácil:300,medio:600,difícil:1200,experto:1800 };
 
     // --- ESTADO DEL JUEGO ---
     let gameState = {
-        solution: [], puzzleBoard: [], lives: 3, selectedTile: null, currentDifficulty: DIFFICULTIES.MEDIO,
-        streaks: JSON.parse(JSON.stringify(DEFAULT_STREAKS)), totalWins: JSON.parse(JSON.stringify(DEFAULT_WINS)),
-        timerInterval: null, secondsElapsed: 0, isPaused: false, gameInProgress: false, lastMove: null,
-        isPencilMode: false, notesBoard: [], isMuted: false, isDailyChallenge: false, hintUsed: false,
-        achievements: JSON.parse(JSON.stringify(DEFAULT_ACHIEVEMENTS)), leaderboards: JSON.parse(JSON.stringify(DEFAULT_LEADERBOARDS)),
-        gameStats: { hasUsedUndo: false, notesPlaced: 0 }, settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS))
+        solution:[], puzzleBoard:[], lives:3, selectedTile:null, currentDifficulty:DIFFICULTIES.MEDIO,
+        streaks:JSON.parse(JSON.stringify(DEFAULT_STREAKS)), totalWins:JSON.parse(JSON.stringify(DEFAULT_WINS)),
+        timerInterval:null, secondsElapsed:0, isPaused:false, gameInProgress:false, /*lastMove:null,*/ // Eliminado
+        isPencilMode:false, notesBoard:[], isMuted:false, isDailyChallenge:false, hintUsed:false,
+        achievements:JSON.parse(JSON.stringify(DEFAULT_ACHIEVEMENTS)), leaderboards:JSON.parse(JSON.stringify(DEFAULT_LEADERBOARDS)),
+        gameStats:{/*hasUsedUndo:false,*/notesPlaced:0, hintUsedThisGame: false }, // Eliminado hasUsedUndo
+        settings:JSON.parse(JSON.stringify(DEFAULT_SETTINGS))
     };
 
     // --- ELEMENTOS DEL DOM ---
-    let screens = {}, boardElement, keypadElement, livesCounter, backToMenuBtn, restartBtn, gameOverMsg,
-        difficultyButtonsContainer, flashMessage, ingameStreakDisplay, infoIcon, mainMenuLogo,
+    let screens = {}, boardElement, keypadElement, /*livesCounter,*/ backToMenuBtn, restartBtn, gameOverMsg,
+        difficultyButtonsContainer, flashMessage, ingameStreakDisplay, /*infoIcon,*/ mainMenuLogo,
         timerDisplay, pauseButton, resumeButton, resumeGameBtn, pauseBackToMenuBtn, gameOverHomeBtn,
-        undoButton, pencilToggleButton, dailyChallengeButton, hintButton, hintExplanation, hintOkButton,
+        /*undoButton,*/ pencilToggleButton, dailyChallengeButton, hintButton, hintExplanation, hintOkButton,
         confettiCanvas, leaderboardButton, goToLeaderboardBtn, achievementsList, leaderboardTableBody,
         tabButtons, tabContents, settingsButton, shareDailyResultBtn, themeSelect, fontSelect,
-        muteToggleSetting, showHintToggle, showPencilToggle, showUndoToggle, /* muteToggleButton, */ // Removido
-        sharePuzzleBtn, timeComparisonElement, eraseButton;
+        muteToggleSetting, showHintToggle, showPencilToggle, /*showUndoToggle,*/ // Eliminado
+        sharePuzzleBtn, timeComparisonElement, eraseButton, errorCounterElement;
 
     function getElements() {
-        screens = { start: document.getElementById('start-screen'), game: document.getElementById('game-screen'), gameOver: document.getElementById('game-over-screen'), instructions: document.getElementById('instructions-screen'), about: document.getElementById('about-screen'), pause: document.getElementById('pause-screen'), hintOverlay: document.getElementById('hint-overlay-screen'), leaderboard: document.getElementById('leaderboard-screen'), settings: document.getElementById('settings-screen') };
-        boardElement = document.getElementById('board'); keypadElement = document.getElementById('keypad'); livesCounter = document.getElementById('lives-counter'); backToMenuBtn = document.getElementById('back-to-menu'); restartBtn = document.getElementById('restart-button'); gameOverMsg = document.getElementById('game-over-message'); difficultyButtonsContainer = document.getElementById('difficulty-buttons'); flashMessage = document.getElementById('flash-message'); ingameStreakDisplay = document.getElementById('ingame-streak-display'); infoIcon = document.getElementById('info-icon'); mainMenuLogo = document.getElementById('main-menu-logo'); timerDisplay = document.getElementById('timer-display'); pauseButton = document.getElementById('pause-button'); resumeButton = document.getElementById('resume-button'); resumeGameBtn = document.getElementById('resume-game-btn'); pauseBackToMenuBtn = document.getElementById('pause-back-to-menu'); gameOverHomeBtn = document.getElementById('game-over-home-btn'); undoButton = document.getElementById('undo-button'); pencilToggleButton = document.getElementById('pencil-toggle-btn'); dailyChallengeButton = document.getElementById('daily-challenge-btn'); hintButton = document.getElementById('hint-button'); hintExplanation = document.getElementById('hint-explanation'); hintOkButton = document.getElementById('hint-ok-btn'); confettiCanvas = document.getElementById('confetti-canvas'); leaderboardButton = document.getElementById('leaderboard-btn'); goToLeaderboardBtn = document.getElementById('go-to-leaderboard-btn'); achievementsList = document.getElementById('achievements-list'); leaderboardTableBody = document.querySelector('#leaderboard-table tbody'); tabButtons = document.querySelectorAll('.tab-btn'); tabContents = document.querySelectorAll('.tab-content'); settingsButton = document.getElementById('settings-btn'); shareDailyResultBtn = document.getElementById('share-daily-result-btn'); themeSelect = document.getElementById('theme-select'); fontSelect = document.getElementById('font-select'); muteToggleSetting = document.getElementById('mute-toggle-setting'); showHintToggle = document.getElementById('show-hint-toggle'); showPencilToggle = document.getElementById('show-pencil-toggle'); showUndoToggle = document.getElementById('show-undo-toggle');
-        sharePuzzleBtn = document.getElementById('share-puzzle-btn'); timeComparisonElement = document.getElementById('time-comparison');
-        eraseButton = document.getElementById('erase-button');
+        screens = { start: document.getElementById('start-screen'), game: document.getElementById('game-screen'), gameOver: document.getElementById('game-over-screen'), /*instructions: document.getElementById('instructions-screen'),*/ about: document.getElementById('about-screen'), pause: document.getElementById('pause-screen'), hintOverlay: document.getElementById('hint-overlay-screen'), leaderboard: document.getElementById('leaderboard-screen'), settings: document.getElementById('settings-screen') };
+        boardElement = document.getElementById('board'); keypadElement = document.getElementById('keypad'); /*livesCounter = document.getElementById('lives-counter');*/ backToMenuBtn = document.getElementById('back-to-menu'); restartBtn = document.getElementById('restart-button'); gameOverMsg = document.getElementById('game-over-message'); difficultyButtonsContainer = document.getElementById('difficulty-buttons'); flashMessage = document.getElementById('flash-message'); ingameStreakDisplay = document.getElementById('ingame-streak-display'); /*infoIcon = document.getElementById('info-icon');*/ mainMenuLogo = document.getElementById('main-menu-logo'); timerDisplay = document.getElementById('timer-display'); pauseButton = document.getElementById('pause-button'); resumeButton = document.getElementById('resume-button'); resumeGameBtn = document.getElementById('resume-game-btn'); pauseBackToMenuBtn = document.getElementById('pause-back-to-menu'); gameOverHomeBtn = document.getElementById('game-over-home-btn'); /*undoButton = document.getElementById('undo-button');*/ pencilToggleButton = document.getElementById('pencil-toggle-btn'); dailyChallengeButton = document.getElementById('daily-challenge-btn'); hintButton = document.getElementById('hint-button'); hintExplanation = document.getElementById('hint-explanation'); hintOkButton = document.getElementById('hint-ok-btn'); confettiCanvas = document.getElementById('confetti-canvas'); leaderboardButton = document.getElementById('leaderboard-btn'); goToLeaderboardBtn = document.getElementById('go-to-leaderboard-btn'); achievementsList = document.getElementById('achievements-list'); leaderboardTableBody = document.querySelector('#leaderboard-table tbody'); tabButtons = document.querySelectorAll('.tab-btn'); tabContents = document.querySelectorAll('.tab-content'); settingsButton = document.getElementById('settings-btn'); shareDailyResultBtn = document.getElementById('share-daily-result-btn'); themeSelect = document.getElementById('theme-select'); fontSelect = document.getElementById('font-select'); muteToggleSetting = document.getElementById('mute-toggle-setting'); showHintToggle = document.getElementById('show-hint-toggle'); showPencilToggle = document.getElementById('show-pencil-toggle'); /*showUndoToggle = document.getElementById('show-undo-toggle');*/ sharePuzzleBtn = document.getElementById('share-puzzle-btn'); timeComparisonElement = document.getElementById('time-comparison'); eraseButton = document.getElementById('erase-button');
+        errorCounterElement = document.getElementById('error-counter');
 
-        const essentialElements = { boardElement, keypadElement, difficultyButtonsContainer, settingsButton, startScreen: screens.start, gameScreen: screens.game, settingsScreen: screens.settings, themeSelect, fontSelect, muteToggleSetting, eraseButton };
-        for (const key in essentialElements) {
-            if (!essentialElements[key]) {
-                 let expectedId = key.replace(/([A-Z])/g, '-$1').toLowerCase(); if (key.endsWith('Screen')) expectedId = key.replace('Screen','-screen');
-                 throw new Error(`Elemento esencial del DOM no encontrado: '${key}' (esperaba ID similar a '${expectedId}'). Verifica el HTML.`);
-            }
-        }
+        const essentialElements = { boardElement, keypadElement, difficultyButtonsContainer, settingsButton, startScreen: screens.start, gameScreen: screens.game, settingsScreen: screens.settings, themeSelect, fontSelect, muteToggleSetting, eraseButton, errorCounterElement, timerDisplay };
+        for (const key in essentialElements) { if (!essentialElements[key]) { let id = key.replace(/([A-Z])/g, '-$1').toLowerCase().replace('-element',''); if(key.endsWith('Screen')) id=key.replace('Screen','-screen'); throw new Error(`Elemento esencial del DOM no encontrado: '${key}' (esperaba ID similar a '${id}'). Verifica el HTML.`); } }
     }
 
     // --- LÓGICA DE AUDIO ---
@@ -60,24 +55,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- LÓGICA DE INICIO ---
     function initialize() {
-        getElements();
-        setupConfetti();
+        getElements(); setupConfetti();
         loadSettings(); loadStreaks(); loadTotalWins(); loadAchievements(); loadLeaderboards();
-        applySettings();
-        createDifficultyButtons();
-        addEventListeners();
-        const urlParams = new URLSearchParams(window.location.search);
-        const puzzleCode = urlParams.get('puzzle');
+        applySettings(); createDifficultyButtons(); addEventListeners();
+        const urlParams = new URLSearchParams(window.location.search); const puzzleCode = urlParams.get('puzzle');
         if (puzzleCode) setTimeout(() => loadPuzzleFromCode(puzzleCode), 100);
+        else showScreen('start'); // Asegura mostrar la pantalla de inicio si no hay puzzle
     }
 
     function addEventListeners() {
         document.body.addEventListener('click', initAudio, { once: true });
         try {
-            // ===== MODIFICADO: backToMenuBtn ahora llama a goHomeFromPause =====
-            backToMenuBtn?.addEventListener('click', goHomeFromPause);
+            backToMenuBtn?.addEventListener('click', goHomeFromPause); // Cambio aquí
             restartBtn?.addEventListener('click', restartGame);
-            // infoIcon?.addEventListener('click', () => { playClickSound(); showOverlay('instructions', true); }); // Eliminado
+            // infoIcon eliminado
             mainMenuLogo?.addEventListener('click', () => { playClickSound(); renderAchievementsPage(); showOverlay('about', true); });
             settingsButton?.addEventListener('click', () => { playClickSound(); setupSettingsScreen(); showOverlay('settings', true); });
             document.querySelectorAll('.back-btn').forEach(btn => btn.addEventListener('click', () => { playClickSound(); ['instructions','about','leaderboard','settings'].forEach(id=>showOverlay(id,false)); }));
@@ -88,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
             resumeGameBtn?.addEventListener('click', resumeGame);
             pauseBackToMenuBtn?.addEventListener('click', goHomeFromPause);
             gameOverHomeBtn?.addEventListener('click', goHome);
-            undoButton?.addEventListener('click', undoLastMove);
+            // undoButton eliminado
             pencilToggleButton?.addEventListener('click', togglePencilMode);
             eraseButton?.addEventListener('click', eraseNumber);
             dailyChallengeButton?.addEventListener('click', startDailyChallenge);
@@ -104,30 +95,42 @@ document.addEventListener('DOMContentLoaded', () => {
             muteToggleSetting?.addEventListener('change', handleMuteChange);
             showHintToggle?.addEventListener('change', (e) => handleButtonVisibilityChange('showHintButton', e.target.checked));
             showPencilToggle?.addEventListener('change', (e) => handleButtonVisibilityChange('showPencilButton', e.target.checked));
-            showUndoToggle?.addEventListener('change', (e) => handleButtonVisibilityChange('showUndoButton', e.target.checked));
+            // showUndoToggle eliminado
         } catch (e) { console.error("Error asignando event listeners:", e); }
     }
 
     function handleTabClick(event) {
         if (!event || !event.target || !event.target.dataset.tab) return;
         playClickSound();
-        tabButtons.forEach(b => b.classList.remove('active'));
-        if (tabContents) tabContents.forEach(c => c.classList.remove('active'));
+        const aboutScreen = document.getElementById('about-screen');
+        if (!aboutScreen) return;
+        const currentTabButtons = aboutScreen.querySelectorAll('.tab-btn');
+        const currentTabContents = aboutScreen.querySelectorAll('.tab-content');
+        currentTabButtons.forEach(b => b.classList.remove('active'));
+        currentTabContents.forEach(c => c.classList.remove('active'));
         event.target.classList.add('active');
-        const targetContent = document.getElementById(event.target.dataset.tab);
+        const targetContent = aboutScreen.querySelector(`#${event.target.dataset.tab}`);
         if (targetContent) targetContent.classList.add('active');
-         // Asegurar que la primera pestaña esté activa al abrir
-         if(event.target.dataset.tab === 'info-tab' && !document.getElementById('info-tab').classList.contains('active')){
-             document.getElementById('info-tab').classList.add('active');
+
+         // Reasegurar primera pestaña activa si es necesario
+         const defaultTab = 'info-tab'; // Ahora es info
+         if(!aboutScreen.querySelector(`.tab-btn[data-tab="${defaultTab}"]`)?.classList.contains('active')){
+              const defaultBtn = aboutScreen.querySelector(`.tab-btn[data-tab="${defaultTab}"]`);
+              const defaultContent = aboutScreen.querySelector(`#${defaultTab}`);
+              if(defaultBtn) defaultBtn.classList.add('active');
+              if(defaultContent) defaultContent.classList.add('active');
          }
     }
 
 
     function createDifficultyButtons() {
-        if (!difficultyButtonsContainer) { console.error("difficultyButtonsContainer no encontrado al crear botones."); return; }
+        if (!difficultyButtonsContainer) { console.error("difficultyButtonsContainer no encontrado."); return; }
         difficultyButtonsContainer.innerHTML = ''; const f = document.createDocumentFragment();
         const l = [{key:'fácil',name:'Fácil'},{key:'medio',name:'Medio'},{key:'difícil',name:'Difícil'},{key:'experto',name:'Experto'}];
-        l.forEach(v=>{const b=document.createElement('button');b.className='difficulty-btn';b.dataset.difficulty=v.key;const t=document.createElement('span');t.textContent=v.name;b.appendChild(t);b.classList.add(`btn-${v.key}`);const s=(gameState.streaks&&typeof gameState.streaks==='object'&&gameState.streaks[v.key])?gameState.streaks[v.key]:0;if(s>0){const sp=document.createElement('span');sp.className='streak-display-menu';sp.textContent=`👑 ${s}`;b.appendChild(sp);}f.appendChild(b);});
+        l.forEach(v=>{const b=document.createElement('button');b.className='difficulty-btn neumorphic';b.dataset.difficulty=v.key;const t=document.createElement('span');t.textContent=v.name;b.appendChild(t);b.classList.add(`btn-${v.key}`);
+        // Aplicar gradiente directamente aquí si no es neumorphic general
+        // b.style.backgroundImage = `linear-gradient(...)`;
+        const s=(gameState.streaks&&typeof gameState.streaks==='object'&&gameState.streaks[v.key])?gameState.streaks[v.key]:0;if(s>0){const sp=document.createElement('span');sp.className='streak-display-menu';sp.textContent=`👑 ${s}`;b.appendChild(sp);}f.appendChild(b);});
         difficultyButtonsContainer.appendChild(f); difficultyButtonsContainer.addEventListener('click', handleDifficultyClick);
     }
 
@@ -140,11 +143,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if(resumeGameBtn)resumeGameBtn.style.display='none'; if(goToLeaderboardBtn)goToLeaderboardBtn.style.display='none'; if(shareDailyResultBtn)shareDailyResultBtn.style.display='none';
             gameState.currentDifficulty=difficulty; gameState.lives=3; gameState.selectedTile=null;
             gameState.secondsElapsed=0; gameState.isPaused=false;
-            gameState.lastMove=null; if(undoButton)undoButton.style.display='none'; clearAllErrors();
+            gameState.lastMove=null; /*undoButton eliminado*/ clearAllErrors();
             gameState.isPencilMode=false; if(pencilToggleButton)pencilToggleButton.classList.remove('active');
             gameState.hintUsed=false; if(hintButton)hintButton.classList.remove('disabled');
             gameState.notesBoard=Array(9).fill(null).map(()=>Array(9).fill(null).map(()=>new Set()));
-            gameState.gameStats={hasUsedUndo:false,notesPlaced:0};
+            gameState.gameStats={/*hasUsedUndo:false,*/notesPlaced:0, hintUsedThisGame: false};
             applyButtonVisibility();
             renderTimer(); startTimer(); if(pauseButton)pauseButton.style.display='flex';
 
@@ -162,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                  let b=generateEmptyBoard(); generateSolution(b,Math.random);
                  gameState.solution=JSON.parse(JSON.stringify(b));
-                 gameState.puzzleBoard=createPuzzle(b,difficulty,Math.random);
+                 gameState.puzzleBoard=createPuzzle(b,difficulty,Math.random); // Usa la función corregida
             }
 
             updateLivesDisplay(); updateIngameStreakDisplay(); renderBoardImproved(); renderKeypad();
@@ -172,32 +175,57 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- MANEJADORES DE EVENTOS ---
     function handleDifficultyClick(event){const b=event.target.closest('.difficulty-btn');if(b){playClickSound();startGame(b.dataset.difficulty);}}
-    function handleBoardClick(event){if(gameState.isPaused)return;const t=event.target.closest('.tile');if(!t)return;gameState.selectedTile=t;clearHintHighlights();highlightTilesFromBoard(t.dataset.row,t.dataset.col);}
-    function handleKeypadClick(event){if(gameState.isPaused)return;const k=event.target.closest('.keypad-number');if(k){playClickSound();if(k.style.opacity === '0.3' || k.style.visibility === 'hidden') return; const n=parseInt(k.textContent);if(isNaN(n)||n<1||n>9)return;if(gameState.selectedTile){clearHintHighlights();if(gameState.isPencilMode)toggleNote(n);else placeNumber(n);}else{clearHintHighlights();highlightNumbersFromKeypad(n);}}}
+    function handleBoardClick(event){if(gameState.isPaused)return;const t=event.target.closest('.tile');if(!t)return;gameState.selectedTile=t;clearHintHighlights();clearErrorHighlights(); /* Limpia conflictos al seleccionar otra celda */ highlightTilesFromBoard(t.dataset.row,t.dataset.col);}
+    function handleKeypadClick(event){if(gameState.isPaused)return;const k=event.target.closest('.keypad-number');if(k){playClickSound();if(k.style.opacity === '0.3' || k.style.visibility === 'hidden') return; const n=parseInt(k.textContent);if(isNaN(n)||n<1||n>9)return;if(gameState.selectedTile){clearHintHighlights();clearErrorHighlights(); /* Limpia conflictos al poner número */ if(gameState.isPencilMode)toggleNote(n);else placeNumber(n);}else{clearHintHighlights();clearErrorHighlights(); /* Limpia conflictos al resaltar */ highlightNumbersFromKeypad(n);}}}
 
     // --- LÓGICA DEL JUEGO ---
-    function placeNumber(num){if(!gameState.selectedTile||gameState.selectedTile.classList.contains('hint'))return;clearErrorHighlights();clearHintHighlights();const r=parseInt(gameState.selectedTile.dataset.row),c=parseInt(gameState.selectedTile.dataset.col);if(isNaN(r)||isNaN(c)||r<0||r>8||c<0||c>8){console.error("Coords inválidas:",r,c);return;}if(gameState.selectedTile.classList.contains('tile-wrong-number')){playErrorSound();showFlashMessage("Deshaz tu jugada anterior primero");return;}const nts=gameState.notesBoard?.[r]?.[c]||new Set();gameState.lastMove={row:r,col:c,prevValue:gameState.puzzleBoard?.[r]?.[c]||0,prevNotes:new Set(nts)};if(nts)nts.clear();renderTileNotes(r,c);if(!gameState.puzzleBoard[r])gameState.puzzleBoard[r]=[];gameState.puzzleBoard[r][c]=num;const numEl=gameState.selectedTile.querySelector('.tile-number');if(numEl)numEl.textContent=num.toString();else console.warn("NumEl missing");gameState.selectedTile.classList.add('user-filled');gameState.selectedTile.classList.remove('is-notes');highlightTilesFromBoard(r,c);if(undoButton)undoButton.style.display='none';if(gameState.solution?.[r]?.[c]===num){gameState.selectedTile.classList.remove('tile-wrong-number');autoCleanNotes(r,c,num);if(checkWin())endGame(true);}else{playErrorSound();if(navigator.vibrate)navigator.vibrate(200);gameState.selectedTile.classList.add('tile-error','tile-wrong-number');highlightConflicts(r,c,num);setTimeout(()=>{if(gameState.selectedTile)gameState.selectedTile.classList.remove('tile-error');},500);if(gameState.settings.showUndoButton&&undoButton)undoButton.style.display='flex';gameState.lives--;updateLivesDisplay();showFlashMessage("Número equivocado");if(gameState.lives<=0)endGame(false);}updateKeypad();}
-    function undoLastMove(){if(!gameState.lastMove)return;playClickSound();gameState.gameStats.hasUsedUndo=true;const{row:r,col:c,prevValue:pv,prevNotes:pn}=gameState.lastMove;const t=boardElement?.children[r*9+c];if(!t)return;const ne=t.querySelector('.tile-number');if(!gameState.puzzleBoard[r])gameState.puzzleBoard[r]=[];gameState.puzzleBoard[r][c]=pv;if(!gameState.notesBoard[r])gameState.notesBoard[r]=[];gameState.notesBoard[r][c]=pn;if(ne)ne.textContent=pv===0?'':pv.toString();t.classList.remove('user-filled','tile-wrong-number');clearErrorHighlights();clearHintHighlights();if(pv===0)t.classList.remove('user-filled');renderTileNotes(r,c);gameState.selectedTile=t;highlightTilesFromBoard(r,c);gameState.lastMove=null;if(undoButton)undoButton.style.display='none';updateKeypad();}
-    function eraseNumber(){if(!gameState.selectedTile||gameState.isPaused||gameState.selectedTile.classList.contains('hint'))return;playClickSound();const r=parseInt(gameState.selectedTile.dataset.row),c=parseInt(gameState.selectedTile.dataset.col);if(isNaN(r)||isNaN(c))return;const nts=gameState.notesBoard?.[r]?.[c]||new Set();gameState.lastMove={row:r,col:c,prevValue:gameState.puzzleBoard?.[r]?.[c]||0,prevNotes:new Set(nts)};if(gameState.puzzleBoard?.[r]?.[c]!==0&&gameState.puzzleBoard?.[r]?.[c]!==undefined){gameState.puzzleBoard[r][c]=0;const nEl=gameState.selectedTile.querySelector('.tile-number');if(nEl)nEl.textContent='';gameState.selectedTile.classList.remove('user-filled','tile-wrong-number');clearErrorHighlights();updateKeypad();}else if(nts.size>0){nts.clear();renderTileNotes(r,c);}highlightTilesFromBoard(r,c);}
-    function endGame(isWin){stopTimer();if(pauseButton)pauseButton.style.display='none';if(pencilToggleButton)pencilToggleButton.style.display='none';if(hintButton)hintButton.style.display='none';gameState.gameInProgress=false;if(resumeGameBtn)resumeGameBtn.style.display='none';if(undoButton)undoButton.style.display='none';gameState.lastMove=null;clearAllErrors();clearHintHighlights();let timeComparisonText='';if(isWin){playWinSound();launchConfetti();gameState.streaks[gameState.currentDifficulty]++;gameState.totalWins[gameState.currentDifficulty]++;saveTotalWins();checkAchievements();if(gameState.isDailyChallenge){saveToLeaderboard(gameState.secondsElapsed);if(goToLeaderboardBtn)goToLeaderboardBtn.style.display='block';if(shareDailyResultBtn)shareDailyResultBtn.style.display='block';}else{const avgTime=AVERAGE_TIMES[gameState.currentDifficulty];if(avgTime){const diff=gameState.secondsElapsed-avgTime;timeComparisonText=diff<=0?`(${Math.abs(diff)}s más rápido que el promedio)`:`(${diff}s más lento que el promedio)`;}}if(gameOverMsg){gameOverMsg.textContent='¡FELICITACIONES!';gameOverMsg.className='win';}}else{gameState.streaks[gameState.currentDifficulty]=0;if(gameOverMsg){gameOverMsg.textContent='Game Over';gameOverMsg.className='lose';}}if(timeComparisonElement)timeComparisonElement.textContent=timeComparisonText;saveStreaks();showOverlay('gameOver',true);}
+    function placeNumber(num){if(!gameState.selectedTile||gameState.selectedTile.classList.contains('hint'))return;clearErrorHighlights();clearHintHighlights();const r=parseInt(gameState.selectedTile.dataset.row),c=parseInt(gameState.selectedTile.dataset.col);if(isNaN(r)||isNaN(c)||r<0||r>8||c<0||c>8){console.error("Coords inválidas:",r,c);return;}if(gameState.selectedTile.classList.contains('tile-wrong-number')){playErrorSound();showFlashMessage("Número ya marcado como incorrecto. Bórralo primero.");return;}const nts=gameState.notesBoard?.[r]?.[c]||new Set();
+    // No guardar lastMove
+    if(nts)nts.clear();renderTileNotes(r,c);
+    if(!gameState.puzzleBoard[r])gameState.puzzleBoard[r]=[];gameState.puzzleBoard[r][c]=num;const numEl=gameState.selectedTile.querySelector('.tile-number');if(numEl){numEl.textContent=num.toString();numEl.classList.add('pop-in');setTimeout(()=>numEl.classList.remove('pop-in'),200);}else console.warn("NumEl missing");gameState.selectedTile.classList.add('user-filled');gameState.selectedTile.classList.remove('is-notes');highlightTilesFromBoard(r,c);
+    // undoButton eliminado
+    if(gameState.solution?.[r]?.[c]===num){gameState.selectedTile.classList.remove('tile-wrong-number');autoCleanNotes(r,c,num);if(checkWin()){/* Resaltado último número */ gameState.selectedTile.classList.add('last-correct'); setTimeout(() => {gameState.selectedTile?.classList.remove('last-correct'); endGame(true);}, 800);} }else{playErrorSound();if(navigator.vibrate)navigator.vibrate(200);gameState.selectedTile.classList.add('tile-error','tile-wrong-number');highlightConflicts(r,c,num);setTimeout(()=>{if(gameState.selectedTile)gameState.selectedTile.classList.remove('tile-error');},500);
+    // undoButton eliminado
+    gameState.lives--;updateLivesDisplay();showFlashMessage("Número equivocado");if(gameState.lives<=0)endGame(false);}updateKeypad();}
+    // undoLastMove eliminado
+    function eraseNumber(){if(!gameState.selectedTile||gameState.isPaused||gameState.selectedTile.classList.contains('hint'))return;playClickSound();clearHintHighlights();const r=parseInt(gameState.selectedTile.dataset.row),c=parseInt(gameState.selectedTile.dataset.col);if(isNaN(r)||isNaN(c))return;const nts=gameState.notesBoard?.[r]?.[c]||new Set();
+    // No guardar lastMove
+    if(gameState.puzzleBoard?.[r]?.[c]!==0&&gameState.puzzleBoard?.[r]?.[c]!==undefined){if(!gameState.puzzleBoard[r])gameState.puzzleBoard[r]=[];gameState.puzzleBoard[r][c]=0;const nEl=gameState.selectedTile.querySelector('.tile-number');if(nEl)nEl.textContent='';gameState.selectedTile.classList.remove('user-filled','tile-wrong-number');clearErrorHighlights();updateKeypad();}else if(nts.size>0){nts.clear();renderTileNotes(r,c);}highlightTilesFromBoard(r,c);}
+    function endGame(isWin){stopTimer();if(pauseButton)pauseButton.style.display='none';if(pencilToggleButton)pencilToggleButton.style.display='none';if(hintButton)hintButton.style.display='none';gameState.gameInProgress=false;if(resumeGameBtn)resumeGameBtn.style.display='none';/*undoButton eliminado*/gameState.lastMove=null;clearAllErrors();clearHintHighlights();let timeComparisonText='';if(isWin){animateBoardWin(); /* Animación cascada */ launchConfetti();playWinSound();gameState.streaks[gameState.currentDifficulty]++;gameState.totalWins[gameState.currentDifficulty]++;saveTotalWins();checkAchievements();if(gameState.isDailyChallenge){saveToLeaderboard(gameState.secondsElapsed);if(goToLeaderboardBtn)goToLeaderboardBtn.style.display='block';if(shareDailyResultBtn)shareDailyResultBtn.style.display='block';}else{const avgTime=AVERAGE_TIMES[gameState.currentDifficulty];if(avgTime){const diff=gameState.secondsElapsed-avgTime;timeComparisonText=diff<=0?`(${Math.abs(diff)}s más rápido que el promedio)`:`(${diff}s más lento que el promedio)`;}}if(gameOverMsg){gameOverMsg.textContent='¡FELICITACIONES!';gameOverMsg.classList.add('win'); /* Asegura clase win */}else{gameOverMsg.classList.remove('win');}}else{gameState.streaks[gameState.currentDifficulty]=0;if(gameOverMsg){gameOverMsg.textContent='Game Over';gameOverMsg.className='lose';}gameOverMsg.classList.remove('win');}if(timeComparisonElement)timeComparisonElement.textContent=timeComparisonText;saveStreaks();setTimeout(() => showOverlay('gameOver', true), 600); /* Espera animación cascada */ }
     function restartGame(){playClickSound();showOverlay('gameOver',false);if(goToLeaderboardBtn)goToLeaderboardBtn.style.display='none';if(shareDailyResultBtn)shareDailyResultBtn.style.display='none';startGame(gameState.currentDifficulty);}
-    function goHome(){playClickSound();stopTimer();if(pauseButton)pauseButton.style.display='none';if(pencilToggleButton)pencilToggleButton.style.display='none';if(hintButton)hintButton.style.display='none';gameState.isPaused=false;gameState.gameInProgress=false;gameState.secondsElapsed=0;if(resumeGameBtn)resumeGameBtn.style.display='none';if(goToLeaderboardBtn)goToLeaderboardBtn.style.display='none';if(shareDailyResultBtn)shareDailyResultBtn.style.display='none';if(undoButton)undoButton.style.display='none';gameState.lastMove=null;clearAllErrors();clearHintHighlights();showOverlay('gameOver',false);showOverlay('pause',false);showScreen('start');createDifficultyButtons();}
-    function goHomeFromPause(){playClickSound();gameState.isPaused=true;gameState.gameInProgress=true;showOverlay('pause',false);showScreen('start');if(resumeGameBtn)resumeGameBtn.style.display='block';if(pauseButton)pauseButton.style.display='none';if(pencilToggleButton)pencilToggleButton.style.display='none';if(hintButton)hintButton.style.display='none';if(undoButton)undoButton.style.display='none';createDifficultyButtons();}
-    function resumeGame(){playClickSound();gameState.isPaused=false;renderBoardImproved();updateKeypad();showScreen('game');if(resumeGameBtn)resumeGameBtn.style.display='none';if(pauseButton)pauseButton.style.display='flex';applyButtonVisibility();if(gameState.lastMove&&gameState.settings.showUndoButton&&undoButton){undoButton.style.display='flex';}}
+    function goHome(){playClickSound();stopTimer();if(pauseButton)pauseButton.style.display='none';if(pencilToggleButton)pencilToggleButton.style.display='none';if(hintButton)hintButton.style.display='none';gameState.isPaused=false;gameState.gameInProgress=false;gameState.secondsElapsed=0;if(resumeGameBtn)resumeGameBtn.style.display='none';if(goToLeaderboardBtn)goToLeaderboardBtn.style.display='none';if(shareDailyResultBtn)shareDailyResultBtn.style.display='none';/*undoButton eliminado*/gameState.lastMove=null;clearAllErrors();clearHintHighlights();showOverlay('gameOver',false);showOverlay('pause',false);showScreen('start');createDifficultyButtons();}
+    function goHomeFromPause(){playClickSound();gameState.isPaused=true;gameState.gameInProgress=true;showOverlay('pause',false);showScreen('start');if(resumeGameBtn)resumeGameBtn.style.display='block';if(pauseButton)pauseButton.style.display='none';if(pencilToggleButton)pencilToggleButton.style.display='none';if(hintButton)hintButton.style.display='none';/*undoButton eliminado*/createDifficultyButtons();}
+    function resumeGame(){playClickSound();gameState.isPaused=false;renderBoardImproved();updateKeypad();showScreen('game');if(resumeGameBtn)resumeGameBtn.style.display='none';if(pauseButton)pauseButton.style.display='flex';applyButtonVisibility();/*undoButton eliminado*/}
 
     // --- RENDERIZADO Y UI ---
-    function showScreen(key){Object.values(screens).forEach(s=>s?.classList.remove('active'));if(screens[key])screens[key].classList.add('active');}
+    function showScreen(key) {
+        const currentActive = document.querySelector('.screen.active');
+        const nextScreen = screens[key];
+        if (currentActive && nextScreen && currentActive !== nextScreen) {
+            currentActive.classList.add('screen-exit');
+            nextScreen.classList.add('active', 'screen-enter'); // Prepara la siguiente
+            // Espera la transición antes de limpiar clases
+            setTimeout(() => {
+                currentActive.classList.remove('active', 'screen-exit');
+                nextScreen.classList.remove('screen-enter');
+                nextScreen.classList.add('screen-enter-active'); // Activa animación de entrada
+                setTimeout(() => nextScreen.classList.remove('screen-enter-active'), 300); // Limpia clase post-animación
+            }, 300); // Duración de la transición
+        } else if (nextScreen) {
+            nextScreen.classList.add('active'); // Si no hay activa, solo muestra
+        }
+    }
     function showOverlay(key,show){const o=screens[key];if(o)o.classList.toggle('active',show);}
     function renderBoardImproved(){if(!boardElement)return;boardElement.innerHTML='';const f=document.createDocumentFragment();for(let r=0;r<9;r++){for(let c=0;c<9;c++){const t=document.createElement('div');t.className='tile';t.dataset.row=r;t.dataset.col=c;if(c===2||c===5)t.classList.add('tile-border-right');if(r===2||r===5)t.classList.add('tile-border-bottom');const nEl=document.createElement('div');nEl.className='tile-number';const nGrid=document.createElement('div');nGrid.className='tile-notes-grid';for(let i=1;i<=9;i++){const nE=document.createElement('div');nE.className='tile-note note-'+i;nGrid.appendChild(nE);}const initialNum=initialPuzzleForResume?.[r]?.[c];const currentNum=gameState.puzzleBoard?.[r]?.[c];const solutionNum=gameState.solution?.[r]?.[c];if(initialNum!==undefined&&initialNum!==0){nEl.textContent=initialNum.toString();t.classList.add('hint');}else if(currentNum!==undefined&&currentNum!==0){nEl.textContent=currentNum.toString();t.classList.add('user-filled');if(solutionNum!==undefined&&currentNum!==solutionNum)t.classList.add('tile-wrong-number');}else{const nts=gameState.notesBoard?.[r]?.[c];if(nts&&nts.size>0){t.classList.add('is-notes');nts.forEach(num=>{const nE=nGrid.querySelector('.note-'+num);if(nE)nE.textContent=num.toString();});}}t.appendChild(nEl);t.appendChild(nGrid);f.appendChild(t);}}boardElement.appendChild(f);}
     function renderKeypad(){if(!keypadElement)return;keypadElement.innerHTML='';const f=document.createDocumentFragment();for(let i=1;i<=9;i++){const k=document.createElement('button');k.className='keypad-number';k.textContent=i.toString();f.appendChild(k);}keypadElement.appendChild(f);updateKeypad();}
-    function renderTileNotes(r,c){const t=boardElement?.children[r*9+c];if(!t)return;const nG=t.querySelector('.tile-notes-grid');if(!nG)return;const nts=gameState.notesBoard?.[r]?.[c];const showNotes=nts&&nts.size>0&&gameState.puzzleBoard?.[r]?.[c]===0;t.classList.toggle('is-notes',showNotes);for(let i=1;i<=9;i++){const nE=nG.querySelector('.note-'+i);if(nE){const hasNote=nts&&nts.has(i);nE.textContent=hasNote?i.toString():'';nE.classList.toggle('visible',hasNote);}}}
-    function updateLivesDisplay(){ if(livesCounter){livesCounter.textContent='❤️'.repeat(Math.max(0,gameState.lives));}const errC=document.getElementById('error-counter');if(errC){const errs=3-Math.max(0,gameState.lives);errC.textContent=`${errs}/3`;}}
+    function renderTileNotes(r,c){const t=boardElement?.children[r*9+c];if(!t)return;const nG=t.querySelector('.tile-notes-grid');if(!nG)return;const nts=gameState.notesBoard?.[r]?.[c];const showNotes=nts&&nts.size>0&&gameState.puzzleBoard?.[r]?.[c]===0;t.classList.toggle('is-notes',showNotes);for(let i=1;i<=9;i++){const nE=nG.querySelector('.note-'+i);if(nE){const hasNote=nts&&nts.has(i);nE.textContent=hasNote?i.toString():'';nE.classList.toggle('visible',hasNote);if(hasNote) {nE.classList.add('pop-in'); setTimeout(() => nE.classList.remove('pop-in'), 200);}}}}
+    function updateLivesDisplay(){ const errC=document.getElementById('error-counter');if(errC){const errs=3-Math.max(0,gameState.lives);errC.textContent=`${errs}/3`;}}
     function updateIngameStreakDisplay(){if(!ingameStreakDisplay)return;const s=(gameState.streaks&&gameState.currentDifficulty)?gameState.streaks[gameState.currentDifficulty]||0:0;ingameStreakDisplay.innerHTML=s>0?`👑 <span class="ingame-streak-number">${s}</span>`:'';}
     function showFlashMessage(m){if(!flashMessage)return;flashMessage.textContent=m;flashMessage.classList.add('show');setTimeout(()=>flashMessage.classList.remove('show'),1500);}
 
     // --- LÓGICA DE RESALTADO ---
     function clearAllHighlights(){document.querySelectorAll('.tile').forEach(t=>t.classList.remove('highlight','keypad-highlight','selected'));}
-    function clearErrorHighlights(){document.querySelectorAll('.tile-conflict').forEach(t=>t.classList.remove('tile-conflict'));}
+    function clearErrorHighlights(){document.querySelectorAll('.tile.tile-conflict').forEach(t=>t.classList.remove('tile-conflict'));} // Solo conflictos
     function clearAllErrors(){document.querySelectorAll('.tile-conflict, .tile-wrong-number, .tile-error').forEach(t=>t.classList.remove('tile-conflict','tile-wrong-number','tile-error'));}
     function clearHintHighlights(){document.querySelectorAll('.tile-hint-target, .tile-hint-involved').forEach(t=>t.classList.remove('tile-hint-target','tile-hint-involved'));}
     function highlightTilesFromBoard(row,col){if(!boardElement)return;const r=parseInt(row),c=parseInt(col);if(isNaN(r)||isNaN(c))return;clearAllHighlights();const t=boardElement.children[r*9+c];if(t)t.classList.add('selected');const n=gameState.puzzleBoard?.[r]?.[c];if(n===undefined)return;for(let i=0;i<9;i++){const rowTile=boardElement.children[r*9+i];if(rowTile)rowTile.classList.add('highlight');const colTile=boardElement.children[i*9+c];if(colTile)colTile.classList.add('highlight');}if(n!==0){for(let i=0;i<9;i++)for(let j=0;j<9;j++)if(gameState.puzzleBoard?.[i]?.[j]===n){const numTile=boardElement.children[i*9+j];if(numTile)numTile.classList.add('keypad-highlight');}}}
@@ -206,18 +234,17 @@ document.addEventListener('DOMContentLoaded', () => {
     function highlightHintCells(targetCoords,involvedCoords=[]){clearHintHighlights();const targetTile=boardElement?.children[targetCoords.row*9+targetCoords.col];if(targetTile)targetTile.classList.add('tile-hint-target');involvedCoords.forEach(coords=>{const involvedTile=boardElement?.children[coords.row*9+coords.col];if(involvedTile)involvedTile.classList.add('tile-hint-involved');});}
 
     // --- LÓGICA DE GUARDADO (localStorage) ---
-    // ===== CORRECCIÓN: Funciones de carga robustecidas =====
+    // ===== CORRECCIÓN: Funciones de carga MUY robustecidas =====
     function saveStreaks(){try{localStorage.setItem('sudokuStreaks',JSON.stringify(gameState.streaks));}catch(e){console.error("Error saving streaks:",e);}}
-    function loadStreaks(){const key='sudokuStreaks'; const defaultVal=JSON.parse(JSON.stringify(DEFAULT_STREAKS)); try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'&&Object.keys(p).every(k=>['fácil','medio','difícil','experto'].includes(k)&&typeof p[k]==='number')){gameState.streaks=deepMerge(defaultVal, p);return;}throw new Error("Invalid format");}gameState.streaks=defaultVal;}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.streaks=defaultVal;}}
+    function loadStreaks(){const key='sudokuStreaks'; const defaultVal=JSON.parse(JSON.stringify(DEFAULT_STREAKS)); gameState.streaks = defaultVal; try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'&&Object.keys(DEFAULT_STREAKS).every(k=>typeof p[k]==='number')){gameState.streaks=deepMerge(defaultVal, p);return;}throw new Error("Invalid format");}}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.streaks=defaultVal;}}
     function saveTotalWins(){try{localStorage.setItem('sudokuTotalWins',JSON.stringify(gameState.totalWins));}catch(e){console.error("Error saving wins:",e);}}
-    function loadTotalWins(){const key='sudokuTotalWins'; const defaultVal=JSON.parse(JSON.stringify(DEFAULT_WINS)); try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'&&Object.keys(p).every(k=>['fácil','medio','difícil','experto'].includes(k)&&typeof p[k]==='number')){gameState.totalWins=deepMerge(defaultVal, p);return;}throw new Error("Invalid format");}gameState.totalWins=defaultVal;}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.totalWins=defaultVal;}}
+    function loadTotalWins(){const key='sudokuTotalWins'; const defaultVal=JSON.parse(JSON.stringify(DEFAULT_WINS)); gameState.totalWins = defaultVal; try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'&&Object.keys(DEFAULT_WINS).every(k=>typeof p[k]==='number')){gameState.totalWins=deepMerge(defaultVal, p);return;}throw new Error("Invalid format");}gameState.totalWins=defaultVal;}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.totalWins=defaultVal;}}
     function saveAchievements(){try{localStorage.setItem('sudokuAchievements',JSON.stringify(gameState.achievements));}catch(e){console.error("Err save achieve:",e);}}
-    function loadAchievements(){const key='sudokuAchievements'; const defaultVal=JSON.parse(JSON.stringify(DEFAULT_ACHIEVEMENTS)); try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'){gameState.achievements=p;return;}throw new Error("Invalid format");}gameState.achievements=defaultVal;}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.achievements=defaultVal;}}
+    function loadAchievements(){const key='sudokuAchievements'; const defaultVal=JSON.parse(JSON.stringify(DEFAULT_ACHIEVEMENTS)); gameState.achievements = defaultVal; try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'){gameState.achievements=p;return;}throw new Error("Invalid format");}}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.achievements=defaultVal;}}
     function saveLeaderboards(){try{localStorage.setItem('sudokuLeaderboards',JSON.stringify(gameState.leaderboards));}catch(e){console.error("Err save leaders:",e);}}
-    function loadLeaderboards(){const key='sudokuLeaderboards'; const defaultVal=JSON.parse(JSON.stringify(DEFAULT_LEADERBOARDS)); try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'&&p.daily&&Array.isArray(p.daily)&&p.daily.every(sc=>typeof sc==='object'&&typeof sc.time==='number'&&typeof sc.date==='string')){gameState.leaderboards=p;return;}throw new Error("Invalid format");}gameState.leaderboards=defaultVal;}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.leaderboards=defaultVal;}}
+    function loadLeaderboards(){const key='sudokuLeaderboards'; const defaultVal=JSON.parse(JSON.stringify(DEFAULT_LEADERBOARDS)); gameState.leaderboards = defaultVal; try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'&&p.daily&&Array.isArray(p.daily)&&p.daily.every(sc=>typeof sc==='object'&&typeof sc.time==='number'&&typeof sc.date==='string')){gameState.leaderboards=p;return;}throw new Error("Invalid format");}}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.leaderboards=defaultVal;}}
     function saveSetting(key,value){try{let s=gameState.settings;if(key.includes('.')){const k=key.split('.');if(s[k[0]]!==undefined&&typeof s[k[0]]==='object')s[k[0]][k[1]]=value;else console.warn(`Cannot save nested setting: ${key}`);}else s[key]=value;localStorage.setItem('sudokuSettings',JSON.stringify(s));}catch(e){console.error("Err save setting:",key,e);}}
-    // ===== CORRECCIÓN: loadSettings más robusta =====
-    function loadSettings() { const key = 'sudokuSettings'; let saved = null; try { const s = localStorage.getItem(key); if (s) { saved = JSON.parse(s); if (typeof saved !== 'object' || saved === null) throw new Error("Invalid format"); } } catch (e) { console.error(`Error loading/parsing ${key}:`, e, "Using defaults."); localStorage.removeItem(key); saved = null; } gameState.settings = deepMerge(JSON.parse(JSON.stringify(DEFAULT_SETTINGS)), saved || {}); gameState.isMuted = gameState.settings.isMuted; /* MuteToggleButton eliminado */ }
+    function loadSettings() {const key='sudokuSettings'; let saved = null; gameState.settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS)); try {const s=localStorage.getItem(key); if(s){saved=JSON.parse(s); if(typeof saved !=='object'||saved===null)throw new Error("Invalid format"); gameState.settings=deepMerge(gameState.settings, saved);}} catch(e){console.error(`Error loading/parsing ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.settings=JSON.parse(JSON.stringify(DEFAULT_SETTINGS));} gameState.isMuted=gameState.settings.isMuted; /* MuteToggleButton eliminado */}
 
 
     // --- LÓGICA DE TIMER Y PAUSA ---
@@ -229,7 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function togglePause(){playClickSound();gameState.isPaused=!gameState.isPaused;showOverlay('pause',gameState.isPaused);}
 
     // --- LÓGICA DE MODO LÁPIZ Y AUTO-LIMPIEZA ---
-    function togglePencilMode(){playClickSound();gameState.isPencilMode=!gameState.isPencilMode;if(pencilToggleButton)pencilToggleButton.classList.toggle('active',gameState.isPencilMode);}
+    function togglePencilMode(){playClickSound();gameState.isPencilMode=!gameState.isPencilMode;if(pencilToggleButton)pencilToggleButton.classList.toggle('active',gameState.isPencilMode); if(boardElement)boardElement.classList.toggle('board-pencil-mode',gameState.isPencilMode); } // Añade clase al tablero
     function toggleNote(num){if(!gameState.selectedTile)return;const r=parseInt(gameState.selectedTile.dataset.row),c=parseInt(gameState.selectedTile.dataset.col);if(isNaN(r)||isNaN(c)||gameState.puzzleBoard?.[r]?.[c]!==0)return;const nts=gameState.notesBoard?.[r]?.[c];if(!nts)return;if(nts.has(num))nts.delete(num);else{nts.add(num);gameState.gameStats.notesPlaced++;if(gameState.gameStats.notesPlaced>=50)unlockAchievement('thinkingAhead');}renderTileNotes(r,c);}
     function autoCleanNotes(row,col,num){for(let i=0;i<9;i++){if(gameState.notesBoard?.[row]?.[i]?.has(num)){gameState.notesBoard[row][i].delete(num);renderTileNotes(row,i);}}for(let i=0;i<9;i++){if(gameState.notesBoard?.[i]?.[col]?.has(num)){gameState.notesBoard[i][col].delete(num);renderTileNotes(i,col);}}const br=Math.floor(row/3)*3,bc=Math.floor(col/3)*3;for(let i=br;i<br+3;i++)for(let j=bc;j<bc+3;j++)if(gameState.notesBoard?.[i]?.[j]?.has(num)){gameState.notesBoard[i][j].delete(num);renderTileNotes(i,j);}}
 
@@ -239,25 +266,26 @@ document.addEventListener('DOMContentLoaded', () => {
     function applyDynamicTheme(){ document.body.dataset.theme = 'light'; }
     function handleFontChange(event){const n=event.target.value;saveSetting('boardFont',n);applyFont(n);playClickSound();}
     function applyFont(f){let ff='var(--font-default)';if(f==='Roboto Slab')ff='var(--font-serif)';else if(f==='Source Code Pro')ff='var(--font-mono)';document.documentElement.style.setProperty('--font-board',ff);}
-    function handleMuteChange(event){const m=event.target.checked;saveSetting('isMuted',m);gameState.isMuted=m;/* muteToggleButton eliminado */if(!m)playClickSound();}
+    function handleMuteChange(event){const m=event.target.checked;saveSetting('isMuted',m);gameState.isMuted=m; /* muteToggleButton eliminado */ if(!m)playClickSound();}
     function handleButtonVisibilityChange(key,v){saveSetting(key,v);applyButtonVisibility();playClickSound();}
-    function applyButtonVisibility(){if(hintButton)hintButton.style.display=(gameState.settings.showHintButton&&gameState.gameInProgress)?'flex':'none';if(pencilToggleButton)pencilToggleButton.style.display=(gameState.settings.showPencilButton&&gameState.gameInProgress)?'flex':'none';if(undoButton&&!gameState.settings.showUndoButton&&undoButton.style.display==='flex')undoButton.style.display='none';}
+    function applyButtonVisibility(){if(hintButton)hintButton.style.display=(gameState.settings.showHintButton&&gameState.gameInProgress)?'flex':'none';if(pencilToggleButton)pencilToggleButton.style.display=(gameState.settings.showPencilButton&&gameState.gameInProgress)?'flex':'none'; /* undoButton eliminado */}
     // Funciones colores eliminadas
-    function setupSettingsScreen(){if(!themeSelect||!fontSelect||!muteToggleSetting||!showHintToggle||!showPencilToggle||!showUndoToggle)return;themeSelect.value=gameState.settings.theme;fontSelect.value=gameState.settings.boardFont;muteToggleSetting.checked=gameState.isMuted;showHintToggle.checked=gameState.settings.showHintButton;showPencilToggle.checked=gameState.settings.showPencilButton;showUndoToggle.checked=gameState.settings.showUndoButton;}
+    function setupSettingsScreen(){if(!themeSelect||!fontSelect||!muteToggleSetting||!showHintToggle||!showPencilToggle/*||!showUndoToggle*/)return;themeSelect.value=gameState.settings.theme;fontSelect.value=gameState.settings.boardFont;muteToggleSetting.checked=gameState.isMuted;showHintToggle.checked=gameState.settings.showHintButton;showPencilToggle.checked=gameState.settings.showPencilButton;/*showUndoToggle.checked=gameState.settings.showUndoButton;*/}
     function deepMerge(t, s) { if (!s) return t; for (const k in s) { if (s.hasOwnProperty(k)) { const sk = s[k]; const tk = t?.[k]; if (sk && typeof sk === 'object' && !Array.isArray(sk)) { if (!tk || typeof tk !== 'object' || Array.isArray(tk)) { t[k] = {}; } deepMerge(t[k], sk); } else if (sk !== undefined) { t[k] = sk; } } } return t; }
-    // ===== CORRECCIÓN: applySettings sin muteToggleButton =====
-    function applySettings(){if(!document.body)return;try{if(gameState.settings.theme==='auto')applyDynamicTheme();else document.body.dataset.theme=gameState.settings.theme;applyFont(gameState.settings.boardFont); /* Colores eliminados */ /* MuteToggleButton eliminado */}catch(e){console.error("Error al aplicar settings:",e);document.body.dataset.theme='light';applyFont(DEFAULT_SETTINGS.boardFont);}}
+    // ===== CORRECCIÓN: applySettings sin muteToggleButton y colores =====
+    function applySettings(){if(!document.body)return;try{if(gameState.settings.theme==='auto')applyDynamicTheme();else document.body.dataset.theme=gameState.settings.theme;applyFont(gameState.settings.boardFont);/* Colores eliminados */ /* MuteToggleButton eliminado */}catch(e){console.error("Error al aplicar settings:",e);document.body.dataset.theme='light';applyFont(DEFAULT_SETTINGS.boardFont);}}
+
 
     // --- LÓGICA DE DESAFÍO DIARIO Y PISTAS ---
     function setSeed(s){randomSeed=s;} function seededRandom(){let x=Math.sin(randomSeed++)*1e4;return x-Math.floor(x);}
-    function startDailyChallenge(){playClickSound();cancelAnimationFrame(confettiAnimationId);if(confettiCtx)confettiCtx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);gameState.gameInProgress=true;gameState.isDailyChallenge=true;if(resumeGameBtn)resumeGameBtn.style.display='none';if(goToLeaderboardBtn)goToLeaderboardBtn.style.display='none';if(shareDailyResultBtn)shareDailyResultBtn.style.display='none';gameState.currentDifficulty=DIFFICULTIES.MEDIO;gameState.lives=3;gameState.selectedTile=null;gameState.secondsElapsed=0;gameState.isPaused=false;gameState.lastMove=null;if(undoButton)undoButton.style.display='none';clearAllErrors();gameState.isPencilMode=false;if(pencilToggleButton)pencilToggleButton.classList.remove('active');gameState.hintUsed=false;if(hintButton)hintButton.classList.remove('disabled');gameState.notesBoard=Array(9).fill(null).map(()=>Array(9).fill(null).map(()=>new Set()));gameState.gameStats={hasUsedUndo:false,notesPlaced:0};applyButtonVisibility();renderTimer();startTimer();if(pauseButton)pauseButton.style.display='flex';const d=new Date(),seed=parseInt(`${d.getFullYear()}${('0'+(d.getMonth()+1)).slice(-2)}${('0'+d.getDate()).slice(-2)}`);setSeed(seed);let b=generateEmptyBoard();generateSolution(b,seededRandom);gameState.solution=JSON.parse(JSON.stringify(b));gameState.puzzleBoard=createPuzzle(b,DIFFICULTIES.MEDIO,seededRandom);updateLivesDisplay();updateIngameStreakDisplay();renderBoardImproved();renderKeypad();showScreen('game');}
-    function provideHint(){if(gameState.hintUsed||!hintButton)return;playClickSound();clearHintHighlights();let h=findNakedSingle();if(!h)h=findHiddenSingle();if(h){gameState.hintUsed=true;hintButton.classList.add('disabled');gameState.secondsElapsed+=60;renderTimer();showFlashMessage("Pista usada: +1 minuto");const{row:r,col:c,num:n,logic:l,involved}=h;if(!gameState.puzzleBoard[r])gameState.puzzleBoard[r]=[];gameState.puzzleBoard[r][c]=n;if(initialPuzzleForResume?.[r])initialPuzzleForResume[r][c]=n;if(gameState.notesBoard?.[r]?.[c])gameState.notesBoard[r][c].clear();renderBoardImproved();updateKeypad();const t=boardElement?.children[r*9+c];if(t){gameState.selectedTile=t;highlightTilesFromBoard(r,c);highlightHintCells({row:r,col:c},involved);}if(hintExplanation)hintExplanation.innerHTML=l;showOverlay('hintOverlay',true);}else showFlashMessage("No se encontraron pistas simples");}
+    function startDailyChallenge(){playClickSound();cancelAnimationFrame(confettiAnimationId);if(confettiCtx)confettiCtx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);gameState.gameInProgress=true;gameState.isDailyChallenge=true;if(resumeGameBtn)resumeGameBtn.style.display='none';if(goToLeaderboardBtn)goToLeaderboardBtn.style.display='none';if(shareDailyResultBtn)shareDailyResultBtn.style.display='none';gameState.currentDifficulty=DIFFICULTIES.MEDIO;gameState.lives=3;gameState.selectedTile=null;gameState.secondsElapsed=0;gameState.isPaused=false;gameState.lastMove=null;/*undoButton eliminado*/clearAllErrors();gameState.isPencilMode=false;if(pencilToggleButton)pencilToggleButton.classList.remove('active');gameState.hintUsed=false;if(hintButton)hintButton.classList.remove('disabled');gameState.notesBoard=Array(9).fill(null).map(()=>Array(9).fill(null).map(()=>new Set()));gameState.gameStats={/*hasUsedUndo:false,*/notesPlaced:0, hintUsedThisGame: false};applyButtonVisibility();renderTimer();startTimer();if(pauseButton)pauseButton.style.display='flex';const d=new Date(),seed=parseInt(`${d.getFullYear()}${('0'+(d.getMonth()+1)).slice(-2)}${('0'+d.getDate()).slice(-2)}`);setSeed(seed);let b=generateEmptyBoard();generateSolution(b,seededRandom);gameState.solution=JSON.parse(JSON.stringify(b));gameState.puzzleBoard=createPuzzle(b,DIFFICULTIES.MEDIO,seededRandom);updateLivesDisplay();updateIngameStreakDisplay();renderBoardImproved();renderKeypad();showScreen('game');}
+    function provideHint(){if(gameState.hintUsed||!hintButton)return;playClickSound();clearHintHighlights();let h=findNakedSingle();if(!h)h=findHiddenSingle();if(h){gameState.hintUsed=true;gameState.gameStats.hintUsedThisGame=true;hintButton.classList.add('disabled');gameState.secondsElapsed+=60;renderTimer();showFlashMessage("Pista usada: +1 minuto");const{row:r,col:c,num:n,logic:l,involved}=h;if(!gameState.puzzleBoard[r])gameState.puzzleBoard[r]=[];gameState.puzzleBoard[r][c]=n;if(initialPuzzleForResume?.[r])initialPuzzleForResume[r][c]=n;if(gameState.notesBoard?.[r]?.[c])gameState.notesBoard[r][c].clear();renderBoardImproved();updateKeypad();const t=boardElement?.children[r*9+c];if(t){gameState.selectedTile=t;highlightTilesFromBoard(r,c);highlightHintCells({row:r,col:c},involved);}if(hintExplanation)hintExplanation.innerHTML=l;showOverlay('hintOverlay',true);}else showFlashMessage("No se encontraron pistas simples");}
     function findNakedSingle(){for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(gameState.puzzleBoard?.[r]?.[c]===0){let p=new Set([1,2,3,4,5,6,7,8,9]);let inv=[];for(let i=0;i<9;i++){const vr=gameState.puzzleBoard?.[r]?.[i];if(vr!==0&&vr!==undefined){p.delete(vr);inv.push({row:r,col:i});}}for(let i=0;i<9;i++){const vc=gameState.puzzleBoard?.[i]?.[c];if(vc!==0&&vc!==undefined){p.delete(vc);inv.push({row:i,col:c});}}const br=Math.floor(r/3)*3,bc=Math.floor(c/3)*3;for(let i=br;i<br+3;i++)for(let j=bc;j<bc+3;j++){const vb=gameState.puzzleBoard?.[i]?.[j];if(vb!==0&&vb!==undefined){p.delete(vb);inv.push({row:i,col:j});}}if(p.size===1){const n=p.values().next().value;return{row:r,col:c,num:n,logic:`En <span class="hint-cell">F${r+1},C${c+1}</span>, el <strong>${n}</strong> es el único posible (ver celdas amarillas).`,involved:inv};}}return null;}
     function findHiddenSingle(){for(let r=0;r<9;r++)for(let n=1;n<=9;n++){let co=0,lc=-1,inv=[];if([...(gameState.puzzleBoard?.[r]||[])].includes(n))continue;for(let c=0;c<9;c++)if(gameState.puzzleBoard?.[r]?.[c]===0&&isPossible(r,c,n)){co++;lc=c;}if(co===1){for(let c=0;c<9;c++){if(gameState.puzzleBoard?.[r]?.[c]!==0)inv.push({row:r,col:c});else if(c!==lc&&!isPossible(r,c,n))inv.push({row:r,col:c});}return{row:r,col:lc,num:n,logic:`En la <span class="hint-cell">Fila ${r+1}</span>, <span class="hint-cell">C${lc+1}</span> es el único lugar para <strong>${n}</strong> (ver celdas amarillas).`,involved:inv};}}/*...(col/box omitted)...*/return null;}
     function isPossible(r,c,n){for(let i=0;i<9;i++)if(gameState.puzzleBoard?.[r]?.[i]===n)return false;for(let i=0;i<9;i++)if(gameState.puzzleBoard?.[i]?.[c]===n)return false;const br=Math.floor(r/3)*3,bc=Math.floor(c/3)*3;for(let i=br;i<br+3;i++)for(let j=bc;j<bc+3;j++)if(gameState.puzzleBoard?.[i]?.[j]===n)return false;return true;}
 
     // --- LÓGICA DE LOGROS Y CLASIFICACIÓN ---
-    function checkAchievements(){try{const{currentDifficulty:d,secondsElapsed:t,gameStats:gs,streaks:s}=gameState;if(d===DIFFICULTIES.MEDIO&&t<300)unlockAchievement('speedRacer');if(d===DIFFICULTIES.DIFÍCIL&&!gs.hasUsedUndo)unlockAchievement('perfectionist');const ts=Object.values(s||{}).reduce((sum,v)=>sum+v,0);if(ts>=10)unlockAchievement('streakMaster');if(gameState.isDailyChallenge)unlockAchievement('dailyConqueror');}catch(e){console.error("Error checking achievements:",e);}}
+    function checkAchievements(){try{const{currentDifficulty:d,secondsElapsed:t,gameStats:gs,streaks:s}=gameState;if(d===DIFFICULTIES.MEDIO&&t<300)unlockAchievement('speedRacer');if(d===DIFFICULTIES.DIFÍCIL&&!gs.hintUsedThisGame)unlockAchievement('perfectionist');const ts=Object.values(s||{}).reduce((sum,v)=>sum+v,0);if(ts>=10)unlockAchievement('streakMaster');if(gameState.isDailyChallenge)unlockAchievement('dailyConqueror');}catch(e){console.error("Error checking achievements:",e);}}
     function unlockAchievement(id){if(!id||!ACHIEVEMENT_DEFINITIONS[id]||gameState.achievements[id])return;gameState.achievements[id]=true;saveAchievements();playAchievementSound();showFlashMessage(`¡Logro: ${ACHIEVEMENT_DEFINITIONS[id]?.title||id}!`);}
     function renderAchievementsPage(){if(!achievementsList)return;achievementsList.innerHTML='';for(const id in ACHIEVEMENT_DEFINITIONS){const d=ACHIEVEMENT_DEFINITIONS[id],u=gameState.achievements[id];const li=document.createElement('li');li.className='achievement-item';if(!u)li.classList.add('locked');let i=u?(d.title.split(' ')[1]||'🎖️'):'🔒';li.innerHTML=`<div class="achievement-icon">${i}</div><div class="achievement-details"><h3>${d.title}</h3><p>${d.desc}</p></div>`;achievementsList.appendChild(li);}}
     function saveToLeaderboard(t){try{const score={time:t,date:new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'})};let s=gameState.leaderboards.daily||[];s.push(score);s.sort((a,b)=>a.time-b.time);gameState.leaderboards.daily=s.slice(0,5);saveLeaderboards();}catch(e){console.error("Error saving leaderboard:",e);}}
@@ -265,20 +293,102 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- LÓGICA PARA COMPARTIR ---
     function generatePuzzleCode(){if(!initialPuzzleForResume||initialPuzzleForResume.length!==9)return null;try{const code=initialPuzzleForResume.flat().join('');return btoa(code);}catch(e){console.error("Error generating puzzle code:",e);return null;}}
-    function loadPuzzleFromCode(code){try{const decoded=atob(code);if(decoded.length!==81||!/^[0-9]{81}$/.test(decoded))throw new Error("Invalid puzzle code format");const puzzleGrid=[];for(let i=0;i<9;i++)puzzleGrid.push(decoded.substring(i*9,(i+1)*9).split('').map(Number));startGame(DIFFICULTIES.MEDIO,puzzleGrid);showFlashMessage("Puzzle compartido cargado.");window.history.replaceState({},document.title,window.location.pathname);}catch(e){console.error("Error loading puzzle from code:",e);showFlashMessage("Error al cargar puzzle compartido.");createDifficultyButtons();/* No llamar a addEventListeners aquí de nuevo */}}
+    function loadPuzzleFromCode(code){try{const decoded=atob(code);if(decoded.length!==81||!/^[0-9]{81}$/.test(decoded))throw new Error("Invalid puzzle code format");const puzzleGrid=[];for(let i=0;i<9;i++)puzzleGrid.push(decoded.substring(i*9,(i+1)*9).split('').map(Number));startGame(DIFFICULTIES.MEDIO,puzzleGrid);showFlashMessage("Puzzle compartido cargado.");window.history.replaceState({},document.title,window.location.pathname);}catch(e){console.error("Error loading puzzle from code:",e);showFlashMessage("Error al cargar puzzle compartido.");createDifficultyButtons();}}
     async function shareCurrentPuzzle(){playClickSound();const code=generatePuzzleCode();if(!code){showFlashMessage("No se pudo generar código.");return;}const url=`${window.location.origin}${window.location.pathname}?puzzle=${code}`;const text=`¡Te reto a resolver este puzzle de Sudoku Pro!`;try{if(navigator.share)await navigator.share({title:'Sudoku Pro Puzzle',text:text,url:url});else if(navigator.clipboard)await navigator.clipboard.writeText(`${text} ${url}`);else throw new Error('Share/Clipboard not supported');showFlashMessage("¡Enlace del puzzle copiado/compartido!");}catch(e){console.error('Error sharing puzzle:',e);showFlashMessage("No se pudo compartir o copiar el enlace.");}showOverlay('pause',false);}
     async function shareDailyResult(){playClickSound();const t=formatTime(gameState.secondsElapsed),d=new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'}),tx=`¡Sudoku Pro: Desafío Diario del ${d} completado en ${t}! ¿Puedes superarlo? #SudokuPro`,u=window.location.href.split('?')[0];try{if(navigator.share)await navigator.share({title:'Resultado Sudoku Pro',text:tx,url:u});else if(navigator.clipboard)await navigator.clipboard.writeText(`${tx} ${u}`);else throw new Error('Share/Clipboard not supported');showFlashMessage("¡Resultado copiado/compartido!");}catch(e){console.error('Error sharing:',e);showFlashMessage("No se pudo compartir o copiar.");}}
 
     // --- GENERADOR DE SUDOKU Y HELPERS ---
     function getNumberCounts(){const c={};for(let i=1;i<=9;i++)c[i]=0;for(let r=0;r<9;r++)for(let j=0;j<9;j++)if(gameState.puzzleBoard?.[r]?.[j]!==0)c[gameState.puzzleBoard[r][j]]++;return c;}
-    function updateKeypad(){if(!keypadElement)return;try{const counts=getNumberCounts();const correctCounts={};for(let i=1;i<=9;i++)correctCounts[i]=0;for(let r=0;r<9;r++)for(let c=0;c<9;c++){const n=gameState.puzzleBoard?.[r]?.[c];if(n!==0&&n!==undefined&&n===gameState.solution?.[r]?.[c])correctCounts[n]++;}keypadElement.querySelectorAll('.keypad-number').forEach(key=>{const num=parseInt(key.textContent);if(isNaN(num))return;const isComplete=correctCounts[num]===9;key.classList.toggle('completed',isComplete);/* Contador eliminado */key.style.visibility=isComplete?'hidden':'visible';});}catch(e){console.error("Error updating keypad:",e);}}
+    function updateKeypad(){if(!keypadElement)return;try{const counts=getNumberCounts();const correctCounts={};for(let i=1;i<=9;i++)correctCounts[i]=0;for(let r=0;r<9;r++)for(let c=0;c<9;c++){const n=gameState.puzzleBoard?.[r]?.[c];if(n!==0&&n!==undefined&&n===gameState.solution?.[r]?.[c])correctCounts[n]++;}keypadElement.querySelectorAll('.keypad-number').forEach(key=>{const num=parseInt(key.textContent);if(isNaN(num))return;const isComplete=correctCounts[num]===9;key.classList.toggle('completed',isComplete);key.style.opacity=isComplete?'0.3':'1';});}catch(e){console.error("Error updating keypad:",e);}} // Usa opacity
     function checkWin(){for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(gameState.puzzleBoard?.[r]?.[c]===0)return false;return true;}
     function generateEmptyBoard(){return Array(9).fill(0).map(()=>Array(9).fill(0));}
     function shuffle(a,rnd=Math.random){for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
     function findEmpty(b){for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(b?.[r]?.[c]===0)return[r,c];return null;}
     function isValid(b,n,p){const[r,c]=p;for(let i=0;i<9;i++){if(b?.[r]?.[i]===n&&c!==i)return false;if(b?.[i]?.[c]===n&&r!==i)return false;}const br=Math.floor(r/3)*3,bc=Math.floor(c/3)*3;for(let i=br;i<br+3;i++)for(let j=bc;j<bc+3;j++)if(b?.[i]?.[j]===n&&(i!==r||j!==c))return false;return true;}
     function generateSolution(b,rnd=Math.random){const e=findEmpty(b);if(!e)return true;const[r,c]=e,nums=shuffle(Array.from({length:9},(_,i)=>i+1),rnd);for(const n of nums){if(isValid(b,n,[r,c])){b[r][c]=n;if(generateSolution(b,rnd))return true;b[r][c]=0;}}return false;}
-    function createPuzzle(b,d,rnd=Math.random){try{const p=JSON.parse(JSON.stringify(b));let rem=CELLS_TO_REMOVE[d]||50,att=200;while(rem>0&&att>0){const r=Math.floor(rnd()*9),c=Math.floor(rnd()*9);if(p?.[r]?.[c]!==0){p[r][c]=0;rem--;}att--;}initialPuzzleForResume=JSON.parse(JSON.stringify(p));return p;}catch(e){console.error("Error creating puzzle:",e);initialPuzzleForResume=b;return b;}}
+    // ===== MODIFICADO: createPuzzle con verificación de solución única =====
+    function createPuzzle(board, difficulty, randFunc = Math.random) {
+        try {
+            let puzzle = board.map(row => [...row]);
+            let targetToRemove = CELLS_TO_REMOVE[difficulty] || 50;
+            const cells = [];
+            for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) cells.push({ r, c });
+            shuffle(cells, randFunc);
+
+            let cellsRemoved = 0;
+            for (let i = 0; i < cells.length && cellsRemoved < targetToRemove; i++) {
+                const { r, c } = cells[i];
+                if (puzzle[r]?.[c] !== 0) {
+                    const temp = puzzle[r][c];
+                    puzzle[r][c] = 0;
+                    // Clonar profundamente para el contador
+                    let boardCopy = puzzle.map(row => [...row]);
+                    if (countSolutions(boardCopy) !== 1) {
+                        puzzle[r][c] = temp; // Restaurar si no es única
+                    } else {
+                        cellsRemoved++;
+                    }
+                }
+            }
+             if (cellsRemoved < targetToRemove * 0.8) { // Ajusta 0.8 si es necesario
+                 console.warn(`No se pudieron quitar ${targetToRemove} celdas manteniendo solución única. Se quitaron ${cellsRemoved}.`);
+             }
+            initialPuzzleForResume = JSON.parse(JSON.stringify(puzzle));
+            return puzzle;
+        } catch (e) {
+            console.error("Error creating puzzle with unique check:", e, "Falling back to simpler method.");
+            // Fallback al método simple si falla la verificación
+            const p = JSON.parse(JSON.stringify(board));
+            let rem = CELLS_TO_REMOVE[difficulty] || 50, att = 200;
+            while(rem > 0 && att > 0) { const r = Math.floor(randFunc() * 9), c = Math.floor(randFunc() * 9); if (p?.[r]?.[c] !== 0) { p[r][c] = 0; rem--; } att--; }
+            initialPuzzleForResume = JSON.parse(JSON.stringify(p));
+            return p;
+        }
+    }
+
+    // --- Solucionador Backtracking y Contador de Soluciones ---
+    let solutionCounter;
+    function countSolutions(board) {
+        solutionCounter = 0;
+        solveSudokuInternal(board);
+        return solutionCounter;
+    }
+    function solveSudokuInternal(board) {
+        const emptySpot = findEmpty(board);
+        if (!emptySpot) { solutionCounter++; return true; }
+        const [row, col] = emptySpot;
+        // No barajar aquí, queremos contar sistemáticamente
+        for (let num = 1; num <= 9; num++) {
+            if (isValid(board, num, [row, col])) {
+                board[row][col] = num;
+                solveSudokuInternal(board);
+                // **CRUCIAL**: Detenerse si ya encontramos más de una solución
+                if (solutionCounter > 1) { board[row][col] = 0; return true; }
+                board[row][col] = 0; // Backtrack
+            }
+        }
+        return false;
+    }
+
+    // --- Animación de Victoria (Cascada) ---
+    function animateBoardWin() {
+        if (!boardElement) return;
+        const tiles = boardElement.children;
+        for (let i = 0; i < tiles.length; i++) {
+            const tile = tiles[i];
+            // Calcula un delay basado en la posición para efecto cascada
+            const row = Math.floor(i / 9);
+            const col = i % 9;
+            const delay = (row + col) * 30; // Ajusta 30ms para velocidad
+            tile.classList.remove('win-cascade'); // Limpia animación previa
+            setTimeout(() => {
+                tile.classList.add('win-cascade');
+                // Limpia la clase después de la animación
+                setTimeout(() => tile.classList.remove('win-cascade'), 500);
+            }, delay);
+        }
+    }
+
 
     // --- INICIALIZACIÓN FINAL ---
     try {
