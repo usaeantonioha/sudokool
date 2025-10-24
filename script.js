@@ -29,14 +29,16 @@ document.addEventListener('DOMContentLoaded', () => {
         confettiCanvas, leaderboardButton, goToLeaderboardBtn, achievementsList, leaderboardTableBody,
         tabButtons, tabContents, settingsButton, shareDailyResultBtn, themeSelect, fontSelect,
         muteToggleSetting, showHintToggle, showPencilToggle, /*showUndoToggle,*/ // Eliminado
-        sharePuzzleBtn, timeComparisonElement, eraseButton, errorCounterElement;
+        sharePuzzleBtn, timeComparisonElement, eraseButton, errorCounterElement,
+        muteToggleButtonIcon; // Icono de mute en la cabecera de config
 
     function getElements() {
         screens = { start: document.getElementById('start-screen'), game: document.getElementById('game-screen'), gameOver: document.getElementById('game-over-screen'), /*instructions: document.getElementById('instructions-screen'),*/ about: document.getElementById('about-screen'), pause: document.getElementById('pause-screen'), hintOverlay: document.getElementById('hint-overlay-screen'), leaderboard: document.getElementById('leaderboard-screen'), settings: document.getElementById('settings-screen') };
         boardElement = document.getElementById('board'); keypadElement = document.getElementById('keypad'); /*livesCounter = document.getElementById('lives-counter');*/ backToMenuBtn = document.getElementById('back-to-menu'); restartBtn = document.getElementById('restart-button'); gameOverMsg = document.getElementById('game-over-message'); difficultyButtonsContainer = document.getElementById('difficulty-buttons'); flashMessage = document.getElementById('flash-message'); ingameStreakDisplay = document.getElementById('ingame-streak-display'); /*infoIcon = document.getElementById('info-icon');*/ mainMenuLogo = document.getElementById('main-menu-logo'); timerDisplay = document.getElementById('timer-display'); pauseButton = document.getElementById('pause-button'); resumeButton = document.getElementById('resume-button'); resumeGameBtn = document.getElementById('resume-game-btn'); pauseBackToMenuBtn = document.getElementById('pause-back-to-menu'); gameOverHomeBtn = document.getElementById('game-over-home-btn'); /*undoButton = document.getElementById('undo-button');*/ pencilToggleButton = document.getElementById('pencil-toggle-btn'); dailyChallengeButton = document.getElementById('daily-challenge-btn'); hintButton = document.getElementById('hint-button'); hintExplanation = document.getElementById('hint-explanation'); hintOkButton = document.getElementById('hint-ok-btn'); confettiCanvas = document.getElementById('confetti-canvas'); leaderboardButton = document.getElementById('leaderboard-btn'); goToLeaderboardBtn = document.getElementById('go-to-leaderboard-btn'); achievementsList = document.getElementById('achievements-list'); leaderboardTableBody = document.querySelector('#leaderboard-table tbody'); tabButtons = document.querySelectorAll('.tab-btn'); tabContents = document.querySelectorAll('.tab-content'); settingsButton = document.getElementById('settings-btn'); shareDailyResultBtn = document.getElementById('share-daily-result-btn'); themeSelect = document.getElementById('theme-select'); fontSelect = document.getElementById('font-select'); muteToggleSetting = document.getElementById('mute-toggle-setting'); showHintToggle = document.getElementById('show-hint-toggle'); showPencilToggle = document.getElementById('show-pencil-toggle'); /*showUndoToggle = document.getElementById('show-undo-toggle');*/ sharePuzzleBtn = document.getElementById('share-puzzle-btn'); timeComparisonElement = document.getElementById('time-comparison'); eraseButton = document.getElementById('erase-button');
         errorCounterElement = document.getElementById('error-counter');
+        muteToggleButtonIcon = document.getElementById('mute-toggle-btn'); // El icono de la cabecera de INICIO
 
-        const essentialElements = { boardElement, keypadElement, difficultyButtonsContainer, settingsButton, startScreen: screens.start, gameScreen: screens.game, settingsScreen: screens.settings, themeSelect, fontSelect, muteToggleSetting, eraseButton, errorCounterElement, timerDisplay };
+        const essentialElements = { boardElement, keypadElement, difficultyButtonsContainer, settingsButton, startScreen: screens.start, gameScreen: screens.game, settingsScreen: screens.settings, themeSelect, fontSelect, muteToggleSetting, eraseButton, errorCounterElement, timerDisplay, backToMenuBtn, mainMenuLogo, dailyChallengeButton, leaderboardButton };
         for (const key in essentialElements) {
             if (!essentialElements[key]) {
                  let expectedId = key.replace(/([A-Z])/g, '-$1').toLowerCase().replace('-element','');
@@ -61,14 +63,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- LÓGICA DE INICIO ---
     function initialize() {
-        getElements();
-        setupConfetti();
+        getElements(); setupConfetti();
         loadSettings(); loadStreaks(); loadTotalWins(); loadAchievements(); loadLeaderboards();
-        applySettings();
-        createDifficultyButtons();
-        addEventListeners();
-        const urlParams = new URLSearchParams(window.location.search);
-        const puzzleCode = urlParams.get('puzzle');
+        applySettings(); createDifficultyButtons(); addEventListeners();
+        const urlParams = new URLSearchParams(window.location.search); const puzzleCode = urlParams.get('puzzle');
         if (puzzleCode) setTimeout(() => loadPuzzleFromCode(puzzleCode), 100);
         else showScreen('start');
     }
@@ -76,9 +74,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function addEventListeners() {
         document.body.addEventListener('click', initAudio, { once: true });
         try {
-            backToMenuBtn?.addEventListener('click', goHomeFromPause);
+            backToMenuBtn?.addEventListener('click', goHomeFromPause); // Restaurado
             restartBtn?.addEventListener('click', restartGame);
-            // infoIcon?.addEventListener('click', () => { playClickSound(); showOverlay('instructions', true); }); // ELIMINADO
             mainMenuLogo?.addEventListener('click', () => { playClickSound(); renderAchievementsPage(true); showOverlay('about', true); });
             settingsButton?.addEventListener('click', () => { playClickSound(); setupSettingsScreen(); showOverlay('settings', true); });
             document.querySelectorAll('.back-btn').forEach(btn => btn.addEventListener('click', () => { playClickSound(); ['instructions','about','leaderboard','settings'].forEach(id=>showOverlay(id,false)); }));
@@ -89,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
             resumeGameBtn?.addEventListener('click', resumeGame);
             pauseBackToMenuBtn?.addEventListener('click', goHomeFromPause);
             gameOverHomeBtn?.addEventListener('click', goHome);
-            // undoButton?.addEventListener('click', undoLastMove); // ELIMINADO
+            // undoButton eliminado
             pencilToggleButton?.addEventListener('click', togglePencilMode);
             eraseButton?.addEventListener('click', eraseNumber);
             dailyChallengeButton?.addEventListener('click', startDailyChallenge);
@@ -105,8 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
             muteToggleSetting?.addEventListener('change', handleMuteChange);
             showHintToggle?.addEventListener('change', (e) => handleButtonVisibilityChange('showHintButton', e.target.checked));
             showPencilToggle?.addEventListener('change', (e) => handleButtonVisibilityChange('showPencilButton', e.target.checked));
-            // showUndoToggle?.addEventListener('change', (e) => handleButtonVisibilityChange('showUndoButton', e.target.checked)); // ELIMINADO
-            // muteToggleButton?.addEventListener('click', ...); // ELIMINADO
+            // showUndoToggle eliminado
         } catch (e) { console.error("Error asignando event listeners:", e); }
     }
 
@@ -124,7 +120,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (targetContent) targetContent.classList.add('active');
     }
     
-    // ===== MODIFICADO: renderAchievementsPage ahora maneja el reordenamiento de tabs =====
     function renderAchievementsPage(forceResetTabs = false) {
         if (!achievementsList) return;
         achievementsList.innerHTML = '';
@@ -135,16 +130,12 @@ document.addEventListener('DOMContentLoaded', () => {
             li.innerHTML = `<div class="achievement-icon">${i}</div><div class="achievement-details"><h3>${d.title}</h3><p>${d.desc}</p></div>`;
             achievementsList.appendChild(li);
         }
-        
-        // Resetear tabs a la pestaña "Información" (default)
         if (forceResetTabs) {
-            const aboutScreen = document.getElementById('about-screen');
-            if (!aboutScreen) return;
+            const aboutScreen = document.getElementById('about-screen'); if (!aboutScreen) return;
             const currentTabButtons = aboutScreen.querySelectorAll('.tab-btn');
             const currentTabContents = aboutScreen.querySelectorAll('.tab-content');
             currentTabButtons.forEach(b => b.classList.remove('active'));
             currentTabContents.forEach(c => c.classList.remove('active'));
-            
             const infoTabBtn = aboutScreen.querySelector('.tab-btn[data-tab="info-tab"]');
             const infoTabContent = aboutScreen.querySelector('#info-tab');
             if (infoTabBtn) infoTabBtn.classList.add('active');
@@ -154,10 +145,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     function createDifficultyButtons() {
-        if (!difficultyButtonsContainer) { console.error("difficultyButtonsContainer no encontrado al crear botones."); return; }
+        if (!difficultyButtonsContainer) { console.error("difficultyButtonsContainer no encontrado."); return; }
         difficultyButtonsContainer.innerHTML = ''; const f = document.createDocumentFragment();
         const l = [{key:'fácil',name:'Fácil'},{key:'medio',name:'Medio'},{key:'difícil',name:'Difícil'},{key:'experto',name:'Experto'}];
         l.forEach(v=>{const b=document.createElement('button');b.className='difficulty-btn neumorphic';b.dataset.difficulty=v.key;const t=document.createElement('span');t.textContent=v.name;b.appendChild(t);b.classList.add(`btn-${v.key}`);
+        if(v.key==='fácil')b.style.backgroundImage='linear-gradient(to bottom, #1de9b6, #1abc9c)';
+        else if(v.key==='medio')b.style.backgroundImage='linear-gradient(to bottom, #4fc3f7, #3498db)';
+        else if(v.key==='difícil')b.style.backgroundImage='linear-gradient(to bottom, #ffca28, #f39c12)';
+        else if(v.key==='experto')b.style.backgroundImage='linear-gradient(to bottom, #ef5350, #c0392b)';
         const s=(gameState.streaks&&typeof gameState.streaks==='object'&&gameState.streaks[v.key])?gameState.streaks[v.key]:0;if(s>0){const sp=document.createElement('span');sp.className='streak-display-menu';sp.textContent=`👑 ${s}`;b.appendChild(sp);}f.appendChild(b);});
         difficultyButtonsContainer.appendChild(f); difficultyButtonsContainer.addEventListener('click', handleDifficultyClick);
     }
@@ -237,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderBoardImproved(){if(!boardElement)return;boardElement.innerHTML='';const f=document.createDocumentFragment();for(let r=0;r<9;r++){for(let c=0;c<9;c++){const t=document.createElement('div');t.className='tile';t.dataset.row=r;t.dataset.col=c;if(c===2||c===5)t.classList.add('tile-border-right');if(r===2||r===5)t.classList.add('tile-border-bottom');const nEl=document.createElement('div');nEl.className='tile-number';const nGrid=document.createElement('div');nGrid.className='tile-notes-grid';for(let i=1;i<=9;i++){const nE=document.createElement('div');nE.className='tile-note note-'+i;nGrid.appendChild(nE);}const initialNum=initialPuzzleForResume?.[r]?.[c];const currentNum=gameState.puzzleBoard?.[r]?.[c];const solutionNum=gameState.solution?.[r]?.[c];if(initialNum!==undefined&&initialNum!==0){nEl.textContent=initialNum.toString();t.classList.add('hint');}else if(currentNum!==undefined&&currentNum!==0){nEl.textContent=currentNum.toString();t.classList.add('user-filled');if(solutionNum!==undefined&&currentNum!==solutionNum)t.classList.add('tile-wrong-number');}else{const nts=gameState.notesBoard?.[r]?.[c];if(nts&&nts.size>0){t.classList.add('is-notes');nts.forEach(num=>{const nE=nGrid.querySelector('.note-'+num);if(nE)nE.textContent=num.toString();});}}t.appendChild(nEl);t.appendChild(nGrid);f.appendChild(t);}}boardElement.appendChild(f);}
     function renderKeypad(){if(!keypadElement)return;keypadElement.innerHTML='';const f=document.createDocumentFragment();for(let i=1;i<=9;i++){const k=document.createElement('button');k.className='keypad-number';k.textContent=i.toString();f.appendChild(k);}keypadElement.appendChild(f);updateKeypad();}
     function renderTileNotes(r,c){const t=boardElement?.children[r*9+c];if(!t)return;const nG=t.querySelector('.tile-notes-grid');if(!nG)return;const nts=gameState.notesBoard?.[r]?.[c];const showNotes=nts&&nts.size>0&&gameState.puzzleBoard?.[r]?.[c]===0;t.classList.toggle('is-notes',showNotes);for(let i=1;i<=9;i++){const nE=nG.querySelector('.note-'+i);if(nE){const hasNote=nts&&nts.has(i);nE.textContent=hasNote?i.toString():'';nE.classList.toggle('visible',hasNote);if(hasNote){nE.classList.add('pop-in');setTimeout(()=>nE.classList.remove('pop-in'),200);}}}}
-    function updateLivesDisplay(){const errC=document.getElementById('error-counter');if(errC){const errs=3-Math.max(0,gameState.lives);errC.textContent=`${errs}/3`;}}
+    function updateLivesDisplay(){if(errorCounterElement){const errs=3-Math.max(0,gameState.lives);errorCounterElement.textContent=`${errs}/3`;}}
     function updateIngameStreakDisplay(){if(!ingameStreakDisplay)return;const s=(gameState.streaks&&gameState.currentDifficulty)?gameState.streaks[gameState.currentDifficulty]||0:0;ingameStreakDisplay.innerHTML=s>0?`👑 <span class="ingame-streak-number">${s}</span>`:'';}
     function showFlashMessage(m){if(!flashMessage)return;flashMessage.textContent=m;flashMessage.classList.add('show');setTimeout(()=>flashMessage.classList.remove('show'),1500);}
 
@@ -286,7 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleButtonVisibilityChange(key,v){saveSetting(key,v);applyButtonVisibility();playClickSound();}
     function applyButtonVisibility(){if(hintButton)hintButton.style.display=(gameState.settings.showHintButton&&gameState.gameInProgress)?'flex':'none';if(pencilToggleButton)pencilToggleButton.style.display=(gameState.settings.showPencilButton&&gameState.gameInProgress)?'flex':'none'; /* undoButton eliminado */}
     // Funciones colores eliminadas
-    function setupSettingsScreen(){if(!themeSelect||!fontSelect||!muteToggleSetting||!showHintToggle||!showPencilToggle/*||!showUndoToggle*/)return;themeSelect.value=gameState.settings.theme;fontSelect.value=gameState.settings.boardFont;muteToggleSetting.checked=gameState.isMuted;showHintToggle.checked=gameState.settings.showHintButton;showPencilToggle.checked=gameState.settings.showPencilButton;/*showUndoToggle.checked=gameState.settings.showUndoButton;*/}
+    function setupSettingsScreen(){if(!themeSelect||!fontSelect||!muteToggleSetting||!showHintToggle||!showPencilToggle)return;themeSelect.value=gameState.settings.theme;fontSelect.value=gameState.settings.boardFont;muteToggleSetting.checked=gameState.isMuted;showHintToggle.checked=gameState.settings.showHintButton;showPencilToggle.checked=gameState.settings.showPencilButton;}
     function deepMerge(t, s) { if (!s) return t; for (const k in s) { if (s.hasOwnProperty(k)) { const sk = s[k]; const tk = t?.[k]; if (sk && typeof sk === 'object' && !Array.isArray(sk)) { if (!tk || typeof tk !== 'object' || Array.isArray(tk)) { t[k] = {}; } deepMerge(t[k], sk); } else if (sk !== undefined) { t[k] = sk; } } } return t; }
     // ===== CORRECCIÓN: applySettings sin muteToggleButton y colores =====
     function applySettings(){if(!document.body)return;try{if(gameState.settings.theme==='auto')applyDynamicTheme();else document.body.dataset.theme=gameState.settings.theme;applyFont(gameState.settings.boardFont);/* Colores eliminados */}catch(e){console.error("Error al aplicar settings:",e);document.body.dataset.theme='light';applyFont(DEFAULT_SETTINGS.boardFont);}}
@@ -303,13 +298,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LÓGICA DE LOGROS Y CLASIFICACIÓN ---
     function checkAchievements(){try{const{currentDifficulty:d,secondsElapsed:t,gameStats:gs,streaks:s}=gameState;if(d===DIFFICULTIES.MEDIO&&t<300)unlockAchievement('speedRacer');if(d===DIFFICULTIES.DIFÍCIL&&!gs.hintUsedThisGame)unlockAchievement('perfectionist');const ts=Object.values(s||{}).reduce((sum,v)=>sum+v,0);if(ts>=10)unlockAchievement('streakMaster');if(gameState.isDailyChallenge)unlockAchievement('dailyConqueror');}catch(e){console.error("Error checking achievements:",e);}}
     function unlockAchievement(id){if(!id||!ACHIEVEMENT_DEFINITIONS[id]||gameState.achievements[id])return;gameState.achievements[id]=true;saveAchievements();playAchievementSound();showFlashMessage(`¡Logro: ${ACHIEVEMENT_DEFINITIONS[id]?.title||id}!`);}
-    function renderAchievementsPage(forceResetTabs = false){if(!achievementsList)return;achievementsList.innerHTML='';for(const id in ACHIEVEMENT_DEFINITIONS){const d=ACHIEVEMENT_DEFINITIONS[id],u=gameState.achievements[id];const li=document.createElement('li');li.className='achievement-item';if(!u)li.classList.add('locked');let i=u?(d.title.split(' ')[1]||'🎖️'):'🔒';li.innerHTML=`<div class="achievement-icon">${i}</div><div class="achievement-details"><h3>${d.title}</h3><p>${d.desc}</p></div>`;achievementsList.appendChild(li);}if(forceResetTabs){const aboutScreen=document.getElementById('about-screen');if(!aboutScreen)return;const currentTabButtons=aboutScreen.querySelectorAll('.tab-btn');const currentTabContents=aboutScreen.querySelectorAll('.tab-content');currentTabButtons.forEach(b=>b.classList.remove('active'));currentTabContents.forEach(c=>c.classList.remove('active'));const infoTabBtn=aboutScreen.querySelector('.tab-btn[data-tab="info-tab"]');const infoTabContent=aboutScreen.querySelector('#info-tab');if(infoTabBtn)infoTabBtn.classList.add('active');if(infoTabContent)infoTabContent.classList.add('active');}}
+    function renderAchievementsPage(forceResetTabs=false){if(!achievementsList)return;achievementsList.innerHTML='';for(const id in ACHIEVEMENT_DEFINITIONS){const d=ACHIEVEMENT_DEFINITIONS[id],u=gameState.achievements[id];const li=document.createElement('li');li.className='achievement-item';if(!u)li.classList.add('locked');let i=u?(d.title.split(' ')[1]||'🎖️'):'🔒';li.innerHTML=`<div class="achievement-icon">${i}</div><div class="achievement-details"><h3>${d.title}</h3><p>${d.desc}</p></div>`;achievementsList.appendChild(li);}if(forceResetTabs){const aboutScreen=document.getElementById('about-screen');if(!aboutScreen)return;const currentTabButtons=aboutScreen.querySelectorAll('.tab-btn');const currentTabContents=aboutScreen.querySelectorAll('.tab-content');currentTabButtons.forEach(b=>b.classList.remove('active'));currentTabContents.forEach(c=>c.classList.remove('active'));const infoTabBtn=aboutScreen.querySelector('.tab-btn[data-tab="info-tab"]');const infoTabContent=aboutScreen.querySelector('#info-tab');if(infoTabBtn)infoTabBtn.classList.add('active');if(infoTabContent)infoTabContent.classList.add('active');}}
     function saveToLeaderboard(t){try{const score={time:t,date:new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'})};let s=gameState.leaderboards.daily||[];s.push(score);s.sort((a,b)=>a.time-b.time);gameState.leaderboards.daily=s.slice(0,5);saveLeaderboards();}catch(e){console.error("Error saving leaderboard:",e);}}
     function renderLeaderboardsPage(){if(!leaderboardTableBody)return;leaderboardTableBody.innerHTML='';const s=gameState.leaderboards.daily||[];if(s.length===0){leaderboardTableBody.innerHTML='<tr><td colspan="3">Aún no hay récords. ¡Juega el Desafío Diario!</td></tr>';return;}s.forEach((sc,i)=>{const tr=document.createElement('tr');tr.innerHTML=`<td>#${i+1}</td><td>${formatTime(sc.time)}</td><td>${sc.date}</td>`;leaderboardTableBody.appendChild(tr);});}
 
     // --- LÓGICA PARA COMPARTIR ---
     function generatePuzzleCode(){if(!initialPuzzleForResume||initialPuzzleForResume.length!==9)return null;try{const code=initialPuzzleForResume.flat().join('');return btoa(code);}catch(e){console.error("Error generating puzzle code:",e);return null;}}
-    function loadPuzzleFromCode(code){try{const decoded=atob(code);if(decoded.length!==81||!/^[0-9]{81}$/.test(decoded))throw new Error("Invalid puzzle code format");const puzzleGrid=[];for(let i=0;i<9;i++)puzzleGrid.push(decoded.substring(i*9,(i+1)*9).split('').map(Number));startGame(DIFFICULTIES.MEDIO,puzzleGrid);showFlashMessage("Puzzle compartido cargado.");window.history.replaceState({},document.title,window.location.pathname);}catch(e){console.error("Error loading puzzle from code:",e);showFlashMessage("Error al cargar puzzle compartido.");createDifficultyButtons();}}
+    function loadPuzzleFromCode(code){try{const decoded=atob(code);if(decoded.length!==81||!/^[0-9]{81}$/.test(decoded))throw new Error("Invalid puzzle code format");const puzzleGrid=[];for(let i=0;i<9;i++)puzzleGrid.push(decoded.substring(i*9,(i+1)*9).split('').map(Number));startGame(DIFFICULTIES.MEDIO,puzzleGrid);showFlashMessage("Puzzle compartido cargado.");if(window.history.replaceState)window.history.replaceState({},document.title,window.location.pathname);}catch(e){console.error("Error loading puzzle from code:",e);showFlashMessage("Error al cargar puzzle compartido.");createDifficultyButtons();}}
     async function shareCurrentPuzzle(){playClickSound();const code=generatePuzzleCode();if(!code){showFlashMessage("No se pudo generar código.");return;}const url=`${window.location.origin}${window.location.pathname}?puzzle=${code}`;const text=`¡Te reto a resolver este puzzle de Sudoku Pro!`;try{if(navigator.share)await navigator.share({title:'Sudoku Pro Puzzle',text:text,url:url});else if(navigator.clipboard)await navigator.clipboard.writeText(`${text} ${url}`);else throw new Error('Share/Clipboard not supported');showFlashMessage("¡Enlace del puzzle copiado/compartido!");}catch(e){console.error('Error sharing puzzle:',e);showFlashMessage("No se pudo compartir o copiar el enlace.");}showOverlay('pause',false);}
     async function shareDailyResult(){playClickSound();const t=formatTime(gameState.secondsElapsed),d=new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'}),tx=`¡Sudoku Pro: Desafío Diario del ${d} completado en ${t}! ¿Puedes superarlo? #SudokuPro`,u=window.location.href.split('?')[0];try{if(navigator.share)await navigator.share({title:'Resultado Sudoku Pro',text:tx,url:u});else if(navigator.clipboard)await navigator.clipboard.writeText(`${tx} ${u}`);else throw new Error('Share/Clipboard not supported');showFlashMessage("¡Resultado copiado/compartido!");}catch(e){console.error('Error sharing:',e);showFlashMessage("No se pudo compartir o copiar.");}}
 
@@ -394,6 +389,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }, delay);
         }
     }
+
 
     // --- INICIALIZACIÓN FINAL ---
     try {

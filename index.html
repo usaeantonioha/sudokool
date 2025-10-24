@@ -13,7 +13,7 @@
 
     <canvas id="confetti-canvas"></canvas>
 
-    <section id="start-screen" class="screen active screen-enter">
+    <section id="start-screen" class="screen active">
         <header class="header-icons">
             <div class="header-icons-left">
                 <button id="main-menu-logo" class="logo-btn" aria-label="Información, Logros y Acerca de">S</button>
@@ -29,12 +29,12 @@
             </h1>
         </div>
 
-        <button id="resume-game-btn" class="resume-btn neumorphic" style="display: none;">Reanudar Partida</button>
-        <button id="daily-challenge-btn" class="daily-btn neumorphic">Desafío Diario</button>
+        <button id="resume-game-btn" class="resume-btn" style="display: none;">Reanudar Partida</button>
+        <button id="daily-challenge-btn" class="daily-btn">Desafío Diario</button>
         <nav id="difficulty-buttons"></nav>
 
         <div class="bottom-button-container">
-             <button id="leaderboard-btn" class="leaderboard-btn neumorphic">🏆 Clasificación</button>
+             <button id="leaderboard-btn" class="leaderboard-btn">🏆 Clasificación</button>
         </div>
     </section>
 
@@ -45,27 +45,16 @@
             <div class="info-item"> <span id="game-difficulty-display"></span> </div>
             <div class="info-item info-errors"> <span>Errores:</span> <span id="error-counter">0/3</span> </div>
             <div class="info-item info-time"> <span>Tiempo:</span> <span id="timer-display">00:00</span> </div>
-            <button id="pause-button" class="pause-btn-ingame" aria-label="Pausar juego">
-                 <span class="pause-text">Pausa</span>
-                 <svg class="action-icon-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path></svg>
-            </button>
+            <div id="pause-button" class="info-item" aria-label="Pausar juego">
+                <span>&nbsp;</span> <span id="pause-button-text">Pausa ||</span> </div>
         </div>
 
         <div class="game-content-area">
             <div id="board"></div>
             <div id="action-bar">
-                <button id="erase-button" class="action-btn" aria-label="Borrar celda">
-                    <svg class="action-icon-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19.78 2.22a2.49 2.49 0 0 0-3.53 0L7.1 11.36a1 1 0 0 0 0 1.41l7.07 7.07a1 1 0 0 0 1.41 0l4.24-4.24a2.49 2.49 0 0 0 0-3.53zm-3.53 3.53l2.83 2.83-8.49 8.49-2.83-2.83zM6 21H3v-3l7.74-7.74 3 3z"></path></svg>
-                    <span class="action-text">Borrar</span>
-                </button>
-                <button id="pencil-toggle-btn" class="action-btn" aria-label="Modo Lápiz" style="display: none;">
-                    <svg class="action-icon-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"></path></svg>
-                    <span class="action-text">Notas</span>
-                </button>
-                <button id="hint-button" class="action-btn" aria-label="Pedir Pista" style="display: none;">
-                    <svg class="action-icon-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"></path></svg>
-                    <span class="action-text">Pista</span>
-                </button>
+                <button id="erase-button" class="action-btn" aria-label="Borrar celda"><svg class="action-icon-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19.78 2.22a2.49 2.49 0 0 0-3.53 0L7.1 11.36a1 1 0 0 0 0 1.41l7.07 7.07a1 1 0 0 0 1.41 0l4.24-4.24a2.49 2.49 0 0 0 0-3.53zm-3.53 3.53l2.83 2.83-8.49 8.49-2.83-2.83zM6 21H3v-3l7.74-7.74 3 3z"></path></svg><span class="action-text">Borrar</span></button>
+                <button id="pencil-toggle-btn" class="action-btn" aria-label="Modo Lápiz" style="display: none;"><svg class="action-icon-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"></path></svg><span class="action-text">Notas</span></button>
+                <button id="hint-button" class="action-btn" aria-label="Pedir Pista" style="display: none;"><svg class="action-icon-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"></path></svg><span class="action-text">Pista</span></button>
             </div>
             <div id="keypad"></div>
         </div>
