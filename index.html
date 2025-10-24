@@ -42,17 +42,9 @@
         <button id="back-to-menu">← Volver al Menú</button>
 
         <div id="game-info-bar">
-            <div class="info-item">
-                <span id="game-difficulty-display"></span>
-            </div>
-            <div class="info-item info-errors">
-                <span>Errores:</span>
-                <span id="error-counter">0/3</span>
-            </div>
-            <div class="info-item info-time">
-                <span>Tiempo:</span>
-                <span id="timer-display">00:00</span>
-            </div>
+            <div class="info-item"> <span id="game-difficulty-display"></span> </div>
+            <div class="info-item info-errors"> <span>Errores:</span> <span id="error-counter">0/3</span> </div>
+            <div class="info-item info-time"> <span>Tiempo:</span> <span id="timer-display">00:00</span> </div>
             <button id="pause-button" class="icon-btn pause-btn-ingame" aria-label="Pausar juego">||</button>
         </div>
 
@@ -92,26 +84,12 @@
                 <button class="tab-btn" data-tab="about-tab">Acerca de</button>
                 <button class="tab-btn" data-tab="achievements-tab">Logros</button>
             </div>
-
             <div id="info-tab" class="tab-content active">
                  <h2>Cómo Jugar Sudoku</h2>
-                 <p class="instructions-text">
-                     El objetivo es rellenar una cuadrícula de 9×9 celdas dividida en subcuadrículas de 3×3 ("cajas" o "regiones") con las cifras del 1 al 9 partiendo de algunos números ya dispuestos en algunas de las celdas.
-                     <br><br>
-                     No se debe repetir ninguna cifra en una misma <strong>fila</strong>, <strong>columna</strong> o <strong>subcuadrícula (caja)</strong>. ¡Usa la lógica para completar el puzzle!
-                 </p>
+                 <p class="instructions-text"> El objetivo es rellenar una cuadrícula de 9×9 celdas dividida en subcuadrículas de 3×3 ("cajas" o "regiones") con las cifras del 1 al 9 partiendo de algunos números ya dispuestos en algunas de las celdas. <br><br> No se debe repetir ninguna cifra en una misma <strong>fila</strong>, <strong>columna</strong> o <strong>subcuadrícula (caja)</strong>. ¡Usa la lógica para completar el puzzle! </p>
             </div>
-
-            <div id="about-tab" class="tab-content">
-                <h2>Creado por</h2>
-                <p class="creator-name">Enzo</p>
-            </div>
-
-            <div id="achievements-tab" class="tab-content">
-                <h2>Logros 🎖️</h2>
-                <ul id="achievements-list" class="achievements-list"></ul>
-            </div>
-
+            <div id="about-tab" class="tab-content"> <h2>Creado por</h2> <p class="creator-name">Enzo</p> </div>
+            <div id="achievements-tab" class="tab-content"> <h2>Logros 🎖️</h2> <ul id="achievements-list" class="achievements-list"></ul> </div>
             <button class="overlay-btn back-btn">Volver</button>
         </div>
     </div>
@@ -120,10 +98,7 @@
         <div class="overlay-box overlay-box-large">
             <h2>🏆 Clasificación (Desafío Diario)</h2>
             <p class="instructions-text">Aquí se muestran tus 5 mejores tiempos.</p>
-            <table id="leaderboard-table" class="leaderboard-table">
-                <thead><tr><th>Puesto</th><th>Tiempo</th><th>Fecha</th></tr></thead>
-                <tbody></tbody>
-            </table>
+            <table id="leaderboard-table" class="leaderboard-table"> <thead><tr><th>Puesto</th><th>Tiempo</th><th>Fecha</th></tr></thead> <tbody></tbody> </table>
             <button class="overlay-btn back-btn">Volver</button>
         </div>
     </div>
@@ -152,8 +127,25 @@
             <h2>⚙️ Configuración</h2>
             <div class="settings-section">
                 <h3>Apariencia</h3>
-                <div class="setting-item"><label for="theme-select">Tema:</label><select id="theme-select"><option value="auto">Automático (Claro)</option><option value="light">Claro</option><option value="sepia">Sepia</option><option value="dark">Oscuro</option><option value="neon">Neón</option><option value="minimalist">Minimalista</option></select></div>
-                <div class="setting-item"><label for="font-select">Fuente Números:</label><select id="font-select"><option value="Manrope">Predeterminada</option><option value="Roboto Slab">Serif</option><option value="Source Code Pro">Monoespaciada</option></select></div>
+                <div class="setting-item">
+                    <label for="theme-select">Tema:</label>
+                    <select id="theme-select">
+                        <option value="auto">Automático (Claro)</option>
+                        <option value="light">Claro</option>
+                        <option value="sepia">Sepia</option>
+                        <option value="dark">Oscuro</option>
+                        <option value="neon">Neón</option>
+                        <option value="minimalist">Minimalista</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label for="font-select">Fuente Números:</label>
+                    <select id="font-select">
+                        <option value="Manrope">Predeterminada</option>
+                        <option value="Roboto Slab">Serif</option>
+                        <option value="Source Code Pro">Monoespaciada</option>
+                    </select>
+                </div>
             </div>
             <div class="settings-section">
                 <h3>Juego</h3>

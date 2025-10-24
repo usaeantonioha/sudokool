@@ -60,18 +60,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- LÓGICA DE INICIO ---
     function initialize() {
-        // Mover getElements al inicio del try...catch global
         getElements();
         setupConfetti();
-        // Carga robusta de datos
         loadSettings(); loadStreaks(); loadTotalWins(); loadAchievements(); loadLeaderboards();
-        // Aplicar ajustes visuales (con try-catch propio)
-        try { applySettings(); }
-        catch(e) { console.error("Error aplicando ajustes:",e,"Restaurando defaults."); gameState.settings=JSON.parse(JSON.stringify(DEFAULT_SETTINGS)); applySettings(); }
-        // Crear UI
+        applySettings();
         createDifficultyButtons();
         addEventListeners();
-        // Cargar puzzle compartido si existe
         const urlParams = new URLSearchParams(window.location.search);
         const puzzleCode = urlParams.get('puzzle');
         if (puzzleCode) setTimeout(() => loadPuzzleFromCode(puzzleCode), 100);
@@ -80,9 +74,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function addEventListeners() {
         document.body.addEventListener('click', initAudio, { once: true });
         try {
-            backToMenuBtn?.addEventListener('click', togglePause);
+            // ===== MODIFICADO: backToMenuBtn ahora llama a goHomeFromPause =====
+            backToMenuBtn?.addEventListener('click', goHomeFromPause);
             restartBtn?.addEventListener('click', restartGame);
-            infoIcon?.addEventListener('click', () => { playClickSound(); showOverlay('instructions', true); }); // Aunque no esté visible, mantenemos por si se re-añade
+            // infoIcon?.addEventListener('click', () => { playClickSound(); showOverlay('instructions', true); }); // Eliminado
             mainMenuLogo?.addEventListener('click', () => { playClickSound(); renderAchievementsPage(); showOverlay('about', true); });
             settingsButton?.addEventListener('click', () => { playClickSound(); setupSettingsScreen(); showOverlay('settings', true); });
             document.querySelectorAll('.back-btn').forEach(btn => btn.addEventListener('click', () => { playClickSound(); ['instructions','about','leaderboard','settings'].forEach(id=>showOverlay(id,false)); }));
@@ -95,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
             gameOverHomeBtn?.addEventListener('click', goHome);
             undoButton?.addEventListener('click', undoLastMove);
             pencilToggleButton?.addEventListener('click', togglePencilMode);
-            eraseButton?.addEventListener('click', eraseNumber); // Listener para Borrar
+            eraseButton?.addEventListener('click', eraseNumber);
             dailyChallengeButton?.addEventListener('click', startDailyChallenge);
             hintButton?.addEventListener('click', provideHint);
             hintOkButton?.addEventListener('click', () => { clearHintHighlights(); showOverlay('hintOverlay', false); });
@@ -110,7 +105,6 @@ document.addEventListener('DOMContentLoaded', () => {
             showHintToggle?.addEventListener('change', (e) => handleButtonVisibilityChange('showHintButton', e.target.checked));
             showPencilToggle?.addEventListener('change', (e) => handleButtonVisibilityChange('showPencilButton', e.target.checked));
             showUndoToggle?.addEventListener('change', (e) => handleButtonVisibilityChange('showUndoButton', e.target.checked));
-            // Listener para muteToggleButton principal eliminado
         } catch (e) { console.error("Error asignando event listeners:", e); }
     }
 
@@ -118,11 +112,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!event || !event.target || !event.target.dataset.tab) return;
         playClickSound();
         tabButtons.forEach(b => b.classList.remove('active'));
-        if (tabContents) tabContents.forEach(c => c.classList.remove('active')); // Añadido chequeo
+        if (tabContents) tabContents.forEach(c => c.classList.remove('active'));
         event.target.classList.add('active');
         const targetContent = document.getElementById(event.target.dataset.tab);
         if (targetContent) targetContent.classList.add('active');
+         // Asegurar que la primera pestaña esté activa al abrir
+         if(event.target.dataset.tab === 'info-tab' && !document.getElementById('info-tab').classList.contains('active')){
+             document.getElementById('info-tab').classList.add('active');
+         }
     }
+
 
     function createDifficultyButtons() {
         if (!difficultyButtonsContainer) { console.error("difficultyButtonsContainer no encontrado al crear botones."); return; }
@@ -146,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
             gameState.hintUsed=false; if(hintButton)hintButton.classList.remove('disabled');
             gameState.notesBoard=Array(9).fill(null).map(()=>Array(9).fill(null).map(()=>new Set()));
             gameState.gameStats={hasUsedUndo:false,notesPlaced:0};
-            applyButtonVisibility(); // Asegura visibilidad correcta
+            applyButtonVisibility();
             renderTimer(); startTimer(); if(pauseButton)pauseButton.style.display='flex';
 
             if (puzzleToLoad) {
@@ -174,12 +173,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- MANEJADORES DE EVENTOS ---
     function handleDifficultyClick(event){const b=event.target.closest('.difficulty-btn');if(b){playClickSound();startGame(b.dataset.difficulty);}}
     function handleBoardClick(event){if(gameState.isPaused)return;const t=event.target.closest('.tile');if(!t)return;gameState.selectedTile=t;clearHintHighlights();highlightTilesFromBoard(t.dataset.row,t.dataset.col);}
-    function handleKeypadClick(event){if(gameState.isPaused)return;const k=event.target.closest('.keypad-number');if(k){playClickSound();if(k.style.opacity === '0.5' || k.style.visibility === 'hidden') return; const n=parseInt(k.textContent);if(isNaN(n)||n<1||n>9)return;if(gameState.selectedTile){clearHintHighlights();if(gameState.isPencilMode)toggleNote(n);else placeNumber(n);}else{clearHintHighlights();highlightNumbersFromKeypad(n);}}}
+    function handleKeypadClick(event){if(gameState.isPaused)return;const k=event.target.closest('.keypad-number');if(k){playClickSound();if(k.style.opacity === '0.3' || k.style.visibility === 'hidden') return; const n=parseInt(k.textContent);if(isNaN(n)||n<1||n>9)return;if(gameState.selectedTile){clearHintHighlights();if(gameState.isPencilMode)toggleNote(n);else placeNumber(n);}else{clearHintHighlights();highlightNumbersFromKeypad(n);}}}
 
     // --- LÓGICA DEL JUEGO ---
     function placeNumber(num){if(!gameState.selectedTile||gameState.selectedTile.classList.contains('hint'))return;clearErrorHighlights();clearHintHighlights();const r=parseInt(gameState.selectedTile.dataset.row),c=parseInt(gameState.selectedTile.dataset.col);if(isNaN(r)||isNaN(c)||r<0||r>8||c<0||c>8){console.error("Coords inválidas:",r,c);return;}if(gameState.selectedTile.classList.contains('tile-wrong-number')){playErrorSound();showFlashMessage("Deshaz tu jugada anterior primero");return;}const nts=gameState.notesBoard?.[r]?.[c]||new Set();gameState.lastMove={row:r,col:c,prevValue:gameState.puzzleBoard?.[r]?.[c]||0,prevNotes:new Set(nts)};if(nts)nts.clear();renderTileNotes(r,c);if(!gameState.puzzleBoard[r])gameState.puzzleBoard[r]=[];gameState.puzzleBoard[r][c]=num;const numEl=gameState.selectedTile.querySelector('.tile-number');if(numEl)numEl.textContent=num.toString();else console.warn("NumEl missing");gameState.selectedTile.classList.add('user-filled');gameState.selectedTile.classList.remove('is-notes');highlightTilesFromBoard(r,c);if(undoButton)undoButton.style.display='none';if(gameState.solution?.[r]?.[c]===num){gameState.selectedTile.classList.remove('tile-wrong-number');autoCleanNotes(r,c,num);if(checkWin())endGame(true);}else{playErrorSound();if(navigator.vibrate)navigator.vibrate(200);gameState.selectedTile.classList.add('tile-error','tile-wrong-number');highlightConflicts(r,c,num);setTimeout(()=>{if(gameState.selectedTile)gameState.selectedTile.classList.remove('tile-error');},500);if(gameState.settings.showUndoButton&&undoButton)undoButton.style.display='flex';gameState.lives--;updateLivesDisplay();showFlashMessage("Número equivocado");if(gameState.lives<=0)endGame(false);}updateKeypad();}
     function undoLastMove(){if(!gameState.lastMove)return;playClickSound();gameState.gameStats.hasUsedUndo=true;const{row:r,col:c,prevValue:pv,prevNotes:pn}=gameState.lastMove;const t=boardElement?.children[r*9+c];if(!t)return;const ne=t.querySelector('.tile-number');if(!gameState.puzzleBoard[r])gameState.puzzleBoard[r]=[];gameState.puzzleBoard[r][c]=pv;if(!gameState.notesBoard[r])gameState.notesBoard[r]=[];gameState.notesBoard[r][c]=pn;if(ne)ne.textContent=pv===0?'':pv.toString();t.classList.remove('user-filled','tile-wrong-number');clearErrorHighlights();clearHintHighlights();if(pv===0)t.classList.remove('user-filled');renderTileNotes(r,c);gameState.selectedTile=t;highlightTilesFromBoard(r,c);gameState.lastMove=null;if(undoButton)undoButton.style.display='none';updateKeypad();}
-    function eraseNumber() {if(!gameState.selectedTile||gameState.isPaused||gameState.selectedTile.classList.contains('hint'))return;playClickSound();const r=parseInt(gameState.selectedTile.dataset.row),c=parseInt(gameState.selectedTile.dataset.col);if(isNaN(r)||isNaN(c))return;const nts=gameState.notesBoard?.[r]?.[c]||new Set();gameState.lastMove={row:r,col:c,prevValue:gameState.puzzleBoard?.[r]?.[c]||0,prevNotes:new Set(nts)};if(gameState.puzzleBoard?.[r]?.[c]!==0){gameState.puzzleBoard[r][c]=0;const nEl=gameState.selectedTile.querySelector('.tile-number');if(nEl)nEl.textContent='';gameState.selectedTile.classList.remove('user-filled','tile-wrong-number');clearErrorHighlights();updateKeypad();}else if(nts.size>0){nts.clear();renderTileNotes(r,c);}/* Deshacer no se activa aquí según la lógica actual */highlightTilesFromBoard(r,c);}
+    function eraseNumber(){if(!gameState.selectedTile||gameState.isPaused||gameState.selectedTile.classList.contains('hint'))return;playClickSound();const r=parseInt(gameState.selectedTile.dataset.row),c=parseInt(gameState.selectedTile.dataset.col);if(isNaN(r)||isNaN(c))return;const nts=gameState.notesBoard?.[r]?.[c]||new Set();gameState.lastMove={row:r,col:c,prevValue:gameState.puzzleBoard?.[r]?.[c]||0,prevNotes:new Set(nts)};if(gameState.puzzleBoard?.[r]?.[c]!==0&&gameState.puzzleBoard?.[r]?.[c]!==undefined){gameState.puzzleBoard[r][c]=0;const nEl=gameState.selectedTile.querySelector('.tile-number');if(nEl)nEl.textContent='';gameState.selectedTile.classList.remove('user-filled','tile-wrong-number');clearErrorHighlights();updateKeypad();}else if(nts.size>0){nts.clear();renderTileNotes(r,c);}highlightTilesFromBoard(r,c);}
     function endGame(isWin){stopTimer();if(pauseButton)pauseButton.style.display='none';if(pencilToggleButton)pencilToggleButton.style.display='none';if(hintButton)hintButton.style.display='none';gameState.gameInProgress=false;if(resumeGameBtn)resumeGameBtn.style.display='none';if(undoButton)undoButton.style.display='none';gameState.lastMove=null;clearAllErrors();clearHintHighlights();let timeComparisonText='';if(isWin){playWinSound();launchConfetti();gameState.streaks[gameState.currentDifficulty]++;gameState.totalWins[gameState.currentDifficulty]++;saveTotalWins();checkAchievements();if(gameState.isDailyChallenge){saveToLeaderboard(gameState.secondsElapsed);if(goToLeaderboardBtn)goToLeaderboardBtn.style.display='block';if(shareDailyResultBtn)shareDailyResultBtn.style.display='block';}else{const avgTime=AVERAGE_TIMES[gameState.currentDifficulty];if(avgTime){const diff=gameState.secondsElapsed-avgTime;timeComparisonText=diff<=0?`(${Math.abs(diff)}s más rápido que el promedio)`:`(${diff}s más lento que el promedio)`;}}if(gameOverMsg){gameOverMsg.textContent='¡FELICITACIONES!';gameOverMsg.className='win';}}else{gameState.streaks[gameState.currentDifficulty]=0;if(gameOverMsg){gameOverMsg.textContent='Game Over';gameOverMsg.className='lose';}}if(timeComparisonElement)timeComparisonElement.textContent=timeComparisonText;saveStreaks();showOverlay('gameOver',true);}
     function restartGame(){playClickSound();showOverlay('gameOver',false);if(goToLeaderboardBtn)goToLeaderboardBtn.style.display='none';if(shareDailyResultBtn)shareDailyResultBtn.style.display='none';startGame(gameState.currentDifficulty);}
     function goHome(){playClickSound();stopTimer();if(pauseButton)pauseButton.style.display='none';if(pencilToggleButton)pencilToggleButton.style.display='none';if(hintButton)hintButton.style.display='none';gameState.isPaused=false;gameState.gameInProgress=false;gameState.secondsElapsed=0;if(resumeGameBtn)resumeGameBtn.style.display='none';if(goToLeaderboardBtn)goToLeaderboardBtn.style.display='none';if(shareDailyResultBtn)shareDailyResultBtn.style.display='none';if(undoButton)undoButton.style.display='none';gameState.lastMove=null;clearAllErrors();clearHintHighlights();showOverlay('gameOver',false);showOverlay('pause',false);showScreen('start');createDifficultyButtons();}
@@ -217,7 +216,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function saveLeaderboards(){try{localStorage.setItem('sudokuLeaderboards',JSON.stringify(gameState.leaderboards));}catch(e){console.error("Err save leaders:",e);}}
     function loadLeaderboards(){const key='sudokuLeaderboards'; const defaultVal=JSON.parse(JSON.stringify(DEFAULT_LEADERBOARDS)); try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'&&p.daily&&Array.isArray(p.daily)&&p.daily.every(sc=>typeof sc==='object'&&typeof sc.time==='number'&&typeof sc.date==='string')){gameState.leaderboards=p;return;}throw new Error("Invalid format");}gameState.leaderboards=defaultVal;}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.leaderboards=defaultVal;}}
     function saveSetting(key,value){try{let s=gameState.settings;if(key.includes('.')){const k=key.split('.');if(s[k[0]]!==undefined&&typeof s[k[0]]==='object')s[k[0]][k[1]]=value;else console.warn(`Cannot save nested setting: ${key}`);}else s[key]=value;localStorage.setItem('sudokuSettings',JSON.stringify(s));}catch(e){console.error("Err save setting:",key,e);}}
-    function loadSettings() {const key='sudokuSettings'; let saved = null; try {const s=localStorage.getItem(key); if(s){saved=JSON.parse(s); if(typeof saved !=='object'||saved===null)throw new Error("Invalid format");}} catch(e){console.error(`Error loading/parsing ${key}:`,e,"Using defaults.");localStorage.removeItem(key);saved=null;}gameState.settings=deepMerge(JSON.parse(JSON.stringify(DEFAULT_SETTINGS)),saved||{});gameState.isMuted=gameState.settings.isMuted; /* MuteToggleButton eliminado */}
+    // ===== CORRECCIÓN: loadSettings más robusta =====
+    function loadSettings() { const key = 'sudokuSettings'; let saved = null; try { const s = localStorage.getItem(key); if (s) { saved = JSON.parse(s); if (typeof saved !== 'object' || saved === null) throw new Error("Invalid format"); } } catch (e) { console.error(`Error loading/parsing ${key}:`, e, "Using defaults."); localStorage.removeItem(key); saved = null; } gameState.settings = deepMerge(JSON.parse(JSON.stringify(DEFAULT_SETTINGS)), saved || {}); gameState.isMuted = gameState.settings.isMuted; /* MuteToggleButton eliminado */ }
+
 
     // --- LÓGICA DE TIMER Y PAUSA ---
     function startTimer(){clearInterval(gameState.timerInterval);gameState.timerInterval=setInterval(updateTimer,1000);}
@@ -234,7 +235,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- LÓGICA DE CONFIGURACIÓN ---
     function handleThemeChange(event){const n=event.target.value;saveSetting('theme',n);if(n==='auto')applyDynamicTheme();else document.body.dataset.theme=n;playClickSound();}
-    function applyDynamicTheme(){const h=new Date().getHours();let t='light';/*if(h>=19||h<6)t='dark';else if(h>=16)t='sepia';*/ document.body.dataset.theme=t;} // Forzado a light
+    // ===== MODIFICADO: Automático ahora es siempre Claro =====
+    function applyDynamicTheme(){ document.body.dataset.theme = 'light'; }
     function handleFontChange(event){const n=event.target.value;saveSetting('boardFont',n);applyFont(n);playClickSound();}
     function applyFont(f){let ff='var(--font-default)';if(f==='Roboto Slab')ff='var(--font-serif)';else if(f==='Source Code Pro')ff='var(--font-mono)';document.documentElement.style.setProperty('--font-board',ff);}
     function handleMuteChange(event){const m=event.target.checked;saveSetting('isMuted',m);gameState.isMuted=m;/* muteToggleButton eliminado */if(!m)playClickSound();}
@@ -243,8 +245,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Funciones colores eliminadas
     function setupSettingsScreen(){if(!themeSelect||!fontSelect||!muteToggleSetting||!showHintToggle||!showPencilToggle||!showUndoToggle)return;themeSelect.value=gameState.settings.theme;fontSelect.value=gameState.settings.boardFont;muteToggleSetting.checked=gameState.isMuted;showHintToggle.checked=gameState.settings.showHintButton;showPencilToggle.checked=gameState.settings.showPencilButton;showUndoToggle.checked=gameState.settings.showUndoButton;}
     function deepMerge(t, s) { if (!s) return t; for (const k in s) { if (s.hasOwnProperty(k)) { const sk = s[k]; const tk = t?.[k]; if (sk && typeof sk === 'object' && !Array.isArray(sk)) { if (!tk || typeof tk !== 'object' || Array.isArray(tk)) { t[k] = {}; } deepMerge(t[k], sk); } else if (sk !== undefined) { t[k] = sk; } } } return t; }
-    function applySettings(){if(!document.body)return;try{if(gameState.settings.theme==='auto')applyDynamicTheme();else document.body.dataset.theme=gameState.settings.theme;applyFont(gameState.settings.boardFont);/*applyCustomColors(gameState.settings.useCustomColors);*/ /* MuteToggleButton eliminado */}catch(e){console.error("Error al aplicar settings:",e);document.body.dataset.theme='light';applyFont(DEFAULT_SETTINGS.boardFont);}}
-
+    // ===== CORRECCIÓN: applySettings sin muteToggleButton =====
+    function applySettings(){if(!document.body)return;try{if(gameState.settings.theme==='auto')applyDynamicTheme();else document.body.dataset.theme=gameState.settings.theme;applyFont(gameState.settings.boardFont); /* Colores eliminados */ /* MuteToggleButton eliminado */}catch(e){console.error("Error al aplicar settings:",e);document.body.dataset.theme='light';applyFont(DEFAULT_SETTINGS.boardFont);}}
 
     // --- LÓGICA DE DESAFÍO DIARIO Y PISTAS ---
     function setSeed(s){randomSeed=s;} function seededRandom(){let x=Math.sin(randomSeed++)*1e4;return x-Math.floor(x);}

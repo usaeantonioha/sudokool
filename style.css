@@ -60,30 +60,15 @@ body[data-theme="minimalist"] {
     --color-hint-target: rgba(40, 167, 69, 0.4); --color-hint-involved: rgba(255, 193, 7, 0.4);
 }
 
-
-body {
-    font-family: var(--font-default); display: flex; justify-content: center; align-items: center;
-    height: 100vh; margin: 0; background-color: var(--color-bg); color: var(--color-black);
-    user-select: none; -webkit-user-select: none; -ms-user-select: none; overflow: hidden;
-    transition: background-color 0.3s, color 0.3s;
-}
-
+body { font-family: var(--font-default); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: var(--color-bg); color: var(--color-black); user-select: none; -webkit-user-select: none; -ms-user-select: none; overflow: hidden; transition: background-color 0.3s, color 0.3s; }
 .overlay-box, #board, .keypad-number, #back-to-menu { transition: background-color 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s, opacity 0.3s; }
 .keypad-number.disabled { transition: none; }
-
-/* Re-coloreado general */
-body[data-theme="dark"] #board, body[data-theme="dark"] .keypad-number,
-body[data-theme="neon"] #board, body[data-theme="neon"] .keypad-number { background-color: var(--color-bg); }
-body[data-theme="sepia"] #board { background-color: #fff; }
-body[data-theme="sepia"] .keypad-number { background-color: transparent; }
+body[data-theme="dark"] #board, body[data-theme="dark"] .keypad-number, body[data-theme="neon"] #board, body[data-theme="neon"] .keypad-number { background-color: var(--color-bg); }
+body[data-theme="sepia"] #board { background-color: #fff; } body[data-theme="sepia"] .keypad-number { background-color: transparent; }
 body[data-theme="minimalist"] #board, body[data-theme="minimalist"] .keypad-number { background-color: #fff; }
-
-body[data-theme] #back-to-menu { background-color: transparent; color: var(--color-text); } /* Ajustado back-to-menu */
-body[data-theme] #back-to-menu:hover { background-color: rgba(0,0,0,0.05); }
-body[data-theme="dark"] #back-to-menu:hover { background-color: rgba(255,255,255,0.1); }
-
-body[data-theme="dark"] .keypad-number.disabled,
-body[data-theme="neon"] .keypad-number.disabled { background-color: transparent !important; }
+body[data-theme] #back-to-menu { background-color: transparent; color: var(--color-text); }
+body[data-theme] #back-to-menu:hover { background-color: rgba(0,0,0,0.05); } body[data-theme="dark"] #back-to-menu:hover { background-color: rgba(255,255,255,0.1); }
+body[data-theme="dark"] .keypad-number.disabled, body[data-theme="neon"] .keypad-number.disabled { background-color: transparent !important; }
 
 #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 500; }
 .screen { width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; padding: 15px; box-sizing: border-box; }
@@ -95,19 +80,15 @@ body[data-theme="neon"] .keypad-number.disabled { background-color: transparent 
 .header-icons-left, .header-icons-right { display: flex; gap: 15px; }
 .icon-btn { width: 40px; height: 40px; border-radius: 50%; background-color: transparent; color: var(--color-hint); display: flex; justify-content: center; align-items: center; font-size: 1.5rem; font-weight: bold; border: none; cursor: pointer; transition: background-color 0.3s, color 0.3s; }
 .icon-btn:hover { background-color: rgba(0, 0, 0, 0.05); }
-body[data-theme="dark"] .icon-btn { color: var(--color-hint); }
-body[data-theme="dark"] .icon-btn:hover { background-color: rgba(255, 255, 255, 0.1); }
-#mute-toggle-btn .icon-sound-on { display: inline; } #mute-toggle-btn .icon-sound-off { display: none; }
-#mute-toggle-btn.muted .icon-sound-on { display: none; } #mute-toggle-btn.muted .icon-sound-off { display: inline; }
+body[data-theme="dark"] .icon-btn { color: var(--color-hint); } body[data-theme="dark"] .icon-btn:hover { background-color: rgba(255, 255, 255, 0.1); }
+#mute-toggle-btn .icon-sound-on { display: inline; } #mute-toggle-btn .icon-sound-off { display: none; } #mute-toggle-btn.muted .icon-sound-on { display: none; } #mute-toggle-btn.muted .icon-sound-off { display: inline; }
 
 .title-container { display: flex; align-items: center; justify-content: center; margin-bottom: 0; }
 .colorful-title { font-size: clamp(2.2rem, 10vw, 3rem); font-weight: bold; }
-/* ... (colores título) ... */
 .colorful-title span:nth-child(1){color:#4285F4}.colorful-title span:nth-child(2){color:#DB4437}.colorful-title span:nth-child(3){color:#F4B400}.colorful-title span:nth-child(4){color:#4285F4}.colorful-title span:nth-child(5){color:#0F9D58}.colorful-title span:nth-child(6){color:#DB4437}.colorful-title span:nth-child(7){margin-left:.5ch}.colorful-title span:nth-child(8){color:#F4B400}.colorful-title span:nth-child(9){color:#4285F4}.colorful-title span:nth-child(10){color:#0F9D58}
 
 #resume-game-btn, #daily-challenge-btn { padding: 15px; font-size: 1.4rem; font-weight: bold; border-radius: 15px; border: none; box-shadow: 0 4px 6px var(--shadow-color); cursor: pointer; transition: all 0.2s; width: 80%; max-width: 350px; margin-bottom: 0; }
-#resume-game-btn { background-color: var(--color-win-text); color: white; }
-#daily-challenge-btn { background-color: #673AB7; color: white; }
+#resume-game-btn { background-color: var(--color-win-text); color: white; } #daily-challenge-btn { background-color: #673AB7; color: white; }
 #resume-game-btn:hover, #daily-challenge-btn:hover { filter: brightness(0.9); }
 #difficulty-buttons { display: flex; flex-direction: column; gap: 15px; width: 80%; max-width: 350px; }
 .difficulty-btn { padding: 15px; font-size: 1.4rem; font-weight: bold; border-radius: 15px; border: none; box-shadow: 0 4px 6px var(--shadow-color); cursor: pointer; transition: all 0.2s; position: relative; display: flex; justify-content: space-between; align-items: center; color: white; }
@@ -115,42 +96,35 @@ body[data-theme="dark"] .icon-btn:hover { background-color: rgba(255, 255, 255, 
 .btn-fácil { background-color: #1abc9c; } .btn-medio { background-color: #3498db; } .btn-difícil { background-color: #f39c12; } .btn-experto { background-color: #c0392b; }
 .streak-display-menu { font-size: 1.1rem; font-weight: bold; color: rgba(255, 255, 255, 0.7); transition: color 0.3s; }
 body[data-theme] .streak-display-menu { color: var(--color-hint); }
-.logo-btn { width: 40px; height: 40px; font-size: 1.5rem; border-radius: 50%; background-color: transparent; color: var(--color-hint); display: flex; justify-content: center; align-items: center; font-weight: bold; cursor: pointer; border: none; transition: background-color 0.3s, color 0.3s; /* Eliminado position absolute */ }
-.logo-btn:hover { background-color: rgba(0, 0, 0, 0.05); }
-body[data-theme="dark"] .logo-btn { color: var(--color-hint); }
-body[data-theme="dark"] .logo-btn:hover { background-color: rgba(255, 255, 255, 0.1); }
+.logo-btn { width: 40px; height: 40px; font-size: 1.5rem; border-radius: 50%; background-color: transparent; color: var(--color-hint); display: flex; justify-content: center; align-items: center; font-weight: bold; cursor: pointer; border: none; transition: background-color 0.3s, color 0.3s; }
+.logo-btn:hover { background-color: rgba(0, 0, 0, 0.05); } body[data-theme="dark"] .logo-btn { color: var(--color-hint); } body[data-theme="dark"] .logo-btn:hover { background-color: rgba(255, 255, 255, 0.1); }
 
+/* Contenedor Botón Clasificación Abajo */
 .bottom-button-container { width: 80%; max-width: 350px; margin-top: 25px; margin-bottom: 15px; }
 #leaderboard-btn { padding: 12px; font-size: 1.2rem; font-weight: bold; border-radius: 15px; border: none; box-shadow: 0 4px 6px var(--shadow-color); cursor: pointer; transition: all 0.2s; background-color: var(--color-button); color: var(--color-button-text); width: 100%; margin-bottom: 0; }
 #leaderboard-btn:hover { filter: brightness(0.9); }
 
 /* --- Pantalla de Juego --- */
-#game-screen { justify-content: flex-start; padding-top: 60px; /* Espacio para el botón Volver */ position: relative; }
-#back-to-menu { position: absolute; top: 15px; left: 15px; padding: 8px 12px; border: none; background: transparent; color: var(--color-text); border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: background-color 0.2s, color 0.3s; z-index: 10; /* Encima de la barra de info */ }
-#back-to-menu:hover { background-color: rgba(0,0,0,0.05); }
-body[data-theme="dark"] #back-to-menu:hover { background-color: rgba(255,255,255,0.1); }
+/* ===== MODIFICADO: Padding top para dejar espacio a back-to-menu ===== */
+#game-screen { justify-content: flex-start; padding-top: 60px; /* Ajusta este valor si es necesario */ position: relative; }
+/* ===== MODIFICADO: Botón Volver ahora es position absolute ===== */
+#back-to-menu { position: absolute; top: 15px; left: 15px; padding: 8px 12px; border: none; background: transparent; color: var(--color-text); border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: background-color 0.2s, color 0.3s; z-index: 10; }
+#back-to-menu:hover { background-color: rgba(0,0,0,0.05); } body[data-theme="dark"] #back-to-menu:hover { background-color: rgba(255,255,255,0.1); }
 
-#game-info-bar { display: flex; justify-content: center; align-items: center; width: 100%; max-width: 500px; margin-bottom: 15px; gap: 20px; color: var(--color-hint); font-size: 0.9rem; position: relative; padding: 0 15px; box-sizing: border-box; margin-top: 10px; /* Margen superior añadido */ }
+/* ===== MODIFICADO: Eliminado margin-top de info-bar ===== */
+#game-info-bar { display: flex; justify-content: center; align-items: center; width: 100%; max-width: 500px; /* margin-top eliminado */ margin-bottom: 15px; gap: 20px; color: var(--color-hint); font-size: 0.9rem; position: relative; padding: 0 15px; box-sizing: border-box; }
 .info-item { text-align: center; } .info-item span { display: block; }
 .info-item span:first-child { font-size: 0.8em; margin-bottom: 2px; }
 .info-item span:last-child { font-weight: bold; font-size: 1.1em; color: var(--color-black); transition: color 0.3s; }
-#error-counter { color: var(--color-lives); }
-#timer-display { color: var(--color-black); letter-spacing: 1px;}
+#error-counter { color: var(--color-lives); } #timer-display { color: var(--color-black); letter-spacing: 1px;}
 .pause-btn-ingame { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background-color: transparent; color: var(--color-hint); font-size: 1.8rem; }
-.pause-btn-ingame:hover { background-color: rgba(0,0,0,0.05); }
-body[data-theme="dark"] .pause-btn-ingame:hover { background-color: rgba(255,255,255,0.1); }
+.pause-btn-ingame:hover { background-color: rgba(0,0,0,0.05); } body[data-theme="dark"] .pause-btn-ingame:hover { background-color: rgba(255,255,255,0.1); }
 
-/* Nuevo contenedor para el contenido principal del juego */
-.game-content-area {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    max-width: 500px; /* O el ancho máximo deseado */
-}
+/* ===== MODIFICADO: Añadido margin-top para bajar el contenido ===== */
+.game-content-area { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 500px; margin-top: 10px; /* Ajusta este valor según sea necesario */ }
 
-
-#board { display: grid; grid-template-columns: repeat(9, 1fr); grid-template-rows: repeat(9, 1fr); width: 100%; aspect-ratio: 1 / 1; max-height: calc(100vh - 300px); /* Ajustado */ border: 2px solid var(--thick-border-color); background-color: var(--color-light-gray); transition: border-color 0.3s, background-color 0.3s; margin: 0 auto; }
+/* ===== MODIFICADO: Restaurado max-height original ===== */
+#board { display: grid; grid-template-columns: repeat(9, 1fr); grid-template-rows: repeat(9, 1fr); width: 100%; aspect-ratio: 1 / 1; max-height: calc(100vh - 250px); /* Restaurado */ border: 2px solid var(--thick-border-color); background-color: var(--color-light-gray); transition: border-color 0.3s, background-color 0.3s; margin: 0 auto; }
 .tile { border: 1px solid var(--color-grid); background-color: var(--color-light-gray); display: flex; justify-content: center; align-items: center; cursor: pointer; box-sizing: border-box; transition: background-color 0.1s ease-out, outline 0.1s ease-out, border-color 0.3s; position: relative; font-family: var(--font-board); }
 body[data-theme="minimalist"] #board { border-width: 1px; } body[data-theme="minimalist"] .tile { border-width: 0.5px; }
 body[data-theme="minimalist"] .tile-border-right { border-right: 1px solid var(--color-grid) !important; } body[data-theme="minimalist"] .tile-border-bottom { border-bottom: 1px solid var(--color-grid) !important; }
@@ -161,7 +135,6 @@ body[data-theme="minimalist"] .tile-border-right { border-right: 1px solid var(-
 .tile-border-right { border-right: var(--thick-border-width, 2px) solid var(--thick-border-color, #A0A0A0); transition: border-color 0.3s; } .tile-border-bottom { border-bottom: var(--thick-border-width, 2px) solid var(--thick-border-color, #A0A0A0); transition: border-color 0.3s; }
 .tile.tile-error { animation: flash-red 0.5s; } .tile.tile-conflict { background-color: rgba(216, 0, 12, 0.3); }
 .tile.tile-hint-target { background-color: var(--color-hint-target); } .tile.tile-hint-involved { background-color: var(--color-hint-involved); }
-
 .tile-notes-grid { display: none; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); position: absolute; top: 1px; left: 1px; right: 1px; bottom: 1px; }
 .tile.is-notes .tile-notes-grid { display: grid; } .tile.is-notes .tile-number { display: none; }
 .tile-note { font-size: clamp(0.5rem, 2vw, 0.7rem); color: var(--color-hint); display: flex; align-items: center; justify-content: center; opacity: 0; transform: scale(0.5); transition: opacity 0.2s ease-out, transform 0.2s ease-out, color 0.3s; }
@@ -169,16 +142,14 @@ body[data-theme="minimalist"] .tile-border-right { border-right: 1px solid var(-
 
 #action-bar { display: flex; justify-content: space-around; width: 100%; max-width: 450px; margin-top: 20px; margin-bottom: 20px; }
 .action-btn { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; padding: 5px; border-radius: 8px; transition: background-color 0.2s, color 0.3s; color: var(--color-hint); }
-.action-btn:hover { background-color: rgba(0, 0, 0, 0.05); }
-body[data-theme="dark"] .action-btn:hover { background-color: rgba(255, 255, 255, 0.1); }
+.action-btn:hover { background-color: rgba(0, 0, 0, 0.05); } body[data-theme="dark"] .action-btn:hover { background-color: rgba(255, 255, 255, 0.1); }
 .action-icon { font-size: 1.8rem; line-height: 1; margin-bottom: 4px; }
 .action-text { font-size: 0.8rem; font-weight: 500; }
 #action-bar #pencil-toggle-btn.active { color: var(--color-text); background-color: var(--color-highlight); }
-#action-bar #hint-button.disabled { opacity: 0.5; cursor: not-allowed; }
-#action-bar #hint-button.disabled:hover { background-color: transparent; }
+#action-bar #hint-button.disabled { opacity: 0.5; cursor: not-allowed; } #action-bar #hint-button.disabled:hover { background-color: transparent; }
 
-#keypad { display: flex; flex-wrap: nowrap; gap: 5px; margin-top: 0; /* Sin margen arriba */ width: 100%; max-width: 500px; justify-content: space-between; padding: 0 5px; /* Pequeño padding lateral */ box-sizing: border-box; }
-.keypad-number { flex: 1; aspect-ratio: auto; height: 50px; font-size: 2.5rem; font-weight: bold; border-radius: 5px; border: none; background-color: transparent; cursor: pointer; transition: transform 0.05s ease-out, color 0.3s, opacity 0.3s; position: relative; color: var(--color-text); /* Azul por defecto */ display: flex; justify-content: center; align-items: center; padding: 0; }
+#keypad { display: flex; flex-wrap: nowrap; gap: 5px; margin-top: 0; width: 100%; max-width: 500px; justify-content: space-between; padding: 0 5px; box-sizing: border-box; }
+.keypad-number { flex: 1; aspect-ratio: auto; height: 50px; font-size: 2.5rem; font-weight: bold; border-radius: 5px; border: none; background-color: transparent; cursor: pointer; transition: transform 0.05s ease-out, color 0.3s, opacity 0.3s; position: relative; color: var(--color-text); display: flex; justify-content: center; align-items: center; padding: 0; }
 .keypad-number:active { transform: scale(0.95); transition-duration: 0.05s; }
 .keypad-number.completed { opacity: 0.3; pointer-events: none; } /* Atenuado */
 .keypad-number.disabled { /* Estilo para compatibilidad, aunque ahora usamos completed */ opacity: 0.3; pointer-events: none; }
