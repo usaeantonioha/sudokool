@@ -61,29 +61,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- LÓGICA DE INICIO ---
     function initialize() {
-        try {
-            getElements();
-            setupConfetti();
-            loadSettings(); loadStreaks(); loadTotalWins(); loadAchievements(); loadLeaderboards();
-            applySettings();
-            createDifficultyButtons();
-            addEventListeners();
-            const urlParams = new URLSearchParams(window.location.search);
-            const puzzleCode = urlParams.get('puzzle');
-            if (puzzleCode) setTimeout(() => loadPuzzleFromCode(puzzleCode), 100);
-            else showScreen('start'); // Muestra la pantalla de inicio
-        } catch(e) {
-             console.error("CRITICAL ERROR during initialization:", e);
-             document.body.innerHTML = `<div style="padding: 20px; text-align: center; color: black; background-color: white; font-family: sans-serif;"><h1>Error Inesperado</h1><p>Ocurrió un problema al cargar el juego.</p><p><strong>Solución Sugerida:</strong> Intenta borrar los datos de navegación para este sitio (caché y datos del sitio) y recarga la página.</p><details><summary>Detalles Técnicos</summary><pre style="text-align: left; background-color: #eee; padding: 10px; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word;">${e.stack || e}</pre></details></div>`;
-        }
+        getElements();
+        setupConfetti();
+        loadSettings(); loadStreaks(); loadTotalWins(); loadAchievements(); loadLeaderboards();
+        applySettings();
+        createDifficultyButtons();
+        addEventListeners();
+        const urlParams = new URLSearchParams(window.location.search);
+        const puzzleCode = urlParams.get('puzzle');
+        if (puzzleCode) setTimeout(() => loadPuzzleFromCode(puzzleCode), 100);
+        else showScreen('start');
     }
 
     function addEventListeners() {
         document.body.addEventListener('click', initAudio, { once: true });
         try {
-            backToMenuBtn?.addEventListener('click', goHomeFromPause); // Cambio aquí
+            backToMenuBtn?.addEventListener('click', goHomeFromPause);
             restartBtn?.addEventListener('click', restartGame);
-            mainMenuLogo?.addEventListener('click', () => { playClickSound(); renderAchievementsPage(true); showOverlay('about', true); }); // true para forzar reset de tabs
+            // infoIcon?.addEventListener('click', () => { playClickSound(); showOverlay('instructions', true); }); // ELIMINADO
+            mainMenuLogo?.addEventListener('click', () => { playClickSound(); renderAchievementsPage(true); showOverlay('about', true); });
             settingsButton?.addEventListener('click', () => { playClickSound(); setupSettingsScreen(); showOverlay('settings', true); });
             document.querySelectorAll('.back-btn').forEach(btn => btn.addEventListener('click', () => { playClickSound(); ['instructions','about','leaderboard','settings'].forEach(id=>showOverlay(id,false)); }));
             boardElement?.addEventListener('click', handleBoardClick);
@@ -93,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
             resumeGameBtn?.addEventListener('click', resumeGame);
             pauseBackToMenuBtn?.addEventListener('click', goHomeFromPause);
             gameOverHomeBtn?.addEventListener('click', goHome);
-            // undoButton eliminado
+            // undoButton?.addEventListener('click', undoLastMove); // ELIMINADO
             pencilToggleButton?.addEventListener('click', togglePencilMode);
             eraseButton?.addEventListener('click', eraseNumber);
             dailyChallengeButton?.addEventListener('click', startDailyChallenge);
@@ -109,33 +105,59 @@ document.addEventListener('DOMContentLoaded', () => {
             muteToggleSetting?.addEventListener('change', handleMuteChange);
             showHintToggle?.addEventListener('change', (e) => handleButtonVisibilityChange('showHintButton', e.target.checked));
             showPencilToggle?.addEventListener('change', (e) => handleButtonVisibilityChange('showPencilButton', e.target.checked));
-            // showUndoToggle eliminado
+            // showUndoToggle?.addEventListener('change', (e) => handleButtonVisibilityChange('showUndoButton', e.target.checked)); // ELIMINADO
+            // muteToggleButton?.addEventListener('click', ...); // ELIMINADO
         } catch (e) { console.error("Error asignando event listeners:", e); }
     }
 
     function handleTabClick(event) {
         if (!event || !event.target || !event.target.dataset.tab) return;
         playClickSound();
-        const aboutScreen = event.target.closest('.overlay-box'); // Busca el contenedor padre
+        const aboutScreen = event.target.closest('.overlay-box');
         if (!aboutScreen) return;
         const currentTabButtons = aboutScreen.querySelectorAll('.tab-btn');
         const currentTabContents = aboutScreen.querySelectorAll('.tab-content');
-        
         currentTabButtons.forEach(b => b.classList.remove('active'));
         currentTabContents.forEach(c => c.classList.remove('active'));
-        
         event.target.classList.add('active');
         const targetContent = aboutScreen.querySelector(`#${event.target.dataset.tab}`);
         if (targetContent) targetContent.classList.add('active');
     }
+    
+    // ===== MODIFICADO: renderAchievementsPage ahora maneja el reordenamiento de tabs =====
+    function renderAchievementsPage(forceResetTabs = false) {
+        if (!achievementsList) return;
+        achievementsList.innerHTML = '';
+        for (const id in ACHIEVEMENT_DEFINITIONS) {
+            const d = ACHIEVEMENT_DEFINITIONS[id], u = gameState.achievements[id];
+            const li = document.createElement('li'); li.className = 'achievement-item'; if (!u) li.classList.add('locked');
+            let i = u ? (d.title.split(' ')[1] || '🎖️') : '🔒';
+            li.innerHTML = `<div class="achievement-icon">${i}</div><div class="achievement-details"><h3>${d.title}</h3><p>${d.desc}</p></div>`;
+            achievementsList.appendChild(li);
+        }
+        
+        // Resetear tabs a la pestaña "Información" (default)
+        if (forceResetTabs) {
+            const aboutScreen = document.getElementById('about-screen');
+            if (!aboutScreen) return;
+            const currentTabButtons = aboutScreen.querySelectorAll('.tab-btn');
+            const currentTabContents = aboutScreen.querySelectorAll('.tab-content');
+            currentTabButtons.forEach(b => b.classList.remove('active'));
+            currentTabContents.forEach(c => c.classList.remove('active'));
+            
+            const infoTabBtn = aboutScreen.querySelector('.tab-btn[data-tab="info-tab"]');
+            const infoTabContent = aboutScreen.querySelector('#info-tab');
+            if (infoTabBtn) infoTabBtn.classList.add('active');
+            if (infoTabContent) infoTabContent.classList.add('active');
+        }
+    }
+
 
     function createDifficultyButtons() {
         if (!difficultyButtonsContainer) { console.error("difficultyButtonsContainer no encontrado al crear botones."); return; }
         difficultyButtonsContainer.innerHTML = ''; const f = document.createDocumentFragment();
         const l = [{key:'fácil',name:'Fácil'},{key:'medio',name:'Medio'},{key:'difícil',name:'Difícil'},{key:'experto',name:'Experto'}];
         l.forEach(v=>{const b=document.createElement('button');b.className='difficulty-btn neumorphic';b.dataset.difficulty=v.key;const t=document.createElement('span');t.textContent=v.name;b.appendChild(t);b.classList.add(`btn-${v.key}`);
-        // Aplicar gradiente directamente
-        if (!b.classList.contains('neumorphic')) b.style.backgroundImage = 'linear-gradient(to bottom, rgba(255,255,255,0.15), rgba(0,0,0,0.1))';
         const s=(gameState.streaks&&typeof gameState.streaks==='object'&&gameState.streaks[v.key])?gameState.streaks[v.key]:0;if(s>0){const sp=document.createElement('span');sp.className='streak-display-menu';sp.textContent=`👑 ${s}`;b.appendChild(sp);}f.appendChild(b);});
         difficultyButtonsContainer.appendChild(f); difficultyButtonsContainer.addEventListener('click', handleDifficultyClick);
     }
@@ -205,9 +227,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- RENDERIZADO Y UI ---
     // ===== MODIFICADO: showScreen instantáneo =====
-    function showScreen(key){
-        Object.values(screens).forEach(s => s?.classList.remove('active'));
-        if(screens[key]) {
+    function showScreen(key) {
+        Object.values(screens).forEach(s => s?.classList.remove('active', 'screen-exit', 'screen-enter', 'screen-enter-active'));
+        if (screens[key]) {
             screens[key].classList.add('active');
         }
     }
@@ -230,7 +252,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function highlightHintCells(targetCoords,involvedCoords=[]){clearHintHighlights();const targetTile=boardElement?.children[targetCoords.row*9+targetCoords.col];if(targetTile)targetTile.classList.add('tile-hint-target');involvedCoords.forEach(coords=>{const involvedTile=boardElement?.children[coords.row*9+coords.col];if(involvedTile)involvedTile.classList.add('tile-hint-involved');});}
 
     // --- LÓGICA DE GUARDADO (localStorage) ---
-    // ===== CORRECCIÓN: Funciones de carga robustecidas =====
     function saveStreaks(){try{localStorage.setItem('sudokuStreaks',JSON.stringify(gameState.streaks));}catch(e){console.error("Error saving streaks:",e);}}
     function loadStreaks(){const key='sudokuStreaks'; const defaultVal=JSON.parse(JSON.stringify(DEFAULT_STREAKS)); gameState.streaks = defaultVal; try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'&&Object.keys(DEFAULT_STREAKS).every(k=>typeof p[k]==='number')){gameState.streaks=deepMerge(defaultVal, p);return;}throw new Error("Invalid format");}}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);}}
     function saveTotalWins(){try{localStorage.setItem('sudokuTotalWins',JSON.stringify(gameState.totalWins));}catch(e){console.error("Error saving wins:",e);}}
@@ -267,7 +288,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Funciones colores eliminadas
     function setupSettingsScreen(){if(!themeSelect||!fontSelect||!muteToggleSetting||!showHintToggle||!showPencilToggle/*||!showUndoToggle*/)return;themeSelect.value=gameState.settings.theme;fontSelect.value=gameState.settings.boardFont;muteToggleSetting.checked=gameState.isMuted;showHintToggle.checked=gameState.settings.showHintButton;showPencilToggle.checked=gameState.settings.showPencilButton;/*showUndoToggle.checked=gameState.settings.showUndoButton;*/}
     function deepMerge(t, s) { if (!s) return t; for (const k in s) { if (s.hasOwnProperty(k)) { const sk = s[k]; const tk = t?.[k]; if (sk && typeof sk === 'object' && !Array.isArray(sk)) { if (!tk || typeof tk !== 'object' || Array.isArray(tk)) { t[k] = {}; } deepMerge(t[k], sk); } else if (sk !== undefined) { t[k] = sk; } } } return t; }
-    function applySettings(){if(!document.body)return;try{if(gameState.settings.theme==='auto')applyDynamicTheme();else document.body.dataset.theme=gameState.settings.theme;applyFont(gameState.settings.boardFont);/* Colores eliminados */ /* MuteToggleButton eliminado */}catch(e){console.error("Error al aplicar settings:",e);document.body.dataset.theme='light';applyFont(DEFAULT_SETTINGS.boardFont);}}
+    // ===== CORRECCIÓN: applySettings sin muteToggleButton y colores =====
+    function applySettings(){if(!document.body)return;try{if(gameState.settings.theme==='auto')applyDynamicTheme();else document.body.dataset.theme=gameState.settings.theme;applyFont(gameState.settings.boardFont);/* Colores eliminados */}catch(e){console.error("Error al aplicar settings:",e);document.body.dataset.theme='light';applyFont(DEFAULT_SETTINGS.boardFont);}}
 
 
     // --- LÓGICA DE DESAFÍO DIARIO Y PISTAS ---
@@ -281,7 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LÓGICA DE LOGROS Y CLASIFICACIÓN ---
     function checkAchievements(){try{const{currentDifficulty:d,secondsElapsed:t,gameStats:gs,streaks:s}=gameState;if(d===DIFFICULTIES.MEDIO&&t<300)unlockAchievement('speedRacer');if(d===DIFFICULTIES.DIFÍCIL&&!gs.hintUsedThisGame)unlockAchievement('perfectionist');const ts=Object.values(s||{}).reduce((sum,v)=>sum+v,0);if(ts>=10)unlockAchievement('streakMaster');if(gameState.isDailyChallenge)unlockAchievement('dailyConqueror');}catch(e){console.error("Error checking achievements:",e);}}
     function unlockAchievement(id){if(!id||!ACHIEVEMENT_DEFINITIONS[id]||gameState.achievements[id])return;gameState.achievements[id]=true;saveAchievements();playAchievementSound();showFlashMessage(`¡Logro: ${ACHIEVEMENT_DEFINITIONS[id]?.title||id}!`);}
-    function renderAchievementsPage(){if(!achievementsList)return;achievementsList.innerHTML='';for(const id in ACHIEVEMENT_DEFINITIONS){const d=ACHIEVEMENT_DEFINITIONS[id],u=gameState.achievements[id];const li=document.createElement('li');li.className='achievement-item';if(!u)li.classList.add('locked');let i=u?(d.title.split(' ')[1]||'🎖️'):'🔒';li.innerHTML=`<div class="achievement-icon">${i}</div><div class="achievement-details"><h3>${d.title}</h3><p>${d.desc}</p></div>`;achievementsList.appendChild(li);}}
+    function renderAchievementsPage(forceResetTabs = false){if(!achievementsList)return;achievementsList.innerHTML='';for(const id in ACHIEVEMENT_DEFINITIONS){const d=ACHIEVEMENT_DEFINITIONS[id],u=gameState.achievements[id];const li=document.createElement('li');li.className='achievement-item';if(!u)li.classList.add('locked');let i=u?(d.title.split(' ')[1]||'🎖️'):'🔒';li.innerHTML=`<div class="achievement-icon">${i}</div><div class="achievement-details"><h3>${d.title}</h3><p>${d.desc}</p></div>`;achievementsList.appendChild(li);}if(forceResetTabs){const aboutScreen=document.getElementById('about-screen');if(!aboutScreen)return;const currentTabButtons=aboutScreen.querySelectorAll('.tab-btn');const currentTabContents=aboutScreen.querySelectorAll('.tab-content');currentTabButtons.forEach(b=>b.classList.remove('active'));currentTabContents.forEach(c=>c.classList.remove('active'));const infoTabBtn=aboutScreen.querySelector('.tab-btn[data-tab="info-tab"]');const infoTabContent=aboutScreen.querySelector('#info-tab');if(infoTabBtn)infoTabBtn.classList.add('active');if(infoTabContent)infoTabContent.classList.add('active');}}
     function saveToLeaderboard(t){try{const score={time:t,date:new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'})};let s=gameState.leaderboards.daily||[];s.push(score);s.sort((a,b)=>a.time-b.time);gameState.leaderboards.daily=s.slice(0,5);saveLeaderboards();}catch(e){console.error("Error saving leaderboard:",e);}}
     function renderLeaderboardsPage(){if(!leaderboardTableBody)return;leaderboardTableBody.innerHTML='';const s=gameState.leaderboards.daily||[];if(s.length===0){leaderboardTableBody.innerHTML='<tr><td colspan="3">Aún no hay récords. ¡Juega el Desafío Diario!</td></tr>';return;}s.forEach((sc,i)=>{const tr=document.createElement('tr');tr.innerHTML=`<td>#${i+1}</td><td>${formatTime(sc.time)}</td><td>${sc.date}</td>`;leaderboardTableBody.appendChild(tr);});}
 
@@ -293,7 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- GENERADOR DE SUDOKU Y HELPERS ---
     function getNumberCounts(){const c={};for(let i=1;i<=9;i++)c[i]=0;for(let r=0;r<9;r++)for(let j=0;j<9;j++)if(gameState.puzzleBoard?.[r]?.[j]!==0)c[gameState.puzzleBoard[r][j]]++;return c;}
-    function updateKeypad(){if(!keypadElement)return;try{const counts=getNumberCounts();const correctCounts={};for(let i=1;i... 9;i++)correctCounts[i]=0;for(let r=0;r<9;r++)for(let c=0;c<9;c++){const n=gameState.puzzleBoard?.[r]?.[c];if(n!==0&&n!==undefined&&n===gameState.solution?.[r]?.[c])correctCounts[n]++;}keypadElement.querySelectorAll('.keypad-number').forEach(key=>{const num=parseInt(key.textContent);if(isNaN(num))return;const isComplete=correctCounts[num]===9;key.classList.toggle('completed',isComplete);key.style.opacity=isComplete?'0.3':'1';});}catch(e){console.error("Error updating keypad:",e);}}
+    function updateKeypad(){if(!keypadElement)return;try{const counts=getNumberCounts();const correctCounts={};for(let i=1;i<=9;i++)correctCounts[i]=0;for(let r=0;r<9;r++)for(let c=0;c<9;c++){const n=gameState.puzzleBoard?.[r]?.[c];if(n!==0&&n!==undefined&&n===gameState.solution?.[r]?.[c])correctCounts[n]++;}keypadElement.querySelectorAll('.keypad-number').forEach(key=>{const num=parseInt(key.textContent);if(isNaN(num))return;const isComplete=correctCounts[num]===9;key.classList.toggle('completed',isComplete);key.style.opacity=isComplete?'0.3':'1';});}catch(e){console.error("Error updating keypad:",e);}}
     function checkWin(){for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(gameState.puzzleBoard?.[r]?.[c]===0)return false;return true;}
     function generateEmptyBoard(){return Array(9).fill(0).map(()=>Array(9).fill(0));}
     function shuffle(a,rnd=Math.random){for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
@@ -309,7 +331,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const cells = [];
             for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) cells.push({ r, c });
             shuffle(cells, randFunc);
-
             let cellsRemoved = 0;
             for (let i = 0; i < cells.length && cellsRemoved < targetToRemove; i++) {
                 const { r, c } = cells[i];
@@ -324,6 +345,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             }
+             if (cellsRemoved < targetToRemove * 0.8) { console.warn(`No se pudieron quitar ${targetToRemove} celdas. Se quitaron ${cellsRemoved}.`); }
             initialPuzzleForResume = JSON.parse(JSON.stringify(puzzle));
             return puzzle;
         } catch (e) {
@@ -334,8 +356,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return p;
         }
     }
-
-    // --- Solucionador Backtracking y Contador de Soluciones ---
     let solutionCounter;
     function countSolutions(board) {
         solutionCounter = 0;
@@ -346,12 +366,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const emptySpot = findEmpty(board);
         if (!emptySpot) { solutionCounter++; return true; }
         const [row, col] = emptySpot;
-        for (let num = 1; num <= 9; num++) { // No barajar para contar
+        for (let num = 1; num <= 9; num++) {
             if (isValid(board, num, [row, col])) {
                 board[row][col] = num;
                 solveSudokuInternal(board);
-                if (solutionCounter > 1) { board[row][col] = 0; return true; } // Optimización
-                board[row][col] = 0; // Backtrack
+                if (solutionCounter > 1) { board[row][col] = 0; return true; }
+                board[row][col] = 0;
             }
         }
         return false;
@@ -374,7 +394,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }, delay);
         }
     }
-
 
     // --- INICIALIZACIÓN FINAL ---
     try {
