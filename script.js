@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const DIFFICULTIES = { FÁCIL: 'fácil', MEDIO: 'medio', DIFÍCIL: 'difícil', EXPERTO: 'experto' };
     const CELLS_TO_REMOVE = { fácil: 35, medio: 45, difícil: 53, experto: 58 };
     const ACHIEVEMENT_DEFINITIONS = { 'speedRacer':{title:'Velocista ⚡',desc:'Gana un juego Medio en menos de 5 minutos.'},'perfectionist':{title:'Perfeccionista 🎯',desc:'Gana un juego Difícil sin usar Pistas.'},'streakMaster':{title:'Imparable 🔥',desc:'Alcanza una racha de 10 victorias.'},'thinkingAhead':{title:'Estratega 🧠',desc:'Usa el modo Lápiz para hacer 50 notas.'},'dailyConqueror':{title:'Conquistador Diario 📅',desc:'Gana el Desafío Diario.'} };
-    const DEFAULT_SETTINGS = { theme:'auto',boardFont:'Manrope',showHintButton:true,showPencilButton:true,/*showUndoButton:true,*/isMuted:false }; // Undo eliminado
+    const DEFAULT_SETTINGS = { theme:'auto',boardFont:'Manrope',showHintButton:true,showPencilButton:true,isMuted:false }; // Undo eliminado
     const DEFAULT_STREAKS = { fácil:0,medio:0,difícil:0,experto:0 };
     const DEFAULT_WINS = { fácil:0,medio:0,difícil:0,experto:0 };
     const DEFAULT_ACHIEVEMENTS = {};
@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
         timerInterval:null, secondsElapsed:0, isPaused:false, gameInProgress:false, /*lastMove:null,*/ // Eliminado
         isPencilMode:false, notesBoard:[], isMuted:false, isDailyChallenge:false, hintUsed:false,
         achievements:JSON.parse(JSON.stringify(DEFAULT_ACHIEVEMENTS)), leaderboards:JSON.parse(JSON.stringify(DEFAULT_LEADERBOARDS)),
-        gameStats:{/*hasUsedUndo:false,*/notesPlaced:0, hintUsedThisGame: false }, // Eliminado hasUsedUndo
+        gameStats:{/*hasUsedUndo:false,*/notesPlaced:0, hintUsedThisGame: false },
         settings:JSON.parse(JSON.stringify(DEFAULT_SETTINGS))
     };
 
@@ -37,7 +37,13 @@ document.addEventListener('DOMContentLoaded', () => {
         errorCounterElement = document.getElementById('error-counter');
 
         const essentialElements = { boardElement, keypadElement, difficultyButtonsContainer, settingsButton, startScreen: screens.start, gameScreen: screens.game, settingsScreen: screens.settings, themeSelect, fontSelect, muteToggleSetting, eraseButton, errorCounterElement, timerDisplay };
-        for (const key in essentialElements) { if (!essentialElements[key]) { let id = key.replace(/([A-Z])/g, '-$1').toLowerCase().replace('-element',''); if(key.endsWith('Screen')) id=key.replace('Screen','-screen'); throw new Error(`Elemento esencial del DOM no encontrado: '${key}' (esperaba ID similar a '${id}'). Verifica el HTML.`); } }
+        for (const key in essentialElements) {
+            if (!essentialElements[key]) {
+                 let expectedId = key.replace(/([A-Z])/g, '-$1').toLowerCase().replace('-element','');
+                 if (key.endsWith('Screen')) expectedId = key.replace('Screen','-screen');
+                 throw new Error(`Elemento esencial del DOM no encontrado: '${key}' (esperaba ID similar a '${expectedId}'). Verifica el HTML.`);
+            }
+        }
     }
 
     // --- LÓGICA DE AUDIO ---
@@ -55,12 +61,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- LÓGICA DE INICIO ---
     function initialize() {
-        getElements(); setupConfetti();
-        loadSettings(); loadStreaks(); loadTotalWins(); loadAchievements(); loadLeaderboards();
-        applySettings(); createDifficultyButtons(); addEventListeners();
-        const urlParams = new URLSearchParams(window.location.search); const puzzleCode = urlParams.get('puzzle');
-        if (puzzleCode) setTimeout(() => loadPuzzleFromCode(puzzleCode), 100);
-        else showScreen('start'); // Asegura mostrar la pantalla de inicio si no hay puzzle
+        try {
+            getElements();
+            setupConfetti();
+            loadSettings(); loadStreaks(); loadTotalWins(); loadAchievements(); loadLeaderboards();
+            applySettings();
+            createDifficultyButtons();
+            addEventListeners();
+            const urlParams = new URLSearchParams(window.location.search);
+            const puzzleCode = urlParams.get('puzzle');
+            if (puzzleCode) setTimeout(() => loadPuzzleFromCode(puzzleCode), 100);
+            else showScreen('start'); // Muestra la pantalla de inicio
+        } catch(e) {
+             console.error("CRITICAL ERROR during initialization:", e);
+             document.body.innerHTML = `<div style="padding: 20px; text-align: center; color: black; background-color: white; font-family: sans-serif;"><h1>Error Inesperado</h1><p>Ocurrió un problema al cargar el juego.</p><p><strong>Solución Sugerida:</strong> Intenta borrar los datos de navegación para este sitio (caché y datos del sitio) y recarga la página.</p><details><summary>Detalles Técnicos</summary><pre style="text-align: left; background-color: #eee; padding: 10px; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word;">${e.stack || e}</pre></details></div>`;
+        }
     }
 
     function addEventListeners() {
@@ -68,8 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             backToMenuBtn?.addEventListener('click', goHomeFromPause); // Cambio aquí
             restartBtn?.addEventListener('click', restartGame);
-            // infoIcon eliminado
-            mainMenuLogo?.addEventListener('click', () => { playClickSound(); renderAchievementsPage(); showOverlay('about', true); });
+            mainMenuLogo?.addEventListener('click', () => { playClickSound(); renderAchievementsPage(true); showOverlay('about', true); }); // true para forzar reset de tabs
             settingsButton?.addEventListener('click', () => { playClickSound(); setupSettingsScreen(); showOverlay('settings', true); });
             document.querySelectorAll('.back-btn').forEach(btn => btn.addEventListener('click', () => { playClickSound(); ['instructions','about','leaderboard','settings'].forEach(id=>showOverlay(id,false)); }));
             boardElement?.addEventListener('click', handleBoardClick);
@@ -102,34 +116,26 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleTabClick(event) {
         if (!event || !event.target || !event.target.dataset.tab) return;
         playClickSound();
-        const aboutScreen = document.getElementById('about-screen');
+        const aboutScreen = event.target.closest('.overlay-box'); // Busca el contenedor padre
         if (!aboutScreen) return;
         const currentTabButtons = aboutScreen.querySelectorAll('.tab-btn');
         const currentTabContents = aboutScreen.querySelectorAll('.tab-content');
+        
         currentTabButtons.forEach(b => b.classList.remove('active'));
         currentTabContents.forEach(c => c.classList.remove('active'));
+        
         event.target.classList.add('active');
         const targetContent = aboutScreen.querySelector(`#${event.target.dataset.tab}`);
         if (targetContent) targetContent.classList.add('active');
-
-         // Reasegurar primera pestaña activa si es necesario
-         const defaultTab = 'info-tab'; // Ahora es info
-         if(!aboutScreen.querySelector(`.tab-btn[data-tab="${defaultTab}"]`)?.classList.contains('active')){
-              const defaultBtn = aboutScreen.querySelector(`.tab-btn[data-tab="${defaultTab}"]`);
-              const defaultContent = aboutScreen.querySelector(`#${defaultTab}`);
-              if(defaultBtn) defaultBtn.classList.add('active');
-              if(defaultContent) defaultContent.classList.add('active');
-         }
     }
 
-
     function createDifficultyButtons() {
-        if (!difficultyButtonsContainer) { console.error("difficultyButtonsContainer no encontrado."); return; }
+        if (!difficultyButtonsContainer) { console.error("difficultyButtonsContainer no encontrado al crear botones."); return; }
         difficultyButtonsContainer.innerHTML = ''; const f = document.createDocumentFragment();
         const l = [{key:'fácil',name:'Fácil'},{key:'medio',name:'Medio'},{key:'difícil',name:'Difícil'},{key:'experto',name:'Experto'}];
         l.forEach(v=>{const b=document.createElement('button');b.className='difficulty-btn neumorphic';b.dataset.difficulty=v.key;const t=document.createElement('span');t.textContent=v.name;b.appendChild(t);b.classList.add(`btn-${v.key}`);
-        // Aplicar gradiente directamente aquí si no es neumorphic general
-        // b.style.backgroundImage = `linear-gradient(...)`;
+        // Aplicar gradiente directamente
+        if (!b.classList.contains('neumorphic')) b.style.backgroundImage = 'linear-gradient(to bottom, rgba(255,255,255,0.15), rgba(0,0,0,0.1))';
         const s=(gameState.streaks&&typeof gameState.streaks==='object'&&gameState.streaks[v.key])?gameState.streaks[v.key]:0;if(s>0){const sp=document.createElement('span');sp.className='streak-display-menu';sp.textContent=`👑 ${s}`;b.appendChild(sp);}f.appendChild(b);});
         difficultyButtonsContainer.appendChild(f); difficultyButtonsContainer.addEventListener('click', handleDifficultyClick);
     }
@@ -165,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                  let b=generateEmptyBoard(); generateSolution(b,Math.random);
                  gameState.solution=JSON.parse(JSON.stringify(b));
-                 gameState.puzzleBoard=createPuzzle(b,difficulty,Math.random); // Usa la función corregida
+                 gameState.puzzleBoard=createPuzzle(b,difficulty,Math.random);
             }
 
             updateLivesDisplay(); updateIngameStreakDisplay(); renderBoardImproved(); renderKeypad();
@@ -175,8 +181,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- MANEJADORES DE EVENTOS ---
     function handleDifficultyClick(event){const b=event.target.closest('.difficulty-btn');if(b){playClickSound();startGame(b.dataset.difficulty);}}
-    function handleBoardClick(event){if(gameState.isPaused)return;const t=event.target.closest('.tile');if(!t)return;gameState.selectedTile=t;clearHintHighlights();clearErrorHighlights(); /* Limpia conflictos al seleccionar otra celda */ highlightTilesFromBoard(t.dataset.row,t.dataset.col);}
-    function handleKeypadClick(event){if(gameState.isPaused)return;const k=event.target.closest('.keypad-number');if(k){playClickSound();if(k.style.opacity === '0.3' || k.style.visibility === 'hidden') return; const n=parseInt(k.textContent);if(isNaN(n)||n<1||n>9)return;if(gameState.selectedTile){clearHintHighlights();clearErrorHighlights(); /* Limpia conflictos al poner número */ if(gameState.isPencilMode)toggleNote(n);else placeNumber(n);}else{clearHintHighlights();clearErrorHighlights(); /* Limpia conflictos al resaltar */ highlightNumbersFromKeypad(n);}}}
+    function handleBoardClick(event){if(gameState.isPaused)return;const t=event.target.closest('.tile');if(!t)return;gameState.selectedTile=t;clearHintHighlights();clearErrorHighlights(); highlightTilesFromBoard(t.dataset.row,t.dataset.col);}
+    function handleKeypadClick(event){if(gameState.isPaused)return;const k=event.target.closest('.keypad-number');if(k){playClickSound();if(k.style.opacity === '0.3' || k.style.visibility === 'hidden') return; const n=parseInt(k.textContent);if(isNaN(n)||n<1||n>9)return;if(gameState.selectedTile){clearHintHighlights();clearErrorHighlights(); if(gameState.isPencilMode)toggleNote(n);else placeNumber(n);}else{clearHintHighlights();clearErrorHighlights(); highlightNumbersFromKeypad(n);}}}
 
     // --- LÓGICA DEL JUEGO ---
     function placeNumber(num){if(!gameState.selectedTile||gameState.selectedTile.classList.contains('hint'))return;clearErrorHighlights();clearHintHighlights();const r=parseInt(gameState.selectedTile.dataset.row),c=parseInt(gameState.selectedTile.dataset.col);if(isNaN(r)||isNaN(c)||r<0||r>8||c<0||c>8){console.error("Coords inválidas:",r,c);return;}if(gameState.selectedTile.classList.contains('tile-wrong-number')){playErrorSound();showFlashMessage("Número ya marcado como incorrecto. Bórralo primero.");return;}const nts=gameState.notesBoard?.[r]?.[c]||new Set();
@@ -184,48 +190,38 @@ document.addEventListener('DOMContentLoaded', () => {
     if(nts)nts.clear();renderTileNotes(r,c);
     if(!gameState.puzzleBoard[r])gameState.puzzleBoard[r]=[];gameState.puzzleBoard[r][c]=num;const numEl=gameState.selectedTile.querySelector('.tile-number');if(numEl){numEl.textContent=num.toString();numEl.classList.add('pop-in');setTimeout(()=>numEl.classList.remove('pop-in'),200);}else console.warn("NumEl missing");gameState.selectedTile.classList.add('user-filled');gameState.selectedTile.classList.remove('is-notes');highlightTilesFromBoard(r,c);
     // undoButton eliminado
-    if(gameState.solution?.[r]?.[c]===num){gameState.selectedTile.classList.remove('tile-wrong-number');autoCleanNotes(r,c,num);if(checkWin()){/* Resaltado último número */ gameState.selectedTile.classList.add('last-correct'); setTimeout(() => {gameState.selectedTile?.classList.remove('last-correct'); endGame(true);}, 800);} }else{playErrorSound();if(navigator.vibrate)navigator.vibrate(200);gameState.selectedTile.classList.add('tile-error','tile-wrong-number');highlightConflicts(r,c,num);setTimeout(()=>{if(gameState.selectedTile)gameState.selectedTile.classList.remove('tile-error');},500);
+    if(gameState.solution?.[r]?.[c]===num){gameState.selectedTile.classList.remove('tile-wrong-number');autoCleanNotes(r,c,num);if(checkWin()){gameState.selectedTile.classList.add('last-correct'); setTimeout(() => {gameState.selectedTile?.classList.remove('last-correct'); endGame(true);}, 800);} }else{playErrorSound();if(navigator.vibrate)navigator.vibrate(200);gameState.selectedTile.classList.add('tile-error','tile-wrong-number');highlightConflicts(r,c,num);setTimeout(()=>{if(gameState.selectedTile)gameState.selectedTile.classList.remove('tile-error');},500);
     // undoButton eliminado
     gameState.lives--;updateLivesDisplay();showFlashMessage("Número equivocado");if(gameState.lives<=0)endGame(false);}updateKeypad();}
     // undoLastMove eliminado
     function eraseNumber(){if(!gameState.selectedTile||gameState.isPaused||gameState.selectedTile.classList.contains('hint'))return;playClickSound();clearHintHighlights();const r=parseInt(gameState.selectedTile.dataset.row),c=parseInt(gameState.selectedTile.dataset.col);if(isNaN(r)||isNaN(c))return;const nts=gameState.notesBoard?.[r]?.[c]||new Set();
     // No guardar lastMove
     if(gameState.puzzleBoard?.[r]?.[c]!==0&&gameState.puzzleBoard?.[r]?.[c]!==undefined){if(!gameState.puzzleBoard[r])gameState.puzzleBoard[r]=[];gameState.puzzleBoard[r][c]=0;const nEl=gameState.selectedTile.querySelector('.tile-number');if(nEl)nEl.textContent='';gameState.selectedTile.classList.remove('user-filled','tile-wrong-number');clearErrorHighlights();updateKeypad();}else if(nts.size>0){nts.clear();renderTileNotes(r,c);}highlightTilesFromBoard(r,c);}
-    function endGame(isWin){stopTimer();if(pauseButton)pauseButton.style.display='none';if(pencilToggleButton)pencilToggleButton.style.display='none';if(hintButton)hintButton.style.display='none';gameState.gameInProgress=false;if(resumeGameBtn)resumeGameBtn.style.display='none';/*undoButton eliminado*/gameState.lastMove=null;clearAllErrors();clearHintHighlights();let timeComparisonText='';if(isWin){animateBoardWin(); /* Animación cascada */ launchConfetti();playWinSound();gameState.streaks[gameState.currentDifficulty]++;gameState.totalWins[gameState.currentDifficulty]++;saveTotalWins();checkAchievements();if(gameState.isDailyChallenge){saveToLeaderboard(gameState.secondsElapsed);if(goToLeaderboardBtn)goToLeaderboardBtn.style.display='block';if(shareDailyResultBtn)shareDailyResultBtn.style.display='block';}else{const avgTime=AVERAGE_TIMES[gameState.currentDifficulty];if(avgTime){const diff=gameState.secondsElapsed-avgTime;timeComparisonText=diff<=0?`(${Math.abs(diff)}s más rápido que el promedio)`:`(${diff}s más lento que el promedio)`;}}if(gameOverMsg){gameOverMsg.textContent='¡FELICITACIONES!';gameOverMsg.classList.add('win'); /* Asegura clase win */}else{gameOverMsg.classList.remove('win');}}else{gameState.streaks[gameState.currentDifficulty]=0;if(gameOverMsg){gameOverMsg.textContent='Game Over';gameOverMsg.className='lose';}gameOverMsg.classList.remove('win');}if(timeComparisonElement)timeComparisonElement.textContent=timeComparisonText;saveStreaks();setTimeout(() => showOverlay('gameOver', true), 600); /* Espera animación cascada */ }
+    function endGame(isWin){stopTimer();if(pauseButton)pauseButton.style.display='none';if(pencilToggleButton)pencilToggleButton.style.display='none';if(hintButton)hintButton.style.display='none';gameState.gameInProgress=false;if(resumeGameBtn)resumeGameBtn.style.display='none';/*undoButton eliminado*/gameState.lastMove=null;clearAllErrors();clearHintHighlights();let timeComparisonText='';if(isWin){animateBoardWin(); launchConfetti();playWinSound();gameState.streaks[gameState.currentDifficulty]++;gameState.totalWins[gameState.currentDifficulty]++;saveTotalWins();checkAchievements();if(gameState.isDailyChallenge){saveToLeaderboard(gameState.secondsElapsed);if(goToLeaderboardBtn)goToLeaderboardBtn.style.display='block';if(shareDailyResultBtn)shareDailyResultBtn.style.display='block';}else{const avgTime=AVERAGE_TIMES[gameState.currentDifficulty];if(avgTime){const diff=gameState.secondsElapsed-avgTime;timeComparisonText=diff<=0?`(${Math.abs(diff)}s más rápido que el promedio)`:`(${diff}s más lento que el promedio)`;}}if(gameOverMsg){gameOverMsg.textContent='¡FELICITACIONES!';gameOverMsg.classList.add('win');}else{gameOverMsg.classList.remove('win');}}else{gameState.streaks[gameState.currentDifficulty]=0;if(gameOverMsg){gameOverMsg.textContent='Game Over';gameOverMsg.className='lose';}if(gameOverMsg)gameOverMsg.classList.remove('win');}if(timeComparisonElement)timeComparisonElement.textContent=timeComparisonText;saveStreaks();setTimeout(() => showOverlay('gameOver', true), 600);}
     function restartGame(){playClickSound();showOverlay('gameOver',false);if(goToLeaderboardBtn)goToLeaderboardBtn.style.display='none';if(shareDailyResultBtn)shareDailyResultBtn.style.display='none';startGame(gameState.currentDifficulty);}
     function goHome(){playClickSound();stopTimer();if(pauseButton)pauseButton.style.display='none';if(pencilToggleButton)pencilToggleButton.style.display='none';if(hintButton)hintButton.style.display='none';gameState.isPaused=false;gameState.gameInProgress=false;gameState.secondsElapsed=0;if(resumeGameBtn)resumeGameBtn.style.display='none';if(goToLeaderboardBtn)goToLeaderboardBtn.style.display='none';if(shareDailyResultBtn)shareDailyResultBtn.style.display='none';/*undoButton eliminado*/gameState.lastMove=null;clearAllErrors();clearHintHighlights();showOverlay('gameOver',false);showOverlay('pause',false);showScreen('start');createDifficultyButtons();}
     function goHomeFromPause(){playClickSound();gameState.isPaused=true;gameState.gameInProgress=true;showOverlay('pause',false);showScreen('start');if(resumeGameBtn)resumeGameBtn.style.display='block';if(pauseButton)pauseButton.style.display='none';if(pencilToggleButton)pencilToggleButton.style.display='none';if(hintButton)hintButton.style.display='none';/*undoButton eliminado*/createDifficultyButtons();}
     function resumeGame(){playClickSound();gameState.isPaused=false;renderBoardImproved();updateKeypad();showScreen('game');if(resumeGameBtn)resumeGameBtn.style.display='none';if(pauseButton)pauseButton.style.display='flex';applyButtonVisibility();/*undoButton eliminado*/}
 
     // --- RENDERIZADO Y UI ---
-    function showScreen(key) {
-        const currentActive = document.querySelector('.screen.active');
-        const nextScreen = screens[key];
-        if (currentActive && nextScreen && currentActive !== nextScreen) {
-            currentActive.classList.add('screen-exit');
-            nextScreen.classList.add('active', 'screen-enter'); // Prepara la siguiente
-            // Espera la transición antes de limpiar clases
-            setTimeout(() => {
-                currentActive.classList.remove('active', 'screen-exit');
-                nextScreen.classList.remove('screen-enter');
-                nextScreen.classList.add('screen-enter-active'); // Activa animación de entrada
-                setTimeout(() => nextScreen.classList.remove('screen-enter-active'), 300); // Limpia clase post-animación
-            }, 300); // Duración de la transición
-        } else if (nextScreen) {
-            nextScreen.classList.add('active'); // Si no hay activa, solo muestra
+    // ===== MODIFICADO: showScreen instantáneo =====
+    function showScreen(key){
+        Object.values(screens).forEach(s => s?.classList.remove('active'));
+        if(screens[key]) {
+            screens[key].classList.add('active');
         }
     }
     function showOverlay(key,show){const o=screens[key];if(o)o.classList.toggle('active',show);}
     function renderBoardImproved(){if(!boardElement)return;boardElement.innerHTML='';const f=document.createDocumentFragment();for(let r=0;r<9;r++){for(let c=0;c<9;c++){const t=document.createElement('div');t.className='tile';t.dataset.row=r;t.dataset.col=c;if(c===2||c===5)t.classList.add('tile-border-right');if(r===2||r===5)t.classList.add('tile-border-bottom');const nEl=document.createElement('div');nEl.className='tile-number';const nGrid=document.createElement('div');nGrid.className='tile-notes-grid';for(let i=1;i<=9;i++){const nE=document.createElement('div');nE.className='tile-note note-'+i;nGrid.appendChild(nE);}const initialNum=initialPuzzleForResume?.[r]?.[c];const currentNum=gameState.puzzleBoard?.[r]?.[c];const solutionNum=gameState.solution?.[r]?.[c];if(initialNum!==undefined&&initialNum!==0){nEl.textContent=initialNum.toString();t.classList.add('hint');}else if(currentNum!==undefined&&currentNum!==0){nEl.textContent=currentNum.toString();t.classList.add('user-filled');if(solutionNum!==undefined&&currentNum!==solutionNum)t.classList.add('tile-wrong-number');}else{const nts=gameState.notesBoard?.[r]?.[c];if(nts&&nts.size>0){t.classList.add('is-notes');nts.forEach(num=>{const nE=nGrid.querySelector('.note-'+num);if(nE)nE.textContent=num.toString();});}}t.appendChild(nEl);t.appendChild(nGrid);f.appendChild(t);}}boardElement.appendChild(f);}
     function renderKeypad(){if(!keypadElement)return;keypadElement.innerHTML='';const f=document.createDocumentFragment();for(let i=1;i<=9;i++){const k=document.createElement('button');k.className='keypad-number';k.textContent=i.toString();f.appendChild(k);}keypadElement.appendChild(f);updateKeypad();}
-    function renderTileNotes(r,c){const t=boardElement?.children[r*9+c];if(!t)return;const nG=t.querySelector('.tile-notes-grid');if(!nG)return;const nts=gameState.notesBoard?.[r]?.[c];const showNotes=nts&&nts.size>0&&gameState.puzzleBoard?.[r]?.[c]===0;t.classList.toggle('is-notes',showNotes);for(let i=1;i<=9;i++){const nE=nG.querySelector('.note-'+i);if(nE){const hasNote=nts&&nts.has(i);nE.textContent=hasNote?i.toString():'';nE.classList.toggle('visible',hasNote);if(hasNote) {nE.classList.add('pop-in'); setTimeout(() => nE.classList.remove('pop-in'), 200);}}}}
-    function updateLivesDisplay(){ const errC=document.getElementById('error-counter');if(errC){const errs=3-Math.max(0,gameState.lives);errC.textContent=`${errs}/3`;}}
+    function renderTileNotes(r,c){const t=boardElement?.children[r*9+c];if(!t)return;const nG=t.querySelector('.tile-notes-grid');if(!nG)return;const nts=gameState.notesBoard?.[r]?.[c];const showNotes=nts&&nts.size>0&&gameState.puzzleBoard?.[r]?.[c]===0;t.classList.toggle('is-notes',showNotes);for(let i=1;i<=9;i++){const nE=nG.querySelector('.note-'+i);if(nE){const hasNote=nts&&nts.has(i);nE.textContent=hasNote?i.toString():'';nE.classList.toggle('visible',hasNote);if(hasNote){nE.classList.add('pop-in');setTimeout(()=>nE.classList.remove('pop-in'),200);}}}}
+    function updateLivesDisplay(){const errC=document.getElementById('error-counter');if(errC){const errs=3-Math.max(0,gameState.lives);errC.textContent=`${errs}/3`;}}
     function updateIngameStreakDisplay(){if(!ingameStreakDisplay)return;const s=(gameState.streaks&&gameState.currentDifficulty)?gameState.streaks[gameState.currentDifficulty]||0:0;ingameStreakDisplay.innerHTML=s>0?`👑 <span class="ingame-streak-number">${s}</span>`:'';}
     function showFlashMessage(m){if(!flashMessage)return;flashMessage.textContent=m;flashMessage.classList.add('show');setTimeout(()=>flashMessage.classList.remove('show'),1500);}
 
     // --- LÓGICA DE RESALTADO ---
     function clearAllHighlights(){document.querySelectorAll('.tile').forEach(t=>t.classList.remove('highlight','keypad-highlight','selected'));}
-    function clearErrorHighlights(){document.querySelectorAll('.tile.tile-conflict').forEach(t=>t.classList.remove('tile-conflict'));} // Solo conflictos
+    function clearErrorHighlights(){document.querySelectorAll('.tile.tile-conflict').forEach(t=>t.classList.remove('tile-conflict'));}
     function clearAllErrors(){document.querySelectorAll('.tile-conflict, .tile-wrong-number, .tile-error').forEach(t=>t.classList.remove('tile-conflict','tile-wrong-number','tile-error'));}
     function clearHintHighlights(){document.querySelectorAll('.tile-hint-target, .tile-hint-involved').forEach(t=>t.classList.remove('tile-hint-target','tile-hint-involved'));}
     function highlightTilesFromBoard(row,col){if(!boardElement)return;const r=parseInt(row),c=parseInt(col);if(isNaN(r)||isNaN(c))return;clearAllHighlights();const t=boardElement.children[r*9+c];if(t)t.classList.add('selected');const n=gameState.puzzleBoard?.[r]?.[c];if(n===undefined)return;for(let i=0;i<9;i++){const rowTile=boardElement.children[r*9+i];if(rowTile)rowTile.classList.add('highlight');const colTile=boardElement.children[i*9+c];if(colTile)colTile.classList.add('highlight');}if(n!==0){for(let i=0;i<9;i++)for(let j=0;j<9;j++)if(gameState.puzzleBoard?.[i]?.[j]===n){const numTile=boardElement.children[i*9+j];if(numTile)numTile.classList.add('keypad-highlight');}}}
@@ -234,18 +230,17 @@ document.addEventListener('DOMContentLoaded', () => {
     function highlightHintCells(targetCoords,involvedCoords=[]){clearHintHighlights();const targetTile=boardElement?.children[targetCoords.row*9+targetCoords.col];if(targetTile)targetTile.classList.add('tile-hint-target');involvedCoords.forEach(coords=>{const involvedTile=boardElement?.children[coords.row*9+coords.col];if(involvedTile)involvedTile.classList.add('tile-hint-involved');});}
 
     // --- LÓGICA DE GUARDADO (localStorage) ---
-    // ===== CORRECCIÓN: Funciones de carga MUY robustecidas =====
+    // ===== CORRECCIÓN: Funciones de carga robustecidas =====
     function saveStreaks(){try{localStorage.setItem('sudokuStreaks',JSON.stringify(gameState.streaks));}catch(e){console.error("Error saving streaks:",e);}}
-    function loadStreaks(){const key='sudokuStreaks'; const defaultVal=JSON.parse(JSON.stringify(DEFAULT_STREAKS)); gameState.streaks = defaultVal; try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'&&Object.keys(DEFAULT_STREAKS).every(k=>typeof p[k]==='number')){gameState.streaks=deepMerge(defaultVal, p);return;}throw new Error("Invalid format");}}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.streaks=defaultVal;}}
+    function loadStreaks(){const key='sudokuStreaks'; const defaultVal=JSON.parse(JSON.stringify(DEFAULT_STREAKS)); gameState.streaks = defaultVal; try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'&&Object.keys(DEFAULT_STREAKS).every(k=>typeof p[k]==='number')){gameState.streaks=deepMerge(defaultVal, p);return;}throw new Error("Invalid format");}}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);}}
     function saveTotalWins(){try{localStorage.setItem('sudokuTotalWins',JSON.stringify(gameState.totalWins));}catch(e){console.error("Error saving wins:",e);}}
-    function loadTotalWins(){const key='sudokuTotalWins'; const defaultVal=JSON.parse(JSON.stringify(DEFAULT_WINS)); gameState.totalWins = defaultVal; try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'&&Object.keys(DEFAULT_WINS).every(k=>typeof p[k]==='number')){gameState.totalWins=deepMerge(defaultVal, p);return;}throw new Error("Invalid format");}gameState.totalWins=defaultVal;}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.totalWins=defaultVal;}}
+    function loadTotalWins(){const key='sudokuTotalWins'; const defaultVal=JSON.parse(JSON.stringify(DEFAULT_WINS)); gameState.totalWins = defaultVal; try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'&&Object.keys(DEFAULT_WINS).every(k=>typeof p[k]==='number')){gameState.totalWins=deepMerge(defaultVal, p);return;}throw new Error("Invalid format");}gameState.totalWins=defaultVal;}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);}}
     function saveAchievements(){try{localStorage.setItem('sudokuAchievements',JSON.stringify(gameState.achievements));}catch(e){console.error("Err save achieve:",e);}}
-    function loadAchievements(){const key='sudokuAchievements'; const defaultVal=JSON.parse(JSON.stringify(DEFAULT_ACHIEVEMENTS)); gameState.achievements = defaultVal; try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'){gameState.achievements=p;return;}throw new Error("Invalid format");}}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.achievements=defaultVal;}}
+    function loadAchievements(){const key='sudokuAchievements'; const defaultVal=JSON.parse(JSON.stringify(DEFAULT_ACHIEVEMENTS)); gameState.achievements = defaultVal; try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'){gameState.achievements=p;return;}throw new Error("Invalid format");}}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);}}
     function saveLeaderboards(){try{localStorage.setItem('sudokuLeaderboards',JSON.stringify(gameState.leaderboards));}catch(e){console.error("Err save leaders:",e);}}
-    function loadLeaderboards(){const key='sudokuLeaderboards'; const defaultVal=JSON.parse(JSON.stringify(DEFAULT_LEADERBOARDS)); gameState.leaderboards = defaultVal; try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'&&p.daily&&Array.isArray(p.daily)&&p.daily.every(sc=>typeof sc==='object'&&typeof sc.time==='number'&&typeof sc.date==='string')){gameState.leaderboards=p;return;}throw new Error("Invalid format");}}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.leaderboards=defaultVal;}}
+    function loadLeaderboards(){const key='sudokuLeaderboards'; const defaultVal=JSON.parse(JSON.stringify(DEFAULT_LEADERBOARDS)); gameState.leaderboards = defaultVal; try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'&&p.daily&&Array.isArray(p.daily)&&p.daily.every(sc=>typeof sc==='object'&&typeof sc.time==='number'&&typeof sc.date==='string')){gameState.leaderboards=p;return;}throw new Error("Invalid format");}}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);}}
     function saveSetting(key,value){try{let s=gameState.settings;if(key.includes('.')){const k=key.split('.');if(s[k[0]]!==undefined&&typeof s[k[0]]==='object')s[k[0]][k[1]]=value;else console.warn(`Cannot save nested setting: ${key}`);}else s[key]=value;localStorage.setItem('sudokuSettings',JSON.stringify(s));}catch(e){console.error("Err save setting:",key,e);}}
     function loadSettings() {const key='sudokuSettings'; let saved = null; gameState.settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS)); try {const s=localStorage.getItem(key); if(s){saved=JSON.parse(s); if(typeof saved !=='object'||saved===null)throw new Error("Invalid format"); gameState.settings=deepMerge(gameState.settings, saved);}} catch(e){console.error(`Error loading/parsing ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.settings=JSON.parse(JSON.stringify(DEFAULT_SETTINGS));} gameState.isMuted=gameState.settings.isMuted; /* MuteToggleButton eliminado */}
-
 
     // --- LÓGICA DE TIMER Y PAUSA ---
     function startTimer(){clearInterval(gameState.timerInterval);gameState.timerInterval=setInterval(updateTimer,1000);}
@@ -256,7 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function togglePause(){playClickSound();gameState.isPaused=!gameState.isPaused;showOverlay('pause',gameState.isPaused);}
 
     // --- LÓGICA DE MODO LÁPIZ Y AUTO-LIMPIEZA ---
-    function togglePencilMode(){playClickSound();gameState.isPencilMode=!gameState.isPencilMode;if(pencilToggleButton)pencilToggleButton.classList.toggle('active',gameState.isPencilMode); if(boardElement)boardElement.classList.toggle('board-pencil-mode',gameState.isPencilMode); } // Añade clase al tablero
+    function togglePencilMode(){playClickSound();gameState.isPencilMode=!gameState.isPencilMode;if(pencilToggleButton)pencilToggleButton.classList.toggle('active',gameState.isPencilMode); if(boardElement)boardElement.classList.toggle('board-pencil-mode',gameState.isPencilMode);}
     function toggleNote(num){if(!gameState.selectedTile)return;const r=parseInt(gameState.selectedTile.dataset.row),c=parseInt(gameState.selectedTile.dataset.col);if(isNaN(r)||isNaN(c)||gameState.puzzleBoard?.[r]?.[c]!==0)return;const nts=gameState.notesBoard?.[r]?.[c];if(!nts)return;if(nts.has(num))nts.delete(num);else{nts.add(num);gameState.gameStats.notesPlaced++;if(gameState.gameStats.notesPlaced>=50)unlockAchievement('thinkingAhead');}renderTileNotes(r,c);}
     function autoCleanNotes(row,col,num){for(let i=0;i<9;i++){if(gameState.notesBoard?.[row]?.[i]?.has(num)){gameState.notesBoard[row][i].delete(num);renderTileNotes(row,i);}}for(let i=0;i<9;i++){if(gameState.notesBoard?.[i]?.[col]?.has(num)){gameState.notesBoard[i][col].delete(num);renderTileNotes(i,col);}}const br=Math.floor(row/3)*3,bc=Math.floor(col/3)*3;for(let i=br;i<br+3;i++)for(let j=bc;j<bc+3;j++)if(gameState.notesBoard?.[i]?.[j]?.has(num)){gameState.notesBoard[i][j].delete(num);renderTileNotes(i,j);}}
 
@@ -272,7 +267,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Funciones colores eliminadas
     function setupSettingsScreen(){if(!themeSelect||!fontSelect||!muteToggleSetting||!showHintToggle||!showPencilToggle/*||!showUndoToggle*/)return;themeSelect.value=gameState.settings.theme;fontSelect.value=gameState.settings.boardFont;muteToggleSetting.checked=gameState.isMuted;showHintToggle.checked=gameState.settings.showHintButton;showPencilToggle.checked=gameState.settings.showPencilButton;/*showUndoToggle.checked=gameState.settings.showUndoButton;*/}
     function deepMerge(t, s) { if (!s) return t; for (const k in s) { if (s.hasOwnProperty(k)) { const sk = s[k]; const tk = t?.[k]; if (sk && typeof sk === 'object' && !Array.isArray(sk)) { if (!tk || typeof tk !== 'object' || Array.isArray(tk)) { t[k] = {}; } deepMerge(t[k], sk); } else if (sk !== undefined) { t[k] = sk; } } } return t; }
-    // ===== CORRECCIÓN: applySettings sin muteToggleButton y colores =====
     function applySettings(){if(!document.body)return;try{if(gameState.settings.theme==='auto')applyDynamicTheme();else document.body.dataset.theme=gameState.settings.theme;applyFont(gameState.settings.boardFont);/* Colores eliminados */ /* MuteToggleButton eliminado */}catch(e){console.error("Error al aplicar settings:",e);document.body.dataset.theme='light';applyFont(DEFAULT_SETTINGS.boardFont);}}
 
 
@@ -299,13 +293,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- GENERADOR DE SUDOKU Y HELPERS ---
     function getNumberCounts(){const c={};for(let i=1;i<=9;i++)c[i]=0;for(let r=0;r<9;r++)for(let j=0;j<9;j++)if(gameState.puzzleBoard?.[r]?.[j]!==0)c[gameState.puzzleBoard[r][j]]++;return c;}
-    function updateKeypad(){if(!keypadElement)return;try{const counts=getNumberCounts();const correctCounts={};for(let i=1;i<=9;i++)correctCounts[i]=0;for(let r=0;r<9;r++)for(let c=0;c<9;c++){const n=gameState.puzzleBoard?.[r]?.[c];if(n!==0&&n!==undefined&&n===gameState.solution?.[r]?.[c])correctCounts[n]++;}keypadElement.querySelectorAll('.keypad-number').forEach(key=>{const num=parseInt(key.textContent);if(isNaN(num))return;const isComplete=correctCounts[num]===9;key.classList.toggle('completed',isComplete);key.style.opacity=isComplete?'0.3':'1';});}catch(e){console.error("Error updating keypad:",e);}} // Usa opacity
+    function updateKeypad(){if(!keypadElement)return;try{const counts=getNumberCounts();const correctCounts={};for(let i=1;i... 9;i++)correctCounts[i]=0;for(let r=0;r<9;r++)for(let c=0;c<9;c++){const n=gameState.puzzleBoard?.[r]?.[c];if(n!==0&&n!==undefined&&n===gameState.solution?.[r]?.[c])correctCounts[n]++;}keypadElement.querySelectorAll('.keypad-number').forEach(key=>{const num=parseInt(key.textContent);if(isNaN(num))return;const isComplete=correctCounts[num]===9;key.classList.toggle('completed',isComplete);key.style.opacity=isComplete?'0.3':'1';});}catch(e){console.error("Error updating keypad:",e);}}
     function checkWin(){for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(gameState.puzzleBoard?.[r]?.[c]===0)return false;return true;}
     function generateEmptyBoard(){return Array(9).fill(0).map(()=>Array(9).fill(0));}
     function shuffle(a,rnd=Math.random){for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
     function findEmpty(b){for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(b?.[r]?.[c]===0)return[r,c];return null;}
     function isValid(b,n,p){const[r,c]=p;for(let i=0;i<9;i++){if(b?.[r]?.[i]===n&&c!==i)return false;if(b?.[i]?.[c]===n&&r!==i)return false;}const br=Math.floor(r/3)*3,bc=Math.floor(c/3)*3;for(let i=br;i<br+3;i++)for(let j=bc;j<bc+3;j++)if(b?.[i]?.[j]===n&&(i!==r||j!==c))return false;return true;}
     function generateSolution(b,rnd=Math.random){const e=findEmpty(b);if(!e)return true;const[r,c]=e,nums=shuffle(Array.from({length:9},(_,i)=>i+1),rnd);for(const n of nums){if(isValid(b,n,[r,c])){b[r][c]=n;if(generateSolution(b,rnd))return true;b[r][c]=0;}}return false;}
+    
     // ===== MODIFICADO: createPuzzle con verificación de solución única =====
     function createPuzzle(board, difficulty, randFunc = Math.random) {
         try {
@@ -321,25 +316,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (puzzle[r]?.[c] !== 0) {
                     const temp = puzzle[r][c];
                     puzzle[r][c] = 0;
-                    // Clonar profundamente para el contador
                     let boardCopy = puzzle.map(row => [...row]);
                     if (countSolutions(boardCopy) !== 1) {
-                        puzzle[r][c] = temp; // Restaurar si no es única
+                        puzzle[r][c] = temp;
                     } else {
                         cellsRemoved++;
                     }
                 }
             }
-             if (cellsRemoved < targetToRemove * 0.8) { // Ajusta 0.8 si es necesario
-                 console.warn(`No se pudieron quitar ${targetToRemove} celdas manteniendo solución única. Se quitaron ${cellsRemoved}.`);
-             }
             initialPuzzleForResume = JSON.parse(JSON.stringify(puzzle));
             return puzzle;
         } catch (e) {
             console.error("Error creating puzzle with unique check:", e, "Falling back to simpler method.");
-            // Fallback al método simple si falla la verificación
-            const p = JSON.parse(JSON.stringify(board));
-            let rem = CELLS_TO_REMOVE[difficulty] || 50, att = 200;
+            const p = JSON.parse(JSON.stringify(board)); let rem = CELLS_TO_REMOVE[difficulty] || 50, att = 200;
             while(rem > 0 && att > 0) { const r = Math.floor(randFunc() * 9), c = Math.floor(randFunc() * 9); if (p?.[r]?.[c] !== 0) { p[r][c] = 0; rem--; } att--; }
             initialPuzzleForResume = JSON.parse(JSON.stringify(p));
             return p;
@@ -357,13 +346,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const emptySpot = findEmpty(board);
         if (!emptySpot) { solutionCounter++; return true; }
         const [row, col] = emptySpot;
-        // No barajar aquí, queremos contar sistemáticamente
-        for (let num = 1; num <= 9; num++) {
+        for (let num = 1; num <= 9; num++) { // No barajar para contar
             if (isValid(board, num, [row, col])) {
                 board[row][col] = num;
                 solveSudokuInternal(board);
-                // **CRUCIAL**: Detenerse si ya encontramos más de una solución
-                if (solutionCounter > 1) { board[row][col] = 0; return true; }
+                if (solutionCounter > 1) { board[row][col] = 0; return true; } // Optimización
                 board[row][col] = 0; // Backtrack
             }
         }
@@ -373,17 +360,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Animación de Victoria (Cascada) ---
     function animateBoardWin() {
         if (!boardElement) return;
-        const tiles = boardElement.children;
+        const tiles = Array.from(boardElement.children);
         for (let i = 0; i < tiles.length; i++) {
             const tile = tiles[i];
-            // Calcula un delay basado en la posición para efecto cascada
+            if (!tile) continue;
             const row = Math.floor(i / 9);
             const col = i % 9;
-            const delay = (row + col) * 30; // Ajusta 30ms para velocidad
-            tile.classList.remove('win-cascade'); // Limpia animación previa
+            const delay = (row + col) * 30;
+            tile.classList.remove('win-cascade');
             setTimeout(() => {
                 tile.classList.add('win-cascade');
-                // Limpia la clase después de la animación
                 setTimeout(() => tile.classList.remove('win-cascade'), 500);
             }, delay);
         }
