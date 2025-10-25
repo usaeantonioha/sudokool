@@ -35,8 +35,7 @@
 
         <div class="bottom-button-container">
              <button id="leaderboard-btn" class="leaderboard-btn neumorphic">🏆 Clasificación</button>
-             <button id="exit-btn" class="exit-btn neumorphic">Salir</button>
-        </div>
+             </div>
     </section>
 
     <main id="game-screen" class="screen">
@@ -47,8 +46,8 @@
             <div class="info-item info-errors"> <span>Errores:</span> <span id="error-counter">0/3</span> </div>
             <div class="info-item info-time"> <span>Tiempo:</span> <span id="timer-display">00:00</span> </div>
             <div id="pause-button" class="info-item" aria-label="Pausar juego">
-                <span>Pausa</span>
-                <span id="pause-button-text">||</span>
+                <span id="pause-button-text">Pausa</span>
+                <span id="pause-button-icon">||</span>
             </div>
         </div>
 
@@ -56,15 +55,15 @@
             <div id="board"></div>
             <div id="action-bar">
                 <button id="erase-button" class="action-btn" aria-label="Borrar celda">
-                    <svg class="action-icon-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13H5c-.55 0-1-.45-1-1s.45-1 1-1h14c.55 0 1 .45 1 1s-.45 1-1 1zM5 15h14c.55 0 1-.45 1-1s-.45-1-1-1H5c-.55 0-1 .45-1 1s.45 1 1 1zm0-8h14c.55 0 1-.45 1-1s-.45-1-1-1H5c-.55 0-1 .45-1 1s.45 1 1 1zM2.92 18.29c.14.14.33.21.51.21h17.14c.18 0 .37-.07.51-.21.29-.29.36-.72.18-1.09L15.41 4.5c-.21-.42-.64-.69-1.12-.69H9.7c-.48 0-.91.27-1.12.69L2.73 17.2c-.17.37-.1 1.8.19 1.09zM9.7 5.09h4.59L19.41 17H4.58L9.7 5.09z"></path></svg>
+                    <svg class="action-icon-svg" id="icon-erase" viewBox="0 0 24 24" fill="currentColor"><path d="M16.21 4.16l4 4V19c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2V5c0-1.1.9-2 2-2h11.21M17 7L7 17M7 7l10 10"></path></svg>
                     <span class="action-text">Borrar</span>
                 </button>
                 <button id="pencil-toggle-btn" class="action-btn" aria-label="Modo Lápiz" style="display: none;">
-                    <svg class="action-icon-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"></path></svg>
+                    <svg class="action-icon-svg" id="icon-pencil" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"></path></svg>
                     <span class="action-text">Notas</span>
                 </button>
                 <button id="hint-button" class="action-btn" aria-label="Pedir Pista" style="display: none;">
-                    <svg class="action-icon-svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"></path></svg>
+                    <svg class="action-icon-svg" id="icon-hint" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"></path></svg>
                     <span class="action-text">Pista</span>
                 </button>
             </div>
@@ -147,7 +146,7 @@
                  <div class="setting-item toggle-setting"><label for="mute-toggle-setting">Silenciar Sonidos:</label><input type="checkbox" id="mute-toggle-setting" class="toggle-switch"></div>
                  <div class="setting-item toggle-setting"><label for="show-hint-toggle">Mostrar Botón Pista:</label><input type="checkbox" id="show-hint-toggle" class="toggle-switch" checked></div>
                  <div class="setting-item toggle-setting"><label for="show-pencil-toggle">Mostrar Botón Lápiz:</label><input type="checkbox" id="show-pencil-toggle" class="toggle-switch" checked></div>
-                 </div>
+            </div>
             <button class="overlay-btn back-btn">Cerrar</button>
         </div>
     </div>

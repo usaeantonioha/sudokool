@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function addEventListeners() {
         document.body.addEventListener('click', initAudio, { once: true });
         try {
-            backToMenuBtn?.addEventListener('click', togglePause); // Restaurado a togglePause
+            backToMenuBtn?.addEventListener('click', togglePause); // Corregido: Volver a Pausa
             restartBtn?.addEventListener('click', restartGame);
             mainMenuLogo?.addEventListener('click', () => { playClickSound(); renderAchievementsPage(true); showOverlay('about', true); });
             settingsButton?.addEventListener('click', () => { playClickSound(); setupSettingsScreen(); showOverlay('settings', true); });
@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showHintToggle?.addEventListener('change', (e) => handleButtonVisibilityChange('showHintButton', e.target.checked));
             showPencilToggle?.addEventListener('change', (e) => handleButtonVisibilityChange('showPencilButton', e.target.checked));
             // showUndoToggle eliminado
-            exitButton?.addEventListener('click', () => { playClickSound(); window.close(); }); // Listener para Salir
+            exitButton?.addEventListener('click', () => { playClickSound(); window.close(); });
         } catch (e) { console.error("Error asignando event listeners:", e); }
     }
 
@@ -149,11 +149,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!difficultyButtonsContainer) { console.error("difficultyButtonsContainer no encontrado."); return; }
         difficultyButtonsContainer.innerHTML = ''; const f = document.createDocumentFragment();
         const l = [{key:'fácil',name:'Fácil'},{key:'medio',name:'Medio'},{key:'difícil',name:'Difícil'},{key:'experto',name:'Experto'}];
-        l.forEach(v=>{const b=document.createElement('button');b.className='difficulty-btn neumorphic';b.dataset.difficulty=v.key;const t=document.createElement('span');t.textContent=v.name;b.appendChild(t);b.classList.add(`btn-${v.key}`);
-        if(v.key==='fácil')b.style.backgroundImage='linear-gradient(to bottom right, #1de9b6, #1abc9c)';
-        else if(v.key==='medio')b.style.backgroundImage='linear-gradient(to bottom right, #4fc3f7, #3498db)';
-        else if(v.key==='difícil')b.style.backgroundImage='linear-gradient(to bottom right, #ffca28, #f39c12)';
-        else if(v.key==='experto')b.style.backgroundImage='linear-gradient(to bottom right, #ef5350, #c0392b)';
+        l.forEach(v=>{const b=document.createElement('button');b.className='difficulty-btn neumorphic';b.dataset.difficulty=v.key;const t=document.createElement('span');t.textContent=v.name;b.appendChild(t);
+        // Estilo basado en clase, no fondo
+        b.classList.add(`btn-${v.key}`);
         const s=(gameState.streaks&&typeof gameState.streaks==='object'&&gameState.streaks[v.key])?gameState.streaks[v.key]:0;if(s>0){const sp=document.createElement('span');sp.className='streak-display-menu';sp.textContent=`👑 ${s}`;b.appendChild(sp);}f.appendChild(b);});
         difficultyButtonsContainer.appendChild(f); difficultyButtonsContainer.addEventListener('click', handleDifficultyClick);
     }
@@ -173,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
             gameState.notesBoard=Array(9).fill(null).map(()=>Array(9).fill(null).map(()=>new Set()));
             gameState.gameStats={/*hasUsedUndo:false,*/notesPlaced:0, hintUsedThisGame: false};
             applyButtonVisibility();
-            renderTimer(); startTimer(); if(pauseButton)pauseButton.style.display='flex';
+            renderTimer(); startTimer(); if(pauseButton)pauseButton.style.display='flex'; // Asegura visibilidad
 
             if (puzzleToLoad) {
                  gameState.puzzleBoard = puzzleToLoad.map(row => [...row]);
@@ -222,16 +220,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function resumeGame(){playClickSound();gameState.isPaused=false;renderBoardImproved();updateKeypad();showScreen('game');if(resumeGameBtn)resumeGameBtn.style.display='none';if(pauseButton)pauseButton.style.display='flex';applyButtonVisibility();/*undoButton eliminado*/}
 
     // --- RENDERIZADO Y UI ---
-    // ===== MODIFICADO: showScreen instantáneo =====
     function showScreen(key) {
-        Object.values(screens).forEach(s => s?.classList.remove('active', 'screen-exit', 'screen-enter', 'screen-enter-active'));
+        Object.values(screens).forEach(s => s?.classList.remove('active'));
         if (screens[key]) {
             screens[key].classList.add('active');
         }
     }
     function showOverlay(key,show){const o=screens[key];if(o)o.classList.toggle('active',show);}
     function renderBoardImproved(){if(!boardElement)return;boardElement.innerHTML='';const f=document.createDocumentFragment();for(let r=0;r<9;r++){for(let c=0;c<9;c++){const t=document.createElement('div');t.className='tile';t.dataset.row=r;t.dataset.col=c;if(c===2||c===5)t.classList.add('tile-border-right');if(r===2||r===5)t.classList.add('tile-border-bottom');const nEl=document.createElement('div');nEl.className='tile-number';const nGrid=document.createElement('div');nGrid.className='tile-notes-grid';for(let i=1;i<=9;i++){const nE=document.createElement('div');nE.className='tile-note note-'+i;nGrid.appendChild(nE);}const initialNum=initialPuzzleForResume?.[r]?.[c];const currentNum=gameState.puzzleBoard?.[r]?.[c];const solutionNum=gameState.solution?.[r]?.[c];if(initialNum!==undefined&&initialNum!==0){nEl.textContent=initialNum.toString();t.classList.add('hint');}else if(currentNum!==undefined&&currentNum!==0){nEl.textContent=currentNum.toString();t.classList.add('user-filled');if(solutionNum!==undefined&&currentNum!==solutionNum)t.classList.add('tile-wrong-number');}else{const nts=gameState.notesBoard?.[r]?.[c];if(nts&&nts.size>0){t.classList.add('is-notes');nts.forEach(num=>{const nE=nGrid.querySelector('.note-'+num);if(nE)nE.textContent=num.toString();});}}t.appendChild(nEl);t.appendChild(nGrid);f.appendChild(t);}}boardElement.appendChild(f);}
-    function renderKeypad(){if(!keypadElement)return;keypadElement.innerHTML='';const f=document.createDocumentFragment();for(let i=1;i<=9;i++){const k=document.createElement('button');k.className='keypad-number';k.textContent=i.toString(); const check=document.createElement('span'); check.className='keypad-checkmark'; check.innerHTML='&#10003;'; /* Checkmark ✓ */ k.appendChild(check); f.appendChild(k);}keypadElement.appendChild(f);updateKeypad();}
+    function renderKeypad(){if(!keypadElement)return;keypadElement.innerHTML='';const f=document.createDocumentFragment();for(let i=1;i<=9;i++){const k=document.createElement('button');k.className='keypad-number';const numSpan=document.createElement('span');numSpan.className='keypad-number-text';numSpan.textContent=i.toString();k.appendChild(numSpan);const check=document.createElement('span');check.className='keypad-checkmark';check.innerHTML='✓';k.appendChild(check);f.appendChild(k);}keypadElement.appendChild(f);updateKeypad();}
     function renderTileNotes(r,c){const t=boardElement?.children[r*9+c];if(!t)return;const nG=t.querySelector('.tile-notes-grid');if(!nG)return;const nts=gameState.notesBoard?.[r]?.[c];const showNotes=nts&&nts.size>0&&gameState.puzzleBoard?.[r]?.[c]===0;t.classList.toggle('is-notes',showNotes);for(let i=1;i<=9;i++){const nE=nG.querySelector('.note-'+i);if(nE){const hasNote=nts&&nts.has(i);nE.textContent=hasNote?i.toString():'';nE.classList.toggle('visible',hasNote);if(hasNote){nE.classList.add('pop-in');setTimeout(()=>nE.classList.remove('pop-in'),200);}}}}
     function updateLivesDisplay(){if(errorCounterElement){const errs=3-Math.max(0,gameState.lives);errorCounterElement.textContent=`${errs}/3`;}}
     function updateIngameStreakDisplay(){if(!ingameStreakDisplay)return;const s=(gameState.streaks&&gameState.currentDifficulty)?gameState.streaks[gameState.currentDifficulty]||0:0;ingameStreakDisplay.innerHTML=s>0?`👑 <span class="ingame-streak-number">${s}</span>`:'';}
@@ -257,7 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function saveLeaderboards(){try{localStorage.setItem('sudokuLeaderboards',JSON.stringify(gameState.leaderboards));}catch(e){console.error("Err save leaders:",e);}}
     function loadLeaderboards(){const key='sudokuLeaderboards'; const defaultVal=JSON.parse(JSON.stringify(DEFAULT_LEADERBOARDS)); gameState.leaderboards = defaultVal; try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'&&p.daily&&Array.isArray(p.daily)&&p.daily.every(sc=>typeof sc==='object'&&typeof sc.time==='number'&&typeof sc.date==='string')){gameState.leaderboards=p;return;}throw new Error("Invalid format");}}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);}}
     function saveSetting(key,value){try{let s=gameState.settings;if(key.includes('.')){const k=key.split('.');if(s[k[0]]!==undefined&&typeof s[k[0]]==='object')s[k[0]][k[1]]=value;else console.warn(`Cannot save nested setting: ${key}`);}else s[key]=value;localStorage.setItem('sudokuSettings',JSON.stringify(s));}catch(e){console.error("Err save setting:",key,e);}}
-    function loadSettings() {const key='sudokuSettings'; let saved = null; gameState.settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS)); try {const s=localStorage.getItem(key); if(s){saved=JSON.parse(s); if(typeof saved !=='object'||saved===null)throw new Error("Invalid format"); gameState.settings=deepMerge(gameState.settings, saved);}} catch(e){console.error(`Error loading/parsing ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.settings=JSON.parse(JSON.stringify(DEFAULT_SETTINGS));} gameState.isMuted=gameState.settings.isMuted; /* MuteToggleButton eliminado */}
+    function loadSettings() {const key='sudokuSettings'; let saved = null; gameState.settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS)); try {const s=localStorage.getItem(key); if(s){saved=JSON.parse(s); if(typeof saved !=='object'||saved===null)throw new Error("Invalid format"); gameState.settings=deepMerge(gameState.settings, saved);}} catch(e){console.error(`Error loading/parsing ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.settings=JSON.parse(JSON.stringify(DEFAULT_SETTINGS));} gameState.isMuted=gameState.settings.isMuted; }
 
     // --- LÓGICA DE TIMER Y PAUSA ---
     function startTimer(){clearInterval(gameState.timerInterval);gameState.timerInterval=setInterval(updateTimer,1000);}
@@ -274,19 +271,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- LÓGICA DE CONFIGURACIÓN ---
     function handleThemeChange(event){const n=event.target.value;saveSetting('theme',n);if(n==='auto')applyDynamicTheme();else document.body.dataset.theme=n;playClickSound();}
-    // ===== MODIFICADO: Automático ahora es siempre Claro =====
-    function applyDynamicTheme(){ document.body.dataset.theme = 'light'; }
+    function applyDynamicTheme(){ document.body.dataset.theme = 'light'; } // Auto = Claro
     function handleFontChange(event){const n=event.target.value;saveSetting('boardFont',n);applyFont(n);playClickSound();}
     function applyFont(f){let ff='var(--font-default)';if(f==='Roboto Slab')ff='var(--font-serif)';else if(f==='Source Code Pro')ff='var(--font-mono)';document.documentElement.style.setProperty('--font-board',ff);}
-    function handleMuteChange(event){const m=event.target.checked;saveSetting('isMuted',m);gameState.isMuted=m; /* muteToggleButton eliminado */ if(!m)playClickSound();}
+    function handleMuteChange(event){const m=event.target.checked;saveSetting('isMuted',m);gameState.isMuted=m; if(!m)playClickSound();}
     function handleButtonVisibilityChange(key,v){saveSetting(key,v);applyButtonVisibility();playClickSound();}
     function applyButtonVisibility(){if(hintButton)hintButton.style.display=(gameState.settings.showHintButton&&gameState.gameInProgress)?'flex':'none';if(pencilToggleButton)pencilToggleButton.style.display=(gameState.settings.showPencilButton&&gameState.gameInProgress)?'flex':'none'; /* undoButton eliminado */}
     // Funciones colores eliminadas
     function setupSettingsScreen(){if(!themeSelect||!fontSelect||!muteToggleSetting||!showHintToggle||!showPencilToggle)return;themeSelect.value=gameState.settings.theme;fontSelect.value=gameState.settings.boardFont;muteToggleSetting.checked=gameState.isMuted;showHintToggle.checked=gameState.settings.showHintButton;showPencilToggle.checked=gameState.settings.showPencilButton;}
     function deepMerge(t, s) { if (!s) return t; for (const k in s) { if (s.hasOwnProperty(k)) { const sk = s[k]; const tk = t?.[k]; if (sk && typeof sk === 'object' && !Array.isArray(sk)) { if (!tk || typeof tk !== 'object' || Array.isArray(tk)) { t[k] = {}; } deepMerge(t[k], sk); } else if (sk !== undefined) { t[k] = sk; } } } return t; }
-    // ===== CORRECCIÓN: applySettings sin muteToggleButton y colores =====
     function applySettings(){if(!document.body)return;try{if(gameState.settings.theme==='auto')applyDynamicTheme();else document.body.dataset.theme=gameState.settings.theme;applyFont(gameState.settings.boardFont);/* Colores eliminados */}catch(e){console.error("Error al aplicar settings:",e);document.body.dataset.theme='light';applyFont(DEFAULT_SETTINGS.boardFont);}}
-
 
     // --- LÓGICA DE DESAFÍO DIARIO Y PISTAS ---
     function setSeed(s){randomSeed=s;} function seededRandom(){let x=Math.sin(randomSeed++)*1e4;return x-Math.floor(x);}
@@ -312,7 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- GENERADOR DE SUDOKU Y HELPERS ---
     function getNumberCounts(){const c={};for(let i=1;i<=9;i++)c[i]=0;for(let r=0;r<9;r++)for(let j=0;j<9;j++)if(gameState.puzzleBoard?.[r]?.[j]!==0)c[gameState.puzzleBoard[r][j]]++;return c;}
     // ===== MODIFICADO: updateKeypad con checkmark =====
-    function updateKeypad(){if(!keypadElement)return;try{const counts=getNumberCounts();const correctCounts={};for(let i=1;i<=9;i++)correctCounts[i]=0;for(let r=0;r<9;r++)for(let c=0;c<9;c++){const n=gameState.puzzleBoard?.[r]?.[c];if(n!==0&&n!==undefined&&n===gameState.solution?.[r]?.[c])correctCounts[n]++;}keypadElement.querySelectorAll('.keypad-number').forEach(key=>{const num=parseInt(key.textContent);if(isNaN(num))return;const isComplete=correctCounts[num]===9;key.classList.toggle('completed',isComplete);const checkmark=key.querySelector('.keypad-checkmark');if(checkmark)checkmark.style.display=isComplete?'block':'none';key.style.opacity=isComplete?'0.3':'1';if(isComplete)key.style.pointerEvents='none';else key.style.pointerEvents='auto';});}catch(e){console.error("Error updating keypad:",e);}}
+    function updateKeypad(){if(!keypadElement)return;try{const counts=getNumberCounts();const correctCounts={};for(let i=1;i<=9;i++)correctCounts[i]=0;for(let r=0;r<9;r++)for(let c=0;c<9;c++){const n=gameState.puzzleBoard?.[r]?.[c];if(n!==0&&n!==undefined&&n===gameState.solution?.[r]?.[c])correctCounts[n]++;}keypadElement.querySelectorAll('.keypad-number').forEach(key=>{const numText=key.querySelector('.keypad-number-text');if(!numText)return;const num=parseInt(numText.textContent);if(isNaN(num))return;const isComplete=correctCounts[num]===9;key.classList.toggle('completed',isComplete);});}catch(e){console.error("Error updating keypad:",e);}}
     function checkWin(){for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(gameState.puzzleBoard?.[r]?.[c]===0)return false;return true;}
     function generateEmptyBoard(){return Array(9).fill(0).map(()=>Array(9).fill(0));}
     function shuffle(a,rnd=Math.random){for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
