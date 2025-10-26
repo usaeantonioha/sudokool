@@ -45,8 +45,8 @@
             <div class="info-item"> <span id="game-difficulty-display"></span> </div>
             <div class="info-item info-errors"> <span>Errores:</span> <span id="error-counter">0/3</span> </div>
             <div class="info-item info-time"> <span>Tiempo:</span> <span id="timer-display">00:00</span> </div>
-            <div id="pause-button" class="info-item" aria-label="Pausar juego">
-                <span id="pause-button-text">Pausa</span>
+            <div id="pause-button" class="info-item pause-btn-container" aria-label="Pausar juego">
+                <span class="pause-text">Pausa</span>
                 <span id="pause-button-icon">||</span>
             </div>
         </div>
@@ -55,7 +55,7 @@
             <div id="board"></div>
             <div id="action-bar">
                 <button id="erase-button" class="action-btn" aria-label="Borrar celda">
-                    <svg class="action-icon-svg" id="icon-erase" viewBox="0 0 24 24" fill="currentColor"><path d="M16.21 4.16l4 4V19c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2V5c0-1.1.9-2 2-2h11.21M17 7L7 17M7 7l10 10"></path></svg>
+                    <svg class="action-icon-svg" id="icon-erase" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13H5c-.55 0-1-.45-1-1s.45-1 1-1h14c.55 0 1 .45 1 1s-.45 1-1 1zm-1.12-4.03c.31-.31.31-.82 0-1.13l-2.83-2.83c-.31-.31-.82-.31-1.13 0L3.71 15.25c-.12.12-.19.28-.2.45l-.79 3.56c-.05.22.02.45.18.61.16.16.39.23.61.18l3.56-.79c.17-.01.33-.08.45-.2L17.88 4.97zM7.09 15.03l7.07-7.07 1.41 1.41-7.07 7.07-1.41-1.41z"></path></svg>
                     <span class="action-text">Borrar</span>
                 </button>
                 <button id="pencil-toggle-btn" class="action-btn" aria-label="Modo Lápiz" style="display: none;">
@@ -146,7 +146,7 @@
                  <div class="setting-item toggle-setting"><label for="mute-toggle-setting">Silenciar Sonidos:</label><input type="checkbox" id="mute-toggle-setting" class="toggle-switch"></div>
                  <div class="setting-item toggle-setting"><label for="show-hint-toggle">Mostrar Botón Pista:</label><input type="checkbox" id="show-hint-toggle" class="toggle-switch" checked></div>
                  <div class="setting-item toggle-setting"><label for="show-pencil-toggle">Mostrar Botón Lápiz:</label><input type="checkbox" id="show-pencil-toggle" class="toggle-switch" checked></div>
-            </div>
+                 </div>
             <button class="overlay-btn back-btn">Cerrar</button>
         </div>
     </div>
