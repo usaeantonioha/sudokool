@@ -31,12 +31,10 @@
 
         <button id="resume-game-btn" class="resume-btn neumorphic" style="display: none;">Reanudar Partida</button>
         <button id="daily-challenge-btn" class="daily-btn neumorphic">Desafío Diario</button>
+        <button id="leaderboard-btn" class="leaderboard-btn neumorphic">🏆 Clasificación</button>
         <nav id="difficulty-buttons"></nav>
 
-        <div class="bottom-button-container">
-             <button id="leaderboard-btn" class="leaderboard-btn neumorphic">🏆 Clasificación</button>
-             </div>
-    </section>
+        </section>
 
     <main id="game-screen" class="screen">
         <button id="back-to-menu">← Volver al Menú</button>
@@ -45,8 +43,8 @@
             <div class="info-item"> <span id="game-difficulty-display"></span> </div>
             <div class="info-item info-errors"> <span>Errores:</span> <span id="error-counter">0/3</span> </div>
             <div class="info-item info-time"> <span>Tiempo:</span> <span id="timer-display">00:00</span> </div>
-            <div id="pause-button" class="info-item pause-btn-container" aria-label="Pausar juego">
-                <span class="pause-text">Pausa</span>
+            <div id="pause-button" class="info-item" aria-label="Pausar juego">
+                <span id="pause-button-text">Pausa</span>
                 <span id="pause-button-icon">||</span>
             </div>
         </div>
@@ -55,7 +53,7 @@
             <div id="board"></div>
             <div id="action-bar">
                 <button id="erase-button" class="action-btn" aria-label="Borrar celda">
-                    <svg class="action-icon-svg" id="icon-erase" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13H5c-.55 0-1-.45-1-1s.45-1 1-1h14c.55 0 1 .45 1 1s-.45 1-1 1zm-1.12-4.03c.31-.31.31-.82 0-1.13l-2.83-2.83c-.31-.31-.82-.31-1.13 0L3.71 15.25c-.12.12-.19.28-.2.45l-.79 3.56c-.05.22.02.45.18.61.16.16.39.23.61.18l3.56-.79c.17-.01.33-.08.45-.2L17.88 4.97zM7.09 15.03l7.07-7.07 1.41 1.41-7.07 7.07-1.41-1.41z"></path></svg>
+                    <svg class="action-icon-svg" id="icon-erase" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13H5c-.55 0-1-.45-1-1s.45-1 1-1h14c.55 0 1 .45 1 1s-.45 1-1 1zM5 15h14c.55 0 1-.45 1-1s-.45-1-1-1H5c-.55 0-1 .45-1 1s.45 1 1 1zm0-8h14c.55 0 1-.45 1-1s-.45-1-1-1H5c-.55 0-1 .45-1 1s.45 1 1 1zM2.92 18.29c.14.14.33.21.51.21h17.14c.18 0 .37-.07.51-.21.29-.29.36-.72.18-1.09L15.41 4.5c-.21-.42-.64-.69-1.12-.69H9.7c-.48 0-.91.27-1.12.69L2.73 17.2c-.17.37-.1 1.8.19 1.09zM9.7 5.09h4.59L19.41 17H4.58L9.7 5.09z"></path></svg>
                     <span class="action-text">Borrar</span>
                 </button>
                 <button id="pencil-toggle-btn" class="action-btn" aria-label="Modo Lápiz" style="display: none;">
