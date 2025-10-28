@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
         errorCounterElement = document.getElementById('error-counter');
         // exitButton eliminado
 
-        // Lista de elementos esenciales actualizada
+        // ===== CORRECCIÓN: Lista de elementos esenciales actualizada =====
         const essentialElements = { boardElement, keypadElement, difficultyButtonsContainer, settingsButton, startScreen: screens.start, gameScreen: screens.game, settingsScreen: screens.settings, themeSelect, fontSelect, muteToggleSetting, eraseButton, errorCounterElement, timerDisplay, backToMenuBtn, mainMenuLogo, dailyChallengeButton, leaderboardButton };
         for (const key in essentialElements) {
             if (!essentialElements[key]) {
@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
             muteToggleSetting?.addEventListener('change', handleMuteChange);
             showHintToggle?.addEventListener('change', (e) => handleButtonVisibilityChange('showHintButton', e.target.checked));
             showPencilToggle?.addEventListener('change', (e) => handleButtonVisibilityChange('showPencilButton', e.target.checked));
-            // exitButton eliminado
+            // showUndoToggle eliminado
         } catch (e) { console.error("Error asignando event listeners:", e); }
     }
 
@@ -220,8 +220,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function resumeGame(){playClickSound();gameState.isPaused=false;renderBoardImproved();updateKeypad();showScreen('game');if(resumeGameBtn)resumeGameBtn.style.display='none';if(pauseButton)pauseButton.style.display='flex';applyButtonVisibility();/*undoButton eliminado*/}
 
     // --- RENDERIZADO Y UI ---
+    // ===== MODIFICADO: showScreen instantáneo =====
     function showScreen(key) {
-        Object.values(screens).forEach(s => s?.classList.remove('active', 'screen-exit', 'screen-enter', 'screen-enter-active'));
+        Object.values(screens).forEach(s => s?.classList.remove('active'));
         if (screens[key]) {
             screens[key].classList.add('active');
         }
@@ -245,7 +246,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function highlightHintCells(targetCoords,involvedCoords=[]){clearHintHighlights();const targetTile=boardElement?.children[targetCoords.row*9+targetCoords.col];if(targetTile)targetTile.classList.add('tile-hint-target');involvedCoords.forEach(coords=>{const involvedTile=boardElement?.children[coords.row*9+coords.col];if(involvedTile)involvedTile.classList.add('tile-hint-involved');});}
 
     // --- LÓGICA DE GUARDADO (localStorage) ---
-    // ===== CORRECCIÓN: Funciones de carga robustecidas =====
     function saveStreaks(){try{localStorage.setItem('sudokuStreaks',JSON.stringify(gameState.streaks));}catch(e){console.error("Error saving streaks:",e);}}
     function loadStreaks(){const key='sudokuStreaks'; const defaultVal=JSON.parse(JSON.stringify(DEFAULT_STREAKS)); gameState.streaks = defaultVal; try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'&&Object.keys(DEFAULT_STREAKS).every(k=>typeof p[k]==='number')){gameState.streaks=deepMerge(defaultVal, p);return;}throw new Error("Invalid format");}}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);}}
     function saveTotalWins(){try{localStorage.setItem('sudokuTotalWins',JSON.stringify(gameState.totalWins));}catch(e){console.error("Error saving wins:",e);}}
@@ -272,8 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- LÓGICA DE CONFIGURACIÓN ---
     function handleThemeChange(event){const n=event.target.value;saveSetting('theme',n);if(n==='auto')applyDynamicTheme();else document.body.dataset.theme=n;playClickSound();}
-    // ===== MODIFICADO: Automático ahora es siempre Claro =====
-    function applyDynamicTheme(){ document.body.dataset.theme = 'light'; }
+    function applyDynamicTheme(){ document.body.dataset.theme = 'light'; } // Auto = Claro
     function handleFontChange(event){const n=event.target.value;saveSetting('boardFont',n);applyFont(n);playClickSound();}
     function applyFont(f){let ff='var(--font-default)';if(f==='Roboto Slab')ff='var(--font-serif)';else if(f==='Source Code Pro')ff='var(--font-mono)';document.documentElement.style.setProperty('--font-board',ff);}
     function handleMuteChange(event){const m=event.target.checked;saveSetting('isMuted',m);gameState.isMuted=m; /* muteToggleButton eliminado */ if(!m)playClickSound();}
@@ -282,7 +281,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Funciones colores eliminadas
     function setupSettingsScreen(){if(!themeSelect||!fontSelect||!muteToggleSetting||!showHintToggle||!showPencilToggle)return;themeSelect.value=gameState.settings.theme;fontSelect.value=gameState.settings.boardFont;muteToggleSetting.checked=gameState.isMuted;showHintToggle.checked=gameState.settings.showHintButton;showPencilToggle.checked=gameState.settings.showPencilButton;}
     function deepMerge(t, s) { if (!s) return t; for (const k in s) { if (s.hasOwnProperty(k)) { const sk = s[k]; const tk = t?.[k]; if (sk && typeof sk === 'object' && !Array.isArray(sk)) { if (!tk || typeof tk !== 'object' || Array.isArray(tk)) { t[k] = {}; } deepMerge(t[k], sk); } else if (sk !== undefined) { t[k] = sk; } } } return t; }
-    // ===== CORRECCIÓN: applySettings sin muteToggleButton y colores =====
     function applySettings(){if(!document.body)return;try{if(gameState.settings.theme==='auto')applyDynamicTheme();else document.body.dataset.theme=gameState.settings.theme;applyFont(gameState.settings.boardFont);/* Colores eliminados */}catch(e){console.error("Error al aplicar settings:",e);document.body.dataset.theme='light';applyFont(DEFAULT_SETTINGS.boardFont);}}
 
 
@@ -309,6 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- GENERADOR DE SUDOKU Y HELPERS ---
     function getNumberCounts(){const c={};for(let i=1;i<=9;i++)c[i]=0;for(let r=0;r<9;r++)for(let j=0;j<9;j++)if(gameState.puzzleBoard?.[r]?.[j]!==0)c[gameState.puzzleBoard[r][j]]++;return c;}
+    // ===== MODIFICADO: updateKeypad con checkmark =====
     function updateKeypad(){if(!keypadElement)return;try{const counts=getNumberCounts();const correctCounts={};for(let i=1;i<=9;i++)correctCounts[i]=0;for(let r=0;r<9;r++)for(let c=0;c<9;c++){const n=gameState.puzzleBoard?.[r]?.[c];if(n!==0&&n!==undefined&&n===gameState.solution?.[r]?.[c])correctCounts[n]++;}keypadElement.querySelectorAll('.keypad-number').forEach(key=>{const numTextEl=key.querySelector('.keypad-number-text');const checkmarkEl=key.querySelector('.keypad-checkmark');if(!numTextEl||!checkmarkEl)return;const num=parseInt(numTextEl.textContent);if(isNaN(num))return;const isComplete=correctCounts[num]===9;key.classList.toggle('completed',isComplete);if(isComplete){numTextEl.style.opacity='0';checkmarkEl.style.display='block';key.style.pointerEvents='none';}else{numTextEl.style.opacity='1';checkmarkEl.style.display='none';key.style.pointerEvents='auto';}});}catch(e){console.error("Error updating keypad:",e);}}
     function checkWin(){for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(gameState.puzzleBoard?.[r]?.[c]===0)return false;return true;}
     function generateEmptyBoard(){return Array(9).fill(0).map(()=>Array(9).fill(0));}
@@ -388,7 +387,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }, delay);
         }
     }
-
 
     // --- INICIALIZACIÓN FINAL ---
     try {
