@@ -106,7 +106,6 @@ body[data-theme="dark"] .icon-btn { color: var(--color-hint); } body[data-theme=
 .colorful-title { font-size: clamp(2.2rem, 10vw, 3rem); font-weight: bold; }
 .colorful-title span:nth-child(1){color:#4285F4}.colorful-title span:nth-child(2){color:#DB4437}.colorful-title span:nth-child(3){color:#F4B400}.colorful-title span:nth-child(4){color:#4285F4}.colorful-title span:nth-child(5){color:#0F9D58}.colorful-title span:nth-child(6){color:#DB4437}.colorful-title span:nth-child(7){margin-left:.5ch}.colorful-title span:nth-child(8){color:#F4B400}.colorful-title span:nth-child(9){color:#4285F4}.colorful-title span:nth-child(10){color:#0F9D58}
 
-/* ===== MODIFICADO: Botones Menú Principal 3/4 tamaño ===== */
 .neumorphic {
     border-radius: 12px; border: none; cursor: pointer; transition: all 0.2s ease-out;
     background: var(--color-bg);
@@ -119,9 +118,10 @@ body[data-theme="dark"] .icon-btn { color: var(--color-hint); } body[data-theme=
 }
 .neumorphic:hover { filter: brightness(0.95); }
 .neumorphic:active { box-shadow: inset 2px 2px 5px var(--shadow-neumorphic-dark), inset -2px -2px 5px var(--shadow-neumorphic-light); transform: scale(0.98); }
-#resume-game-btn { background: var(--color-win-text); color: white; }
-#daily-challenge-btn { background: #673AB7; color: white; }
-#leaderboard-btn { background: var(--color-button); color: var(--color-button-text); padding: 12px; font-size: 1.2rem; }
+/* Botones de menú con color de texto */
+#resume-game-btn { color: var(--color-win-text); }
+#daily-challenge-btn { color: #673AB7; }
+#leaderboard-btn { color: var(--color-button-text); padding: 12px; font-size: 1.2rem; }
 .exit-btn { background-color: var(--color-hint); color: var(--color-bg); }
 body[data-theme] .exit-btn { background-color: var(--color-button-text); color: var(--color-bg); }
 .exit-btn:hover { filter: brightness(1.1); }
@@ -146,7 +146,6 @@ body[data-theme] .exit-btn { background-color: var(--color-button-text); color: 
 .logo-btn { width: 40px; height: 40px; font-size: 1.5rem; border-radius: 50%; background-color: transparent; color: var(--color-hint); display: flex; justify-content: center; align-items: center; font-weight: bold; cursor: pointer; border: none; transition: background-color 0.3s, color 0.3s; }
 .logo-btn:hover { background-color: rgba(0, 0, 0, 0.05); } body[data-theme="dark"] .logo-btn { color: var(--color-hint); } body[data-theme="dark"] .logo-btn:hover { background-color: rgba(255, 255, 255, 0.1); }
 
-/* Contenedor Botón Clasificación (ahora parte del flujo) */
 .bottom-button-container { display: none; /* Oculto, ya que el botón se movió */ }
 #leaderboard-btn { width: 100%; margin-bottom: 0; }
 
