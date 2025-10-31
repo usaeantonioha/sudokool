@@ -253,4 +253,154 @@ document.addEventListener('DOMContentLoaded', () => {
     function saveStreaks(){try{localStorage.setItem('sudokuStreaks',JSON.stringify(gameState.streaks));}catch(e){console.error("Error saving streaks:",e);}}
     function loadStreaks(){const key='sudokuStreaks'; const defaultVal=JSON.parse(JSON.stringify(DEFAULT_STREAKS)); gameState.streaks = defaultVal; try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'&&Object.keys(DEFAULT_STREAKS).every(k=>typeof p[k]==='number')){gameState.streaks=deepMerge(defaultVal, p);return;}throw new Error("Invalid format");}}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);}}
     function saveTotalWins(){try{localStorage.setItem('sudokuTotalWins',JSON.stringify(gameState.totalWins));}catch(e){console.error("Error saving wins:",e);}}
-    function loadTotalWins(){const key='sudokuTotalWins'; const defaultVal=JSON.parse
+    function loadTotalWins(){const key='sudokuTotalWins'; const defaultVal=JSON.parse(JSON.stringify(DEFAULT_WINS)); gameState.totalWins = defaultVal; try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'&&Object.keys(DEFAULT_WINS).every(k=>typeof p[k]==='number')){gameState.totalWins=deepMerge(defaultVal, p);return;}throw new Error("Invalid format");}gameState.totalWins=defaultVal;}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);}}
+    function saveAchievements(){try{localStorage.setItem('sudokuAchievements',JSON.stringify(gameState.achievements));}catch(e){console.error("Err save achieve:",e);}}
+    function loadAchievements(){const key='sudokuAchievements'; const defaultVal=JSON.parse(JSON.stringify(DEFAULT_ACHIEVEMENTS)); gameState.achievements = defaultVal; try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'){gameState.achievements=p;return;}throw new Error("Invalid format");}}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);}}
+    function saveLeaderboards(){try{localStorage.setItem('sudokuLeaderboards',JSON.stringify(gameState.leaderboards));}catch(e){console.error("Err save leaders:",e);}}
+    function loadLeaderboards(){const key='sudokuLeaderboards'; const defaultVal=JSON.parse(JSON.stringify(DEFAULT_LEADERBOARDS)); gameState.leaderboards = defaultVal; try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'&&p.daily&&Array.isArray(p.daily)&&p.daily.every(sc=>typeof sc==='object'&&typeof sc.time==='number'&&typeof sc.date==='string')){gameState.leaderboards=p;return;}throw new Error("Invalid format");}}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);}}
+    function saveSetting(key,value){try{let s=gameState.settings;if(key.includes('.')){const k=key.split('.');if(s[k[0]]!==undefined&&typeof s[k[0]]==='object')s[k[0]][k[1]]=value;else console.warn(`Cannot save nested setting: ${key}`);}else s[key]=value;localStorage.setItem('sudokuSettings',JSON.stringify(s));}catch(e){console.error("Err save setting:",key,e);}}
+    // ===== CORRECCIÓN: loadSettings sin muteToggleButton =====
+    function loadSettings() {const key='sudokuSettings'; let saved = null; gameState.settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS)); try {const s=localStorage.getItem(key); if(s){saved=JSON.parse(s); if(typeof saved !=='object'||saved===null)throw new Error("Invalid format"); gameState.settings=deepMerge(gameState.settings, saved);}} catch(e){console.error(`Error loading/parsing ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.settings=JSON.parse(JSON.stringify(DEFAULT_SETTINGS));} gameState.isMuted=gameState.settings.isMuted; }
+
+    // --- LÓGICA DE TIMER Y PAUSA ---
+    function startTimer(){clearInterval(gameState.timerInterval);gameState.timerInterval=setInterval(updateTimer,1000);}
+    function stopTimer(){clearInterval(gameState.timerInterval);}
+    function updateTimer(){if(!gameState.isPaused){gameState.secondsElapsed++;renderTimer();}}
+    function formatTime(s){const m=Math.floor(s/60).toString().padStart(2,'0'),sc=(s%60).toString().padStart(2,'0');return`${m}:${sc}`;}
+    function renderTimer(){if(timerDisplay)timerDisplay.textContent=formatTime(gameState.secondsElapsed);}
+    function togglePause(){playClickSound();gameState.isPaused=!gameState.isPaused;showOverlay('pause',gameState.isPaused);}
+
+    // --- LÓGICA DE MODO LÁPIZ Y AUTO-LIMPIEZA ---
+    function togglePencilMode(){playClickSound();gameState.isPencilMode=!gameState.isPencilMode;if(pencilToggleButton)pencilToggleButton.classList.toggle('active',gameState.isPencilMode); if(boardElement)boardElement.classList.toggle('board-pencil-mode',gameState.isPencilMode);}
+    function toggleNote(num){if(!gameState.selectedTile)return;const r=parseInt(gameState.selectedTile.dataset.row),c=parseInt(gameState.selectedTile.dataset.col);if(isNaN(r)||isNaN(c)||gameState.puzzleBoard?.[r]?.[c]!==0)return;const nts=gameState.notesBoard?.[r]?.[c];if(!nts)return;if(nts.has(num))nts.delete(num);else{nts.add(num);gameState.gameStats.notesPlaced++;if(gameState.gameStats.notesPlaced>=50)unlockAchievement('thinkingAhead');}renderTileNotes(r,c);}
+    function autoCleanNotes(row,col,num){for(let i=0;i<9;i++){if(gameState.notesBoard?.[row]?.[i]?.has(num)){gameState.notesBoard[row][i].delete(num);renderTileNotes(row,i);}}for(let i=0;i<9;i++){if(gameState.notesBoard?.[i]?.[col]?.has(num)){gameState.notesBoard[i][col].delete(num);renderTileNotes(i,col);}}const br=Math.floor(row/3)*3,bc=Math.floor(col/3)*3;for(let i=br;i<br+3;i++)for(let j=bc;j<bc+3;j++)if(gameState.notesBoard?.[i]?.[j]?.has(num)){gameState.notesBoard[i][j].delete(num);renderTileNotes(i,j);}}
+
+    // --- LÓGICA DE CONFIGURACIÓN ---
+    function handleThemeChange(event){const n=event.target.value;saveSetting('theme',n);if(n==='auto')applyDynamicTheme();else document.body.dataset.theme=n;playClickSound();}
+    // ===== MODIFICADO: Automático ahora es siempre Claro =====
+    function applyDynamicTheme(){ document.body.dataset.theme = 'light'; }
+    function handleFontChange(event){const n=event.target.value;saveSetting('boardFont',n);applyFont(n);playClickSound();}
+    function applyFont(f){let ff='var(--font-default)';if(f==='Roboto Slab')ff='var(--font-serif)';else if(f==='Source Code Pro')ff='var(--font-mono)';document.documentElement.style.setProperty('--font-board',ff);}
+    function handleMuteChange(event){const m=event.target.checked;saveSetting('isMuted',m);gameState.isMuted=m; /* muteToggleButton eliminado */ if(!m)playClickSound();}
+    function handleButtonVisibilityChange(key,v){saveSetting(key,v);applyButtonVisibility();playClickSound();}
+    function applyButtonVisibility(){if(hintButton)hintButton.style.display=(gameState.settings.showHintButton&&gameState.gameInProgress)?'flex':'none';if(pencilToggleButton)pencilToggleButton.style.display=(gameState.settings.showPencilButton&&gameState.gameInProgress)?'flex':'none'; /* undoButton eliminado */}
+    // Funciones colores eliminadas
+    function setupSettingsScreen(){if(!themeSelect||!fontSelect||!muteToggleSetting||!showHintToggle||!showPencilToggle)return;themeSelect.value=gameState.settings.theme;fontSelect.value=gameState.settings.boardFont;muteToggleSetting.checked=gameState.isMuted;showHintToggle.checked=gameState.settings.showHintButton;showPencilToggle.checked=gameState.settings.showPencilButton;}
+    function deepMerge(t, s) { if (!s) return t; for (const k in s) { if (s.hasOwnProperty(k)) { const sk = s[k]; const tk = t?.[k]; if (sk && typeof sk === 'object' && !Array.isArray(sk)) { if (!tk || typeof tk !== 'object' || Array.isArray(tk)) { t[k] = {}; } deepMerge(t[k], sk); } else if (sk !== undefined) { t[k] = sk; } } } return t; }
+    // ===== CORRECCIÓN: applySettings sin muteToggleButton y colores =====
+    function applySettings(){if(!document.body)return;try{if(gameState.settings.theme==='auto')applyDynamicTheme();else document.body.dataset.theme=gameState.settings.theme;applyFont(gameState.settings.boardFont);/* Colores eliminados */}catch(e){console.error("Error al aplicar settings:",e);document.body.dataset.theme='light';applyFont(DEFAULT_SETTINGS.boardFont);}}
+
+
+    // --- LÓGICA DE DESAFÍO DIARIO Y PISTAS ---
+    function setSeed(s){randomSeed=s;} function seededRandom(){let x=Math.sin(randomSeed++)*1e4;return x-Math.floor(x);}
+    function startDailyChallenge(){playClickSound();cancelAnimationFrame(confettiAnimationId);if(confettiCtx)confettiCtx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);gameState.gameInProgress=true;gameState.isDailyChallenge=true;if(resumeGameBtn)resumeGameBtn.style.display='none';if(goToLeaderboardBtn)goToLeaderboardBtn.style.display='none';if(shareDailyResultBtn)shareDailyResultBtn.style.display='none';gameState.currentDifficulty=DIFFICULTIES.MEDIO;gameState.lives=3;gameState.selectedTile=null;gameState.secondsElapsed=0;gameState.isPaused=false;gameState.lastMove=null;/*undoButton eliminado*/clearAllErrors();gameState.isPencilMode=false;if(pencilToggleButton)pencilToggleButton.classList.remove('active');gameState.hintUsed=false;if(hintButton)hintButton.classList.remove('disabled');gameState.notesBoard=Array(9).fill(null).map(()=>Array(9).fill(null).map(()=>new Set()));gameState.gameStats={/*hasUsedUndo:false,*/notesPlaced:0, hintUsedThisGame: false};applyButtonVisibility();renderTimer();startTimer();if(pauseButton)pauseButton.style.display='flex';const d=new Date(),seed=parseInt(`${d.getFullYear()}${('0'+(d.getMonth()+1)).slice(-2)}${('0'+d.getDate()).slice(-2)}`);setSeed(seed);let b=generateEmptyBoard();generateSolution(b,seededRandom);gameState.solution=JSON.parse(JSON.stringify(b));gameState.puzzleBoard=createPuzzle(b,DIFFICULTIES.MEDIO,seededRandom);updateLivesDisplay();updateIngameStreakDisplay();renderBoardImproved();renderKeypad();showScreen('game');}
+    function provideHint(){if(gameState.hintUsed||!hintButton)return;playClickSound();clearHintHighlights();let h=findNakedSingle();if(!h)h=findHiddenSingle();if(h){gameState.hintUsed=true;gameState.gameStats.hintUsedThisGame=true;hintButton.classList.add('disabled');gameState.secondsElapsed+=60;renderTimer();showFlashMessage("Pista usada: +1 minuto");const{row:r,col:c,num:n,logic:l,involved}=h;if(!gameState.puzzleBoard[r])gameState.puzzleBoard[r]=[];gameState.puzzleBoard[r][c]=n;if(initialPuzzleForResume?.[r])initialPuzzleForResume[r][c]=n;if(gameState.notesBoard?.[r]?.[c])gameState.notesBoard[r][c].clear();renderBoardImproved();updateKeypad();const t=boardElement?.children[r*9+c];if(t){gameState.selectedTile=t;highlightTilesFromBoard(r,c);highlightHintCells({row:r,col:c},involved);}if(hintExplanation)hintExplanation.innerHTML=l;showOverlay('hintOverlay',true);}else showFlashMessage("No se encontraron pistas simples");}
+    function findNakedSingle(){for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(gameState.puzzleBoard?.[r]?.[c]===0){let p=new Set([1,2,3,4,5,6,7,8,9]);let inv=[];for(let i=0;i<9;i++){const vr=gameState.puzzleBoard?.[r]?.[i];if(vr!==0&&vr!==undefined){p.delete(vr);inv.push({row:r,col:i});}}for(let i=0;i<9;i++){const vc=gameState.puzzleBoard?.[i]?.[c];if(vc!==0&&vc!==undefined){p.delete(vc);inv.push({row:i,col:c});}}const br=Math.floor(r/3)*3,bc=Math.floor(c/3)*3;for(let i=br;i<br+3;i++)for(let j=bc;j<bc+3;j++){const vb=gameState.puzzleBoard?.[i]?.[j];if(vb!==0&&vb!==undefined){p.delete(vb);inv.push({row:i,col:j});}}if(p.size===1){const n=p.values().next().value;return{row:r,col:c,num:n,logic:`En <span class="hint-cell">F${r+1},C${c+1}</span>, el <strong>${n}</strong> es el único posible (ver celdas amarillas).`,involved:inv};}}return null;}
+    function findHiddenSingle(){for(let r=0;r<9;r++)for(let n=1;n<=9;n++){let co=0,lc=-1,inv=[];if([...(gameState.puzzleBoard?.[r]||[])].includes(n))continue;for(let c=0;c<9;c++)if(gameState.puzzleBoard?.[r]?.[c]===0&&isPossible(r,c,n)){co++;lc=c;}if(co===1){for(let c=0;c<9;c++){if(gameState.puzzleBoard?.[r]?.[c]!==0)inv.push({row:r,col:c});else if(c!==lc&&!isPossible(r,c,n))inv.push({row:r,col:c});}return{row:r,col:lc,num:n,logic:`En la <span class="hint-cell">Fila ${r+1}</span>, <span class="hint-cell">C${lc+1}</span> es el único lugar para <strong>${n}</strong> (ver celdas amarillas).`,involved:inv};}}/*...(col/box omitted)...*/return null;}
+    function isPossible(r,c,n){for(let i=0;i<9;i++)if(gameState.puzzleBoard?.[r]?.[i]===n)return false;for(let i=0;i<9;i++)if(gameState.puzzleBoard?.[i]?.[c]===n)return false;const br=Math.floor(r/3)*3,bc=Math.floor(c/3)*3;for(let i=br;i<br+3;i++)for(let j=bc;j<bc+3;j++)if(gameState.puzzleBoard?.[i]?.[j]===n)return false;return true;}
+
+    // --- LÓGICA DE LOGROS Y CLASIFICACIÓN ---
+    function checkAchievements(){try{const{currentDifficulty:d,secondsElapsed:t,gameStats:gs,streaks:s}=gameState;if(d===DIFFICULTIES.MEDIO&&t<300)unlockAchievement('speedRacer');if(d===DIFFICULTIES.DIFÍCIL&&!gs.hintUsedThisGame)unlockAchievement('perfectionist');const ts=Object.values(s||{}).reduce((sum,v)=>sum+v,0);if(ts>=10)unlockAchievement('streakMaster');if(gameState.isDailyChallenge)unlockAchievement('dailyConqueror');}catch(e){console.error("Error checking achievements:",e);}}
+    function unlockAchievement(id){if(!id||!ACHIEVEMENT_DEFINITIONS[id]||gameState.achievements[id])return;gameState.achievements[id]=true;saveAchievements();playAchievementSound();showFlashMessage(`¡Logro: ${ACHIEVEMENT_DEFINITIONS[id]?.title||id}!`);}
+    function renderAchievementsPage(forceResetTabs=false){if(!achievementsList)return;achievementsList.innerHTML='';for(const id in ACHIEVEMENT_DEFINITIONS){const d=ACHIEVEMENT_DEFINITIONS[id],u=gameState.achievements[id];const li=document.createElement('li');li.className='achievement-item';if(!u)li.classList.add('locked');let i=u?(d.title.split(' ')[1]||'🎖️'):'🔒';li.innerHTML=`<div class="achievement-icon">${i}</div><div class="achievement-details"><h3>${d.title}</h3><p>${d.desc}</p></div>`;achievementsList.appendChild(li);}if(forceResetTabs){const aboutScreen=document.getElementById('about-screen');if(!aboutScreen)return;const currentTabButtons=aboutScreen.querySelectorAll('.tab-btn');const currentTabContents=aboutScreen.querySelectorAll('.tab-content');currentTabButtons.forEach(b=>b.classList.remove('active'));currentTabContents.forEach(c=>c.classList.remove('active'));const infoTabBtn=aboutScreen.querySelector('.tab-btn[data-tab="info-tab"]');const infoTabContent=aboutScreen.querySelector('#info-tab');if(infoTabBtn)infoTabBtn.classList.add('active');if(infoTabContent)infoTabContent.classList.add('active');}}
+    function saveToLeaderboard(t){try{const score={time:t,date:new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'})};let s=gameState.leaderboards.daily||[];s.push(score);s.sort((a,b)=>a.time-b.time);gameState.leaderboards.daily=s.slice(0,5);saveLeaderboards();}catch(e){console.error("Error saving leaderboard:",e);}}
+    function renderLeaderboardsPage(){if(!leaderboardTableBody)return;leaderboardTableBody.innerHTML='';const s=gameState.leaderboards.daily||[];if(s.length===0){leaderboardTableBody.innerHTML='<tr><td colspan="3">Aún no hay récords. ¡Juega el Desafío Diario!</td></tr>';return;}s.forEach((sc,i)=>{const tr=document.createElement('tr');tr.innerHTML=`<td>#${i+1}</td><td>${formatTime(sc.time)}</td><td>${sc.date}</td>`;leaderboardTableBody.appendChild(tr);});}
+
+    // --- LÓGICA PARA COMPARTIR ---
+    function generatePuzzleCode(){if(!initialPuzzleForResume||initialPuzzleForResume.length!==9)return null;try{const code=initialPuzzleForResume.flat().join('');return btoa(code);}catch(e){console.error("Error generating puzzle code:",e);return null;}}
+    function loadPuzzleFromCode(code){try{const decoded=atob(code);if(decoded.length!==81||!/^[0-9]{81}$/.test(decoded))throw new Error("Invalid puzzle code format");const puzzleGrid=[];for(let i=0;i<9;i++)puzzleGrid.push(decoded.substring(i*9,(i+1)*9).split('').map(Number));startGame(DIFFICULTIES.MEDIO,puzzleGrid);showFlashMessage("Puzzle compartido cargado.");if(window.history.replaceState)window.history.replaceState({},document.title,window.location.pathname);}catch(e){console.error("Error loading puzzle from code:",e);showFlashMessage("Error al cargar puzzle compartido.");createDifficultyButtons();}}
+    async function shareCurrentPuzzle(){playClickSound();const code=generatePuzzleCode();if(!code){showFlashMessage("No se pudo generar código.");return;}const url=`${window.location.origin}${window.location.pathname}?puzzle=${code}`;const text=`¡Te reto a resolver este puzzle de Sudoku Pro!`;try{if(navigator.share)await navigator.share({title:'Sudoku Pro Puzzle',text:text,url:url});else if(navigator.clipboard)await navigator.clipboard.writeText(`${text} ${url}`);else throw new Error('Share/Clipboard not supported');showFlashMessage("¡Enlace del puzzle copiado/compartido!");}catch(e){console.error('Error sharing puzzle:',e);showFlashMessage("No se pudo compartir o copiar el enlace.");}showOverlay('pause',false);}
+    async function shareDailyResult(){playClickSound();const t=formatTime(gameState.secondsElapsed),d=new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'}),tx=`¡Sudoku Pro: Desafío Diario del ${d} completado en ${t}! ¿Puedes superarlo? #SudokuPro`,u=window.location.href.split('?')[0];try{if(navigator.share)await navigator.share({title:'Resultado Sudoku Pro',text:tx,url:u});else if(navigator.clipboard)await navigator.clipboard.writeText(`${tx} ${u}`);else throw new Error('Share/Clipboard not supported');showFlashMessage("¡Resultado copiado/compartido!");}catch(e){console.error('Error sharing:',e);showFlashMessage("No se pudo compartir o copiar.");}}
+
+    // --- GENERADOR DE SUDOKU Y HELPERS ---
+    function getNumberCounts(){const c={};for(let i=1;i<=9;i++)c[i]=0;for(let r=0;r<9;r++)for(let j=0;j<9;j++)if(gameState.puzzleBoard?.[r]?.[j]!==0)c[gameState.puzzleBoard[r][j]]++;return c;}
+    // ===== MODIFICADO: updateKeypad con checkmark =====
+    function updateKeypad(){if(!keypadElement)return;try{const counts=getNumberCounts();const correctCounts={};for(let i=1;i<=9;i++)correctCounts[i]=0;for(let r=0;r<9;r++)for(let c=0;c<9;c++){const n=gameState.puzzleBoard?.[r]?.[c];if(n!==0&&n!==undefined&&n===gameState.solution?.[r]?.[c])correctCounts[n]++;}keypadElement.querySelectorAll('.keypad-number').forEach(key=>{const numTextEl=key.querySelector('.keypad-number-text');const checkmarkEl=key.querySelector('.keypad-checkmark');if(!numTextEl||!checkmarkEl)return;const num=parseInt(numTextEl.textContent);if(isNaN(num))return;const isComplete=correctCounts[num]===9;key.classList.toggle('completed',isComplete);if(isComplete){numTextEl.style.opacity='0';checkmarkEl.style.display='block';key.style.pointerEvents='none';}else{numTextEl.style.opacity='1';checkmarkEl.style.display='none';key.style.pointerEvents='auto';}});}catch(e){console.error("Error updating keypad:",e);}}
+    function checkWin(){for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(gameState.puzzleBoard?.[r]?.[c]===0)return false;return true;}
+    function generateEmptyBoard(){return Array(9).fill(0).map(()=>Array(9).fill(0));}
+    function shuffle(a,rnd=Math.random){for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+    function findEmpty(b){for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(b?.[r]?.[c]===0)return[r,c];return null;}
+    function isValid(b,n,p){const[r,c]=p;for(let i=0;i<9;i++){if(b?.[r]?.[i]===n&&c!==i)return false;if(b?.[i]?.[c]===n&&r!==i)return false;}const br=Math.floor(r/3)*3,bc=Math.floor(c/3)*3;for(let i=br;i<br+3;i++)for(let j=bc;j<bc+3;j++)if(b?.[i]?.[j]===n&&(i!==r||j!==c))return false;return true;}
+    function generateSolution(b,rnd=Math.random){const e=findEmpty(b);if(!e)return true;const[r,c]=e,nums=shuffle(Array.from({length:9},(_,i)=>i+1),rnd);for(const n of nums){if(isValid(b,n,[r,c])){b[r][c]=n;if(generateSolution(b,rnd))return true;b[r][c]=0;}}return false;}
+    
+    // ===== MODIFICADO: createPuzzle con verificación de solución única =====
+    function createPuzzle(board, difficulty, randFunc = Math.random) {
+        try {
+            let puzzle = board.map(row => [...row]);
+            let targetToRemove = CELLS_TO_REMOVE[difficulty] || 50;
+            const cells = [];
+            for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) cells.push({ r, c });
+            shuffle(cells, randFunc);
+            let cellsRemoved = 0;
+            for (let i = 0; i < cells.length && cellsRemoved < targetToRemove; i++) {
+                const { r, c } = cells[i];
+                if (puzzle[r]?.[c] !== 0) {
+                    const temp = puzzle[r][c];
+                    puzzle[r][c] = 0;
+                    let boardCopy = puzzle.map(row => [...row]);
+                    if (countSolutions(boardCopy) !== 1) {
+                        puzzle[r][c] = temp;
+                    } else {
+                        cellsRemoved++;
+                    }
+                }
+            }
+             if (cellsRemoved < targetToRemove * 0.8) { console.warn(`No se pudieron quitar ${targetToRemove} celdas. Se quitaron ${cellsRemoved}.`); }
+            initialPuzzleForResume = JSON.parse(JSON.stringify(puzzle));
+            return puzzle;
+        } catch (e) {
+            console.error("Error creating puzzle with unique check:", e, "Falling back to simpler method.");
+            const p = JSON.parse(JSON.stringify(board)); let rem = CELLS_TO_REMOVE[difficulty] || 50, att = 200;
+            while(rem > 0 && att > 0) { const r = Math.floor(randFunc() * 9), c = Math.floor(randFunc() * 9); if (p?.[r]?.[c] !== 0) { p[r][c] = 0; rem--; } att--; }
+            initialPuzzleForResume = JSON.parse(JSON.stringify(p));
+            return p;
+        }
+    }
+    let solutionCounter;
+    function countSolutions(board) {
+        solutionCounter = 0;
+        solveSudokuInternal(board);
+        return solutionCounter;
+    }
+    function solveSudokuInternal(board) {
+        const emptySpot = findEmpty(board);
+        if (!emptySpot) { solutionCounter++; return true; }
+        const [row, col] = emptySpot;
+        for (let num = 1; num <= 9; num++) {
+            if (isValid(board, num, [row, col])) {
+                board[row][col] = num;
+                solveSudokuInternal(board);
+                if (solutionCounter > 1) { board[row][col] = 0; return true; }
+                board[row][col] = 0;
+            }
+        }
+        return false;
+    }
+
+    // --- Animación de Victoria (Cascada) ---
+    function animateBoardWin() {
+        if (!boardElement) return;
+        const tiles = Array.from(boardElement.children);
+        for (let i = 0; i < tiles.length; i++) {
+            const tile = tiles[i];
+            if (!tile) continue;
+            const row = Math.floor(i / 9);
+            const col = i % 9;
+            const delay = (row + col) * 30;
+            tile.classList.remove('win-cascade');
+            setTimeout(() => {
+                tile.classList.add('win-cascade');
+                setTimeout(() => tile.classList.remove('win-cascade'), 500);
+            }, delay);
+        }
+    }
+
+
+    // --- INICIALIZACIÓN FINAL ---
+    try {
+        initialize();
+    } catch (error) {
+        console.error("CRITICAL ERROR during initialization - Fallback:", error);
+        document.body.innerHTML = `<div style="padding: 20px; text-align: center; color: black; background-color: white; font-family: sans-serif;"><h1>Error Inesperado</h1><p>Ocurrió un problema al cargar el juego.</p><p><strong>Solución Sugerida:</strong> Intenta borrar los datos de navegación para este sitio (caché y datos del sitio) y recarga la página.</p><details><summary>Detalles Técnicos</summary><pre style="text-align: left; background-color: #eee; padding: 10px; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word;">${error.stack || error}</pre></details></div>`;
+    }
+});
