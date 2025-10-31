@@ -90,6 +90,7 @@ body[data-theme="dark"] .keypad-number.disabled, body[data-theme="neon"] .keypad
 #confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 500; }
 .screen { width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; padding: 15px; box-sizing: border-box; }
 .screen.active { display: flex; }
+/* Transiciones de pantalla eliminadas */
 
 /* --- Pantalla de Inicio --- */
 #start-screen { justify-content: flex-start; text-align: center; padding-top: max(8vh, 50px); padding-bottom: 30px; gap: 20px; overflow-y: auto; }
@@ -98,13 +99,14 @@ body[data-theme="dark"] .keypad-number.disabled, body[data-theme="neon"] .keypad
 .icon-btn { width: 40px; height: 40px; border-radius: 50%; background-color: transparent; color: var(--color-hint); display: flex; justify-content: center; align-items: center; font-size: 1.5rem; font-weight: bold; border: none; cursor: pointer; transition: background-color 0.3s, color 0.3s; }
 .icon-btn:hover { background-color: rgba(0, 0, 0, 0.05); }
 body[data-theme="dark"] .icon-btn { color: var(--color-hint); } body[data-theme="dark"] .icon-btn:hover { background-color: rgba(255, 255, 255, 0.1); }
-/* Iconos de Sonido (en settings) */
+/* Icono Mute (en settings) */
 #mute-toggle-btn .icon-sound-on { display: inline; } #mute-toggle-btn .icon-sound-off { display: none; } #mute-toggle-btn.muted .icon-sound-on { display: none; } #mute-toggle-btn.muted .icon-sound-off { display: inline; }
 
 .title-container { display: flex; align-items: center; justify-content: center; margin-bottom: 0; }
 .colorful-title { font-size: clamp(2.2rem, 10vw, 3rem); font-weight: bold; }
 .colorful-title span:nth-child(1){color:#4285F4}.colorful-title span:nth-child(2){color:#DB4437}.colorful-title span:nth-child(3){color:#F4B400}.colorful-title span:nth-child(4){color:#4285F4}.colorful-title span:nth-child(5){color:#0F9D58}.colorful-title span:nth-child(6){color:#DB4437}.colorful-title span:nth-child(7){margin-left:.5ch}.colorful-title span:nth-child(8){color:#F4B400}.colorful-title span:nth-child(9){color:#4285F4}.colorful-title span:nth-child(10){color:#0F9D58}
 
+/* ===== MODIFICADO: Botones Menú Principal 3/4 tamaño ===== */
 .neumorphic {
     border-radius: 12px; border: none; cursor: pointer; transition: all 0.2s ease-out;
     background: var(--color-bg);
@@ -144,7 +146,8 @@ body[data-theme] .exit-btn { background-color: var(--color-button-text); color: 
 .logo-btn { width: 40px; height: 40px; font-size: 1.5rem; border-radius: 50%; background-color: transparent; color: var(--color-hint); display: flex; justify-content: center; align-items: center; font-weight: bold; cursor: pointer; border: none; transition: background-color 0.3s, color 0.3s; }
 .logo-btn:hover { background-color: rgba(0, 0, 0, 0.05); } body[data-theme="dark"] .logo-btn { color: var(--color-hint); } body[data-theme="dark"] .logo-btn:hover { background-color: rgba(255, 255, 255, 0.1); }
 
-.bottom-button-container { width: 80%; max-width: 350px; margin-top: 25px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 15px; }
+/* Contenedor Botón Clasificación (ahora parte del flujo) */
+.bottom-button-container { display: none; /* Oculto, ya que el botón se movió */ }
 #leaderboard-btn { width: 100%; margin-bottom: 0; }
 
 /* --- Pantalla de Juego --- */

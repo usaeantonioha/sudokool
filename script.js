@@ -38,7 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
         errorCounterElement = document.getElementById('error-counter');
         // exitButton eliminado
 
-        // ===== CORRECCIÓN: Lista de elementos esenciales actualizada =====
         const essentialElements = { boardElement, keypadElement, difficultyButtonsContainer, settingsButton, startScreen: screens.start, gameScreen: screens.game, settingsScreen: screens.settings, themeSelect, fontSelect, muteToggleSetting, eraseButton, errorCounterElement, timerDisplay, backToMenuBtn, mainMenuLogo, dailyChallengeButton, leaderboardButton };
         for (const key in essentialElements) {
             if (!essentialElements[key]) {
@@ -197,20 +196,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- MANEJADORES DE EVENTOS ---
     function handleDifficultyClick(event){const b=event.target.closest('.difficulty-btn');if(b){playClickSound();startGame(b.dataset.difficulty);}}
-    function handleBoardClick(event){if(gameState.isPaused)return;const t=event.target.closest('.tile');if(!t)return;gameState.selectedTile=t;clearHintHighlights();clearErrorHighlights(); highlightTilesFromBoard(t.dataset.row,t.dataset.col);}
-    function handleKeypadClick(event){if(gameState.isPaused)return;const k=event.target.closest('.keypad-number');if(k){playClickSound();if(k.classList.contains('completed')) return; const numTextEl=k.querySelector('.keypad-number-text');if(!numTextEl)return;const n=parseInt(numTextEl.textContent);if(isNaN(n)||n<1||n>9)return;if(gameState.selectedTile){clearHintHighlights();clearErrorHighlights(); if(gameState.isPencilMode)toggleNote(n);else placeNumber(n);}else{clearHintHighlights();clearErrorHighlights(); highlightNumbersFromKeypad(n);}}}
+    // ===== CORRECCIÓN: Añadido chequeo de gameInProgress =====
+    function handleBoardClick(event){if(gameState.isPaused || !gameState.gameInProgress)return;const t=event.target.closest('.tile');if(!t)return;gameState.selectedTile=t;clearHintHighlights();clearErrorHighlights(); highlightTilesFromBoard(t.dataset.row,t.dataset.col);}
+    function handleKeypadClick(event){if(gameState.isPaused || !gameState.gameInProgress)return;const k=event.target.closest('.keypad-number');if(k){playClickSound();if(k.classList.contains('completed')) return; const numTextEl=k.querySelector('.keypad-number-text');if(!numTextEl)return;const n=parseInt(numTextEl.textContent);if(isNaN(n)||n<1||n>9)return;if(gameState.selectedTile){clearHintHighlights();clearErrorHighlights(); if(gameState.isPencilMode)toggleNote(n);else placeNumber(n);}else{clearHintHighlights();clearErrorHighlights(); highlightNumbersFromKeypad(n);}}}
 
     // --- LÓGICA DEL JUEGO ---
-    function placeNumber(num){if(!gameState.selectedTile||gameState.selectedTile.classList.contains('hint'))return;clearErrorHighlights();clearHintHighlights();const r=parseInt(gameState.selectedTile.dataset.row),c=parseInt(gameState.selectedTile.dataset.col);if(isNaN(r)||isNaN(c)||r<0||r>8||c<0||c>8){console.error("Coords inválidas:",r,c);return;}if(gameState.selectedTile.classList.contains('tile-wrong-number')){playErrorSound();showFlashMessage("Número ya marcado como incorrecto. Bórralo primero.");return;}const nts=gameState.notesBoard?.[r]?.[c]||new Set();
+    function placeNumber(num){if(!gameState.gameInProgress||!gameState.selectedTile||gameState.selectedTile.classList.contains('hint'))return;clearErrorHighlights();clearHintHighlights();const r=parseInt(gameState.selectedTile.dataset.row),c=parseInt(gameState.selectedTile.dataset.col);if(isNaN(r)||isNaN(c)||r<0||r>8||c<0||c>8){console.error("Coords inválidas:",r,c);return;}if(gameState.selectedTile.classList.contains('tile-wrong-number')){playErrorSound();showFlashMessage("Número ya marcado como incorrecto. Bórralo primero.");return;}const nts=gameState.notesBoard?.[r]?.[c]||new Set();
     // No guardar lastMove
     if(nts)nts.clear();renderTileNotes(r,c);
     if(!gameState.puzzleBoard[r])gameState.puzzleBoard[r]=[];gameState.puzzleBoard[r][c]=num;const numEl=gameState.selectedTile.querySelector('.tile-number');if(numEl){numEl.textContent=num.toString();numEl.classList.add('pop-in');setTimeout(()=>numEl.classList.remove('pop-in'),200);}else console.warn("NumEl missing");gameState.selectedTile.classList.add('user-filled');gameState.selectedTile.classList.remove('is-notes');highlightTilesFromBoard(r,c);
     // undoButton eliminado
     if(gameState.solution?.[r]?.[c]===num){gameState.selectedTile.classList.remove('tile-wrong-number');autoCleanNotes(r,c,num);if(checkWin()){gameState.selectedTile.classList.add('last-correct'); setTimeout(() => {gameState.selectedTile?.classList.remove('last-correct'); endGame(true);}, 800);} }else{playErrorSound();if(navigator.vibrate)navigator.vibrate(200);gameState.selectedTile.classList.add('tile-error','tile-wrong-number');highlightConflicts(r,c,num);setTimeout(()=>{if(gameState.selectedTile)gameState.selectedTile.classList.remove('tile-error');},500);
     // undoButton eliminado
-    gameState.lives--;updateLivesDisplay();showFlashMessage("Número equivocado");if(gameState.lives<=0)endGame(false);}updateKeypad();}
+    gameState.lives--;updateLivesDisplay();showFlashMessage("Número equivocado");
+    // ===== CORRECCIÓN: Lógica de Game Over =====
+    if(gameState.lives <= 0) { endGame(false); return; /* Detiene la ejecución aquí */ }
+    }updateKeypad();}
     // undoLastMove eliminado
-    function eraseNumber(){if(!gameState.selectedTile||gameState.isPaused||gameState.selectedTile.classList.contains('hint'))return;playClickSound();clearHintHighlights();const r=parseInt(gameState.selectedTile.dataset.row),c=parseInt(gameState.selectedTile.dataset.col);if(isNaN(r)||isNaN(c))return;const nts=gameState.notesBoard?.[r]?.[c]||new Set();
+    function eraseNumber(){if(!gameState.gameInProgress||!gameState.selectedTile||gameState.isPaused||gameState.selectedTile.classList.contains('hint'))return;playClickSound();clearHintHighlights();const r=parseInt(gameState.selectedTile.dataset.row),c=parseInt(gameState.selectedTile.dataset.col);if(isNaN(r)||isNaN(c))return;const nts=gameState.notesBoard?.[r]?.[c]||new Set();
     // No guardar lastMove
     if(gameState.puzzleBoard?.[r]?.[c]!==0&&gameState.puzzleBoard?.[r]?.[c]!==undefined){if(!gameState.puzzleBoard[r])gameState.puzzleBoard[r]=[];gameState.puzzleBoard[r][c]=0;const nEl=gameState.selectedTile.querySelector('.tile-number');if(nEl)nEl.textContent='';gameState.selectedTile.classList.remove('user-filled','tile-wrong-number');clearErrorHighlights();updateKeypad();}else if(nts.size>0){nts.clear();renderTileNotes(r,c);}highlightTilesFromBoard(r,c);}
     function endGame(isWin){stopTimer();if(pauseButton)pauseButton.style.display='none';if(pencilToggleButton)pencilToggleButton.style.display='none';if(hintButton)hintButton.style.display='none';gameState.gameInProgress=false;if(resumeGameBtn)resumeGameBtn.style.display='none';/*undoButton eliminado*/gameState.lastMove=null;clearAllErrors();clearHintHighlights();let timeComparisonText='';if(isWin){animateBoardWin(); launchConfetti();playWinSound();gameState.streaks[gameState.currentDifficulty]++;gameState.totalWins[gameState.currentDifficulty]++;saveTotalWins();checkAchievements();if(gameState.isDailyChallenge){saveToLeaderboard(gameState.secondsElapsed);if(goToLeaderboardBtn)goToLeaderboardBtn.style.display='block';if(shareDailyResultBtn)shareDailyResultBtn.style.display='block';}else{const avgTime=AVERAGE_TIMES[gameState.currentDifficulty];if(avgTime){const diff=gameState.secondsElapsed-avgTime;timeComparisonText=diff<=0?`(${Math.abs(diff)}s más rápido que el promedio)`:`(${diff}s más lento que el promedio)`;}}if(gameOverMsg){gameOverMsg.textContent='¡FELICITACIONES!';gameOverMsg.classList.add('win');}else{gameOverMsg.classList.remove('win');}}else{gameState.streaks[gameState.currentDifficulty]=0;if(gameOverMsg){gameOverMsg.textContent='Game Over';gameOverMsg.className='lose';}if(gameOverMsg)gameOverMsg.classList.remove('win');}if(timeComparisonElement)timeComparisonElement.textContent=timeComparisonText;saveStreaks();setTimeout(() => showOverlay('gameOver', true), 600);}
@@ -246,6 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function highlightHintCells(targetCoords,involvedCoords=[]){clearHintHighlights();const targetTile=boardElement?.children[targetCoords.row*9+targetCoords.col];if(targetTile)targetTile.classList.add('tile-hint-target');involvedCoords.forEach(coords=>{const involvedTile=boardElement?.children[coords.row*9+coords.col];if(involvedTile)involvedTile.classList.add('tile-hint-involved');});}
 
     // --- LÓGICA DE GUARDADO (localStorage) ---
+    // ===== CORRECCIÓN: Funciones de carga robustecidas =====
     function saveStreaks(){try{localStorage.setItem('sudokuStreaks',JSON.stringify(gameState.streaks));}catch(e){console.error("Error saving streaks:",e);}}
     function loadStreaks(){const key='sudokuStreaks'; const defaultVal=JSON.parse(JSON.stringify(DEFAULT_STREAKS)); gameState.streaks = defaultVal; try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'&&Object.keys(DEFAULT_STREAKS).every(k=>typeof p[k]==='number')){gameState.streaks=deepMerge(defaultVal, p);return;}throw new Error("Invalid format");}}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);}}
     function saveTotalWins(){try{localStorage.setItem('sudokuTotalWins',JSON.stringify(gameState.totalWins));}catch(e){console.error("Error saving wins:",e);}}
@@ -387,6 +391,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }, delay);
         }
     }
+
 
     // --- INICIALIZACIÓN FINAL ---
     try {
