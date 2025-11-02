@@ -76,8 +76,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function addEventListeners() {
         document.body.addEventListener('click', initAudio, { once: true });
         try {
-            // ===== CORRECCIÓN: backToMenuBtn llama a goHomeFromPause =====
-            backToMenuBtn?.addEventListener('click', goHomeFromPause);
+            // ===== CORRECCIÓN: backToMenuBtn llama a togglePause =====
+            backToMenuBtn?.addEventListener('click', togglePause);
             restartBtn?.addEventListener('click', restartGame);
             mainMenuLogo?.addEventListener('click', () => { playClickSound(); renderAchievementsPage(true); showOverlay('about', true); });
             settingsButton?.addEventListener('click', () => { playClickSound(); setupSettingsScreen(); showOverlay('settings', true); });
@@ -286,7 +286,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Funciones colores eliminadas
     function setupSettingsScreen(){if(!themeSelect||!fontSelect||!muteToggleSetting||!showHintToggle||!showPencilToggle)return;themeSelect.value=gameState.settings.theme;fontSelect.value=gameState.settings.boardFont;muteToggleSetting.checked=gameState.isMuted;showHintToggle.checked=gameState.settings.showHintButton;showPencilToggle.checked=gameState.settings.showPencilButton;}
     function deepMerge(t, s) { if (!s) return t; for (const k in s) { if (s.hasOwnProperty(k)) { const sk = s[k]; const tk = t?.[k]; if (sk && typeof sk === 'object' && !Array.isArray(sk)) { if (!tk || typeof tk !== 'object' || Array.isArray(tk)) { t[k] = {}; } deepMerge(t[k], sk); } else if (sk !== undefined) { t[k] = sk; } } } return t; }
-    // ===== CORRECCIÓN: applySettings sin muteToggleButton y colores =====
     function applySettings(){if(!document.body)return;try{if(gameState.settings.theme==='auto')applyDynamicTheme();else document.body.dataset.theme=gameState.settings.theme;applyFont(gameState.settings.boardFont);/* Colores eliminados */}catch(e){console.error("Error al aplicar settings:",e);document.body.dataset.theme='light';applyFont(DEFAULT_SETTINGS.boardFont);}}
 
 
