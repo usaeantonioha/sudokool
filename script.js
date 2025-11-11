@@ -31,7 +31,6 @@ document.addEventListener('DOMContentLoaded', () => {
         muteToggleSetting, showHintToggle, showPencilToggle, /*showUndoToggle,*/ // Eliminado
         sharePuzzleBtn, timeComparisonElement, eraseButton, errorCounterElement;
         // muteToggleButton fue eliminado
-        // exitButton fue eliminado
 
     function getElements() {
         screens = { start: document.getElementById('start-screen'), game: document.getElementById('game-screen'), gameOver: document.getElementById('game-over-screen'), /*instructions: document.getElementById('instructions-screen'),*/ about: document.getElementById('about-screen'), pause: document.getElementById('pause-screen'), hintOverlay: document.getElementById('hint-overlay-screen'), leaderboard: document.getElementById('leaderboard-screen'), settings: document.getElementById('settings-screen') };
@@ -39,7 +38,8 @@ document.addEventListener('DOMContentLoaded', () => {
         errorCounterElement = document.getElementById('error-counter');
         // exitButton eliminado
 
-        // ===== CORRECCIÓN: Lista de elementos esenciales actualizada (exitButton eliminado) =====
+        // ===== CORRECCIÓN: Lista de elementos esenciales actualizada =====
+        // Se eliminó 'muteToggleButton' y 'exitButton' de esta lista.
         const essentialElements = { boardElement, keypadElement, difficultyButtonsContainer, settingsButton, startScreen: screens.start, gameScreen: screens.game, settingsScreen: screens.settings, themeSelect, fontSelect, muteToggleSetting, eraseButton, errorCounterElement, timerDisplay, backToMenuBtn, mainMenuLogo, dailyChallengeButton, leaderboardButton };
         for (const key in essentialElements) {
             if (!essentialElements[key]) {
@@ -274,7 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LÓGICA DE MODO LÁPIZ Y AUTO-LIMPIEZA ---
     function togglePencilMode(){playClickSound();gameState.isPencilMode=!gameState.isPencilMode;if(pencilToggleButton)pencilToggleButton.classList.toggle('active',gameState.isPencilMode); if(boardElement)boardElement.classList.toggle('board-pencil-mode',gameState.isPencilMode);}
     function toggleNote(num){if(!gameState.selectedTile)return;const r=parseInt(gameState.selectedTile.dataset.row),c=parseInt(gameState.selectedTile.dataset.col);if(isNaN(r)||isNaN(c)||gameState.puzzleBoard?.[r]?.[c]!==0)return;const nts=gameState.notesBoard?.[r]?.[c];if(!nts)return;if(nts.has(num))nts.delete(num);else{nts.add(num);gameState.gameStats.notesPlaced++;if(gameState.gameStats.notesPlaced>=50)unlockAchievement('thinkingAhead');}renderTileNotes(r,c);}
-    function autoCleanNotes(row,col,num){for(let i=0;i<9;i++){if(gameState.notesBoard?.[row]?.[i]?.has(num)){gameState.notesBoard[row][i].delete(num);renderTileNotes(row,i);}}for(let i=0;i<9;i++){if(gameState.notesBoard?.[i]?.[col]?.has(num)){gameState.notesBoard[i][col].delete(num);renderTileNotes(i,col);}}const br=Math.floor(row/3)*3,bc=Math.floor(c/3)*3;for(let i=br;i<br+3;i++)for(let j=bc;j<bc+3;j++)if(gameState.notesBoard?.[i]?.[j]?.has(num)){gameState.notesBoard[i][j].delete(num);renderTileNotes(i,j);}}
+    function autoCleanNotes(row,col,num){for(let i=0;i<9;i++){if(gameState.notesBoard?.[row]?.[i]?.has(num)){gameState.notesBoard[row][i].delete(num);renderTileNotes(row,i);}}for(let i=0;i<9;i++){if(gameState.notesBoard?.[i]?.[col]?.has(num)){gameState.notesBoard[i][col].delete(num);renderTileNotes(i,col);}}const br=Math.floor(row/3)*3,bc=Math.floor(col/3)*3;for(let i=br;i<br+3;i++)for(let j=bc;j<bc+3;j++)if(gameState.notesBoard?.[i]?.[j]?.has(num)){gameState.notesBoard[i][j].delete(num);renderTileNotes(i,j);}}
 
     // --- LÓGICA DE CONFIGURACIÓN ---
     function handleThemeChange(event){const n=event.target.value;saveSetting('theme',n);if(n==='auto')applyDynamicTheme();else document.body.dataset.theme=n;playClickSound();}
