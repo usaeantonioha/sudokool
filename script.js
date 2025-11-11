@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
         muteToggleSetting, showHintToggle, showPencilToggle, /*showUndoToggle,*/ // Eliminado
         sharePuzzleBtn, timeComparisonElement, eraseButton, errorCounterElement;
         // muteToggleButton fue eliminado
+        // exitButton fue eliminado
 
     function getElements() {
         screens = { start: document.getElementById('start-screen'), game: document.getElementById('game-screen'), gameOver: document.getElementById('game-over-screen'), /*instructions: document.getElementById('instructions-screen'),*/ about: document.getElementById('about-screen'), pause: document.getElementById('pause-screen'), hintOverlay: document.getElementById('hint-overlay-screen'), leaderboard: document.getElementById('leaderboard-screen'), settings: document.getElementById('settings-screen') };
@@ -38,8 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
         errorCounterElement = document.getElementById('error-counter');
         // exitButton eliminado
 
-        // ===== CORRECCIÓN: Lista de elementos esenciales actualizada =====
-        // Se eliminó 'muteToggleButton' de esta lista.
+        // ===== CORRECCIÓN: Lista de elementos esenciales actualizada (exitButton eliminado) =====
         const essentialElements = { boardElement, keypadElement, difficultyButtonsContainer, settingsButton, startScreen: screens.start, gameScreen: screens.game, settingsScreen: screens.settings, themeSelect, fontSelect, muteToggleSetting, eraseButton, errorCounterElement, timerDisplay, backToMenuBtn, mainMenuLogo, dailyChallengeButton, leaderboardButton };
         for (const key in essentialElements) {
             if (!essentialElements[key]) {
@@ -260,7 +260,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function saveLeaderboards(){try{localStorage.setItem('sudokuLeaderboards',JSON.stringify(gameState.leaderboards));}catch(e){console.error("Err save leaders:",e);}}
     function loadLeaderboards(){const key='sudokuLeaderboards'; const defaultVal=JSON.parse(JSON.stringify(DEFAULT_LEADERBOARDS)); gameState.leaderboards = defaultVal; try{const s=localStorage.getItem(key);if(s){const p=JSON.parse(s);if(p&&typeof p==='object'&&p.daily&&Array.isArray(p.daily)&&p.daily.every(sc=>typeof sc==='object'&&typeof sc.time==='number'&&typeof sc.date==='string')){gameState.leaderboards=p;return;}throw new Error("Invalid format");}}catch(e){console.error(`Error loading ${key}:`,e,"Using defaults.");localStorage.removeItem(key);}}
     function saveSetting(key,value){try{let s=gameState.settings;if(key.includes('.')){const k=key.split('.');if(s[k[0]]!==undefined&&typeof s[k[0]]==='object')s[k[0]][k[1]]=value;else console.warn(`Cannot save nested setting: ${key}`);}else s[key]=value;localStorage.setItem('sudokuSettings',JSON.stringify(s));}catch(e){console.error("Err save setting:",key,e);}}
-    function loadSettings() {const key='sudokuSettings'; let saved = null; gameState.settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS)); try {const s=localStorage.getItem(key); if(s){saved=JSON.parse(s); if(typeof saved !=='object'||saved===null)throw new Error("Invalid format"); gameState.settings=deepMerge(gameState.settings, saved);}} catch(e){console.error(`Error loading/parsing ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.settings=JSON.parse(JSON.stringify(DEFAULT_SETTINGS));} gameState.isMuted=gameState.settings.isMuted; /* MuteToggleButton eliminado */}
+    // ===== CORRECCIÓN: loadSettings sin muteToggleButton =====
+    function loadSettings() {const key='sudokuSettings'; let saved = null; gameState.settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS)); try {const s=localStorage.getItem(key); if(s){saved=JSON.parse(s); if(typeof saved !=='object'||saved===null)throw new Error("Invalid format"); gameState.settings=deepMerge(gameState.settings, saved);}} catch(e){console.error(`Error loading/parsing ${key}:`,e,"Using defaults.");localStorage.removeItem(key);gameState.settings=JSON.parse(JSON.stringify(DEFAULT_SETTINGS));} gameState.isMuted=gameState.settings.isMuted; }
 
     // --- LÓGICA DE TIMER Y PAUSA ---
     function startTimer(){clearInterval(gameState.timerInterval);gameState.timerInterval=setInterval(updateTimer,1000);}
@@ -273,7 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- LÓGICA DE MODO LÁPIZ Y AUTO-LIMPIEZA ---
     function togglePencilMode(){playClickSound();gameState.isPencilMode=!gameState.isPencilMode;if(pencilToggleButton)pencilToggleButton.classList.toggle('active',gameState.isPencilMode); if(boardElement)boardElement.classList.toggle('board-pencil-mode',gameState.isPencilMode);}
     function toggleNote(num){if(!gameState.selectedTile)return;const r=parseInt(gameState.selectedTile.dataset.row),c=parseInt(gameState.selectedTile.dataset.col);if(isNaN(r)||isNaN(c)||gameState.puzzleBoard?.[r]?.[c]!==0)return;const nts=gameState.notesBoard?.[r]?.[c];if(!nts)return;if(nts.has(num))nts.delete(num);else{nts.add(num);gameState.gameStats.notesPlaced++;if(gameState.gameStats.notesPlaced>=50)unlockAchievement('thinkingAhead');}renderTileNotes(r,c);}
-    function autoCleanNotes(row,col,num){for(let i=0;i<9;i++){if(gameState.notesBoard?.[row]?.[i]?.has(num)){gameState.notesBoard[row][i].delete(num);renderTileNotes(row,i);}}for(let i=0;i<9;i++){if(gameState.notesBoard?.[i]?.[col]?.has(num)){gameState.notesBoard[i][col].delete(num);renderTileNotes(i,col);}}const br=Math.floor(row/3)*3,bc=Math.floor(col/3)*3;for(let i=br;i<br+3;i++)for(let j=bc;j<bc+3;j++)if(gameState.notesBoard?.[i]?.[j]?.has(num)){gameState.notesBoard[i][j].delete(num);renderTileNotes(i,j);}}
+    function autoCleanNotes(row,col,num){for(let i=0;i<9;i++){if(gameState.notesBoard?.[row]?.[i]?.has(num)){gameState.notesBoard[row][i].delete(num);renderTileNotes(row,i);}}for(let i=0;i<9;i++){if(gameState.notesBoard?.[i]?.[col]?.has(num)){gameState.notesBoard[i][col].delete(num);renderTileNotes(i,col);}}const br=Math.floor(row/3)*3,bc=Math.floor(c/3)*3;for(let i=br;i<br+3;i++)for(let j=bc;j<bc+3;j++)if(gameState.notesBoard?.[i]?.[j]?.has(num)){gameState.notesBoard[i][j].delete(num);renderTileNotes(i,j);}}
 
     // --- LÓGICA DE CONFIGURACIÓN ---
     function handleThemeChange(event){const n=event.target.value;saveSetting('theme',n);if(n==='auto')applyDynamicTheme();else document.body.dataset.theme=n;playClickSound();}
@@ -286,6 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Funciones colores eliminadas
     function setupSettingsScreen(){if(!themeSelect||!fontSelect||!muteToggleSetting||!showHintToggle||!showPencilToggle)return;themeSelect.value=gameState.settings.theme;fontSelect.value=gameState.settings.boardFont;muteToggleSetting.checked=gameState.isMuted;showHintToggle.checked=gameState.settings.showHintButton;showPencilToggle.checked=gameState.settings.showPencilButton;}
     function deepMerge(t, s) { if (!s) return t; for (const k in s) { if (s.hasOwnProperty(k)) { const sk = s[k]; const tk = t?.[k]; if (sk && typeof sk === 'object' && !Array.isArray(sk)) { if (!tk || typeof tk !== 'object' || Array.isArray(tk)) { t[k] = {}; } deepMerge(t[k], sk); } else if (sk !== undefined) { t[k] = sk; } } } return t; }
+    // ===== CORRECCIÓN: applySettings sin muteToggleButton y colores =====
     function applySettings(){if(!document.body)return;try{if(gameState.settings.theme==='auto')applyDynamicTheme();else document.body.dataset.theme=gameState.settings.theme;applyFont(gameState.settings.boardFont);/* Colores eliminados */}catch(e){console.error("Error al aplicar settings:",e);document.body.dataset.theme='light';applyFont(DEFAULT_SETTINGS.boardFont);}}
 
 
@@ -316,7 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateKeypad(){if(!keypadElement)return;try{const counts=getNumberCounts();const correctCounts={};for(let i=1;i<=9;i++)correctCounts[i]=0;for(let r=0;r<9;r++)for(let c=0;c<9;c++){const n=gameState.puzzleBoard?.[r]?.[c];if(n!==0&&n!==undefined&&n===gameState.solution?.[r]?.[c])correctCounts[n]++;}keypadElement.querySelectorAll('.keypad-number').forEach(key=>{const numTextEl=key.querySelector('.keypad-number-text');const checkmarkEl=key.querySelector('.keypad-checkmark');if(!numTextEl||!checkmarkEl)return;const num=parseInt(numTextEl.textContent);if(isNaN(num))return;const isComplete=correctCounts[num]===9;key.classList.toggle('completed',isComplete);if(isComplete){numTextEl.style.opacity='0';checkmarkEl.style.display='block';key.style.pointerEvents='none';}else{numTextEl.style.opacity='1';checkmarkEl.style.display='none';key.style.pointerEvents='auto';}});}catch(e){console.error("Error updating keypad:",e);}}
     function checkWin(){for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(gameState.puzzleBoard?.[r]?.[c]===0)return false;return true;}
     function generateEmptyBoard(){return Array(9).fill(0).map(()=>Array(9).fill(0));}
-    function shuffle(a,rnd=Math.random){for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],aVideoI]];}return a;}
+    function shuffle(a,rnd=Math.random){for(let i=a.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
     function findEmpty(b){for(let r=0;r<9;r++)for(let c=0;c<9;c++)if(b?.[r]?.[c]===0)return[r,c];return null;}
     function isValid(b,n,p){const[r,c]=p;for(let i=0;i<9;i++){if(b?.[r]?.[i]===n&&c!==i)return false;if(b?.[i]?.[c]===n&&r!==i)return false;}const br=Math.floor(r/3)*3,bc=Math.floor(c/3)*3;for(let i=br;i<br+3;i++)for(let j=bc;j<bc+3;j++)if(b?.[i]?.[j]===n&&(i!==r||j!==c))return false;return true;}
     function generateSolution(b,rnd=Math.random){const e=findEmpty(b);if(!e)return true;const[r,c]=e,nums=shuffle(Array.from({length:9},(_,i)=>i+1),rnd);for(const n of nums){if(isValid(b,n,[r,c])){b[r][c]=n;if(generateSolution(b,rnd))return true;b[r][c]=0;}}return false;}
