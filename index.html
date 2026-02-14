@@ -2,92 +2,163 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sudoku Pro Chile</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sudoku Profesional (Web)</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700&family=Roboto+Slab:wght@400;700&family=Source+Code+Pro:wght@400;700&display=swap" rel="stylesheet">
 </head>
-<body data-theme="light">
+<body data-theme="auto">
 
     <canvas id="confetti-canvas"></canvas>
 
     <section id="start-screen" class="screen active">
         <header class="header-icons">
-            <button id="main-menu-logo" class="logo-btn" aria-label="Acerca de">S</button>
-            <button id="settings-btn" class="icon-btn" aria-label="Configuración">⚙️</button>
+            <div class="header-icons-left">
+                <button id="main-menu-logo" class="logo-btn" aria-label="Información, Acerca de y Logros">S</button>
+            </div>
+            <div class="header-icons-right">
+                <button id="settings-btn" class="icon-btn" aria-label="Configuración">⚙️</button>
+            </div>
         </header>
 
         <div class="title-container">
-            <h1 class="colorful-title">SUDOKU PRO</h1>
+            <h1 class="colorful-title">
+                <span>S</span><span>U</span><span>D</span><span>O</span><span>K</span><span>U</span> <span>P</span><span>R</span><span>O</span>
+            </h1>
         </div>
 
-        <div class="menu-container">
-            <button id="resume-game-btn" class="menu-btn resume-btn" style="display: none;">Reanudar Partida</button>
-            <button id="daily-challenge-btn" class="menu-btn daily-btn">Desafío Diario</button>
-            <nav id="difficulty-buttons" class="menu-container">
-                </nav>
+        <button id="resume-game-btn" class="resume-btn" style="display: none;">Reanudar Partida</button>
+        <button id="daily-challenge-btn" class="daily-btn">Desafío Diario</button>
+        <nav id="difficulty-buttons"></nav>
+
+        <div class="bottom-button-container">
+             <button id="leaderboard-btn" class="leaderboard-btn">🏆 Clasificación</button>
         </div>
     </section>
 
     <main id="game-screen" class="screen">
-        <div class="game-header">
-            <button id="back-to-menu">← Volver</button>
-            <div id="timer-display">00:00</div>
-            <button id="pause-button" class="icon-btn">||</button>
-        </div>
+        <button id="back-to-menu">← Volver al Menú</button>
 
         <div id="game-info-bar">
-            <span>Errores: <span id="error-counter">0/3</span></span>
-            <span id="game-difficulty-display"></span>
+            <div class="info-item"> <span id="game-difficulty-display"></span> </div>
+            <div class="info-item info-errors"> <span>Errores:</span> <span id="error-counter">0/3</span> </div>
+            <div class="info-item info-time"> <span>Tiempo:</span> <span id="timer-display">00:00</span> </div>
+            <button id="pause-button" class="icon-btn pause-btn-ingame" aria-label="Pausar juego">||</button>
         </div>
 
-        <div id="board"></div>
-
-        <div id="action-bar">
-            <button id="undo-button" class="action-btn">↩️<br>Atrás</button>
-            <button id="erase-button" class="action-btn">🗑️<br>Borrar</button>
-            <button id="pencil-toggle-btn" class="action-btn">✏️<br>Notas</button>
+        <div class="game-content-area">
+            <div id="board"></div>
+            <div id="action-bar">
+                <button id="undo-button" class="action-btn" aria-label="Deshacer jugada" style="display: none;"><span class="action-icon">↩️</span><span class="action-text">Deshacer</span></button>
+                <button id="erase-button" class="action-btn" aria-label="Borrar celda"><span class="action-icon"> B </span><span class="action-text">Borrar</span></button>
+                <button id="pencil-toggle-btn" class="action-btn" aria-label="Modo Lápiz" style="display: none;"><span class="action-icon">✏️</span><span class="action-text">Notas</span></button>
+                <button id="hint-button" class="action-btn" aria-label="Pedir Pista" style="display: none;"><span class="action-icon">💡</span><span class="action-text">Pista</span></button>
+            </div>
+            <div id="keypad"></div>
         </div>
 
-        <div id="keypad"></div>
+        <div id="ingame-streak-display" style="display: none;"></div>
+        <div id="lives-container" style="display: none;"><h3>Vidas</h3><div id="lives-counter"></div></div>
+        <div id="timer-container" style="display: none;"><h3>Tiempo</h3></div>
     </main>
-
-    <div id="about-overlay" class="overlay">
-        <div class="overlay-box">
-            <h2>Información</h2>
-            <p>Juego creado por:</p>
-            <h3 style="color: var(--color-text);">e.a.h.a</h3>
-            <div class="flag-cl">🇨🇱</div>
-            <button class="overlay-btn close-overlay">Entendido</button>
-        </div>
-    </div>
-
-    <div id="settings-overlay" class="overlay">
-        <div class="overlay-box">
-            <h2>Ajustes</h2>
-            <div class="setting-item">
-                <label>Tema:</label>
-                <select id="theme-select">
-                    <option value="light">Claro</option>
-                    <option value="sepia">Sepia</option>
-                    <option value="dark">Oscuro</option>
-                </select>
-            </div>
-            <div class="setting-item">
-                <label>Sonido:</label>
-                <input type="checkbox" id="mute-toggle-setting" class="toggle-switch">
-            </div>
-            <button class="overlay-btn close-overlay">Cerrar</button>
-        </div>
-    </div>
 
     <div id="game-over-screen" class="overlay">
         <div class="overlay-box">
-            <h2 id="game-over-message">Fin del Juego</h2>
-            <button id="restart-button" class="overlay-btn">Jugar de Nuevo</button>
-            <button id="game-over-home-btn" class="overlay-btn secondary">Menú Principal</button>
+            <h2 id="game-over-message"></h2>
+             <p id="time-comparison" class="time-comparison"></p>
+            <button id="share-daily-result-btn" class="overlay-btn overlay-btn-share" style="display: none;">Compartir Resultado</button>
+            <button id="go-to-leaderboard-btn" class="overlay-btn" style="display: none;">Ver Clasificación</button>
+            <div class="overlay-button-container">
+                <button id="restart-button" class="overlay-btn">Jugar de Nuevo</button>
+                <button id="game-over-home-btn" class="overlay-btn overlay-btn-secondary">Volver al Menú</button>
+            </div>
         </div>
     </div>
+
+    <div id="about-screen" class="overlay">
+        <div class="overlay-box overlay-box-large">
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="info-tab">Información</button>
+                <button class="tab-btn" data-tab="about-tab">Acerca de</button>
+                <button class="tab-btn" data-tab="achievements-tab">Logros</button>
+            </div>
+            <div id="info-tab" class="tab-content active">
+                 <h2>Cómo Jugar Sudoku</h2>
+                 <p class="instructions-text"> El objetivo es rellenar una cuadrícula de 9×9 celdas dividida en subcuadrículas de 3×3 ("cajas" o "regiones") con las cifras del 1 al 9 partiendo de algunos números ya dispuestos en algunas de las celdas. <br><br> No se debe repetir ninguna cifra en una misma <strong>fila</strong>, <strong>columna</strong> o <strong>subcuadrícula (caja)</strong>. ¡Usa la lógica para completar el puzzle! </p>
+            </div>
+            <div id="about-tab" class="tab-content"> <h2>Creado por</h2> <p class="creator-name">Enzo</p> </div>
+            <div id="achievements-tab" class="tab-content"> <h2>Logros 🎖️</h2> <ul id="achievements-list" class="achievements-list"></ul> </div>
+            <button class="overlay-btn back-btn">Volver</button>
+        </div>
+    </div>
+
+    <div id="leaderboard-screen" class="overlay">
+        <div class="overlay-box overlay-box-large">
+            <h2>🏆 Clasificación (Desafío Diario)</h2>
+            <p class="instructions-text">Aquí se muestran tus 5 mejores tiempos.</p>
+            <table id="leaderboard-table" class="leaderboard-table"> <thead><tr><th>Puesto</th><th>Tiempo</th><th>Fecha</th></tr></thead> <tbody></tbody> </table>
+            <button class="overlay-btn back-btn">Volver</button>
+        </div>
+    </div>
+
+    <div id="pause-screen" class="overlay">
+        <div class="overlay-box">
+            <h2>Pausa</h2>
+            <div class="overlay-button-container">
+                <button id="resume-button" class="overlay-btn">Reanudar</button>
+                <button id="share-puzzle-btn" class="overlay-btn overlay-btn-share">Compartir Puzzle</button>
+                <button id="pause-back-to-menu" class="overlay-btn overlay-btn-secondary">Volver al Menú</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="hint-overlay-screen" class="overlay">
+        <div class="overlay-box">
+            <h2>¡Pista Encontrada!</h2>
+            <p id="hint-explanation" class="instructions-text"></p>
+            <button id="hint-ok-btn" class="overlay-btn">Entendido</button>
+        </div>
+    </div>
+
+    <div id="settings-screen" class="overlay">
+        <div class="overlay-box overlay-box-large">
+            <h2>⚙️ Configuración</h2>
+            <div class="settings-section">
+                <h3>Apariencia</h3>
+                <div class="setting-item">
+                    <label for="theme-select">Tema:</label>
+                    <select id="theme-select">
+                        <option value="auto">Automático (Claro)</option>
+                        <option value="light">Claro</option>
+                        <option value="sepia">Sepia</option>
+                        <option value="dark">Oscuro</option>
+                        <option value="neon">Neón</option>
+                        <option value="minimalist">Minimalista</option>
+                    </select>
+                </div>
+                <div class="setting-item">
+                    <label for="font-select">Fuente Números:</label>
+                    <select id="font-select">
+                        <option value="Manrope">Predeterminada</option>
+                        <option value="Roboto Slab">Serif</option>
+                        <option value="Source Code Pro">Monoespaciada</option>
+                    </select>
+                </div>
+            </div>
+            <div class="settings-section">
+                <h3>Juego</h3>
+                 <div class="setting-item toggle-setting"><label for="mute-toggle-setting">Silenciar Sonidos:</label><input type="checkbox" id="mute-toggle-setting" class="toggle-switch"></div>
+                 <div class="setting-item toggle-setting"><label for="show-hint-toggle">Mostrar Botón Pista:</label><input type="checkbox" id="show-hint-toggle" class="toggle-switch" checked></div>
+                 <div class="setting-item toggle-setting"><label for="show-pencil-toggle">Mostrar Botón Lápiz:</label><input type="checkbox" id="show-pencil-toggle" class="toggle-switch" checked></div>
+                 <div class="setting-item toggle-setting"><label for="show-undo-toggle">Mostrar Botón Deshacer (en error):</label><input type="checkbox" id="show-undo-toggle" class="toggle-switch" checked></div>
+            </div>
+            <button class="overlay-btn back-btn">Cerrar</button>
+        </div>
+    </div>
+
+    <div id="flash-message"></div>
 
     <script src="script.js"></script>
 </body>
