@@ -1,14 +1,15 @@
 :root {
-    --bg-color: #f4f4f4;
-    --text-color: #333;
-    --primary-color: #3498db;
+    --color-bg: #F0F2F5;
+    --color-text: #1A73E8;
+    --color-black: #333;
+    --color-white: #FFFFFF;
+    --font-main: 'Manrope', sans-serif;
 }
 
 body {
-    font-family: Arial, sans-serif;
     margin: 0;
-    background-color: var(--bg-color);
-    color: var(--text-color);
+    font-family: var(--font-main);
+    background-color: var(--color-bg);
     overflow: hidden;
     touch-action: manipulation;
 }
@@ -19,102 +20,121 @@ body {
     align-items: center;
     width: 100vw;
     height: 100vh;
-    padding: 20px;
+    padding: env(safe-area-inset-top) 15px;
     box-sizing: border-box;
 }
 
 .screen.active { display: flex; }
 
-/* Botones del Menú Principal (Igual tamaño y centrados) */
-.menu-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    width: 100%;
-    max-width: 300px;
-    margin-top: 20px;
-}
-
-.menu-btn, .difficulty-btn {
-    width: 100%;
-    padding: 20px;
-    font-size: 1.2rem;
-    font-weight: bold;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    background-color: var(--primary-color);
-    color: white;
-    text-align: center;
-}
-
-.resume { background-color: #2ecc71; }
-.daily { background-color: #9b59b6; }
-
-/* Iconos de cabecera */
+/* CABECERA E ICONOS */
 .header-icons {
     width: 100%;
     display: flex;
     justify-content: space-between;
-    margin-bottom: 40px;
+    padding: 20px 0;
 }
 
 .logo-btn, .icon-btn {
-    font-size: 2rem;
-    background: none;
+    background: white;
     border: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    font-weight: bold;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     cursor: pointer;
 }
 
-/* Tablero de Sudoku */
+/* MENÚ CENTRAL (Botones del mismo tamaño) */
+.menu-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+    max-width: 320px;
+}
+
+.menu-btn, .difficulty-btn {
+    width: 100%;
+    height: 65px; /* Tamaño fijo para todos */
+    font-size: 1.3rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 15px;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.resume-btn { background: #27ae60; }
+.daily-btn { background: #8e44ad; }
+.btn-fácil { background: #1abc9c; }
+.btn-medio { background: #3498db; }
+.btn-difícil { background: #f39c12; }
+.btn-experto { background: #e74c3c; }
+
+/* TABLERO (Proporcional a la pantalla) */
 #board {
     display: grid;
     grid-template-columns: repeat(9, 1fr);
     width: 95vw;
     max-width: 450px;
     aspect-ratio: 1/1;
-    border: 2px solid #333;
-    background-color: #fff;
+    background: #333;
+    border: 3px solid #333;
+    margin: 10px 0;
 }
 
 .tile {
-    border: 1px solid #ccc;
+    background: white;
+    border: 0.5px solid #ccc;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     font-weight: bold;
+    color: var(--color-text);
 }
 
-/* Teclado Numérico (Flexible para que no se salga) */
+.tile.fixed { color: #555; background: #f9f9f9; }
+.tile.selected { background: #bbdefb; }
+
+/* TECLADO ADAPTABLE (No se sale) */
 #keypad {
     display: flex;
-    flex-wrap: wrap; /* Esto permite que los números bajen si no caben */
+    flex-wrap: wrap;
     justify-content: center;
-    gap: 10px;
+    gap: 8px;
     width: 100%;
-    margin-top: 20px;
+    max-width: 400px;
+    padding: 10px;
 }
 
 .keypad-number {
-    width: 50px;
+    width: 18%; /* 5 botones por fila aproximadamente */
+    min-width: 55px;
     height: 60px;
     font-size: 1.8rem;
     font-weight: bold;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    background: #fff;
+    border-radius: 10px;
+    border: none;
+    background: white;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
 }
 
-/* Modales (Ventanas) */
+/* MODALES */
 .overlay {
     position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.7);
+    top:0; left:0; width:100%; height:100%;
+    background: rgba(0,0,0,0.8);
     display: none;
     justify-content: center;
     align-items: center;
-    z-index: 100;
+    z-index: 1000;
 }
 
 .overlay.active { display: flex; }
@@ -124,6 +144,20 @@ body {
     padding: 30px;
     border-radius: 20px;
     text-align: center;
-    width: 80%;
-    max-width: 400px;
+    width: 85%;
+    max-width: 350px;
+}
+
+.flag-cl { font-size: 4rem; margin: 15px 0; }
+
+.overlay-btn {
+    width: 100%;
+    padding: 15px;
+    margin-top: 10px;
+    border-radius: 10px;
+    border: none;
+    background: var(--color-text);
+    color: white;
+    font-weight: bold;
+    font-size: 1.1rem;
 }
